@@ -1,0 +1,17 @@
+{% extends 'admin/change_list.html' %}
+{% block object-tools %}
+    <div>
+        <form action="process_props_files/" method="POST">
+            {% csrf_token %}
+            <span><button type="submit">Process NCF Excel Files</button><i> from the following resources:</i></span>
+            <ul>
+                <li>//ncfsrv01-mk/Company/Accounts - Marc/Account B/09 - Alfandari Private Equities Ltd/Own Book/AOB Props & Payouts.xlsx</li>
+                <li>//ncfsrv01-mk/Company/AOB End Of Day Report/New Arrears Report.19.06.18.xls</li>
+                <li>C:/Users/Steve.Ismay/Desktop/Live Title Report.xls</li>
+                <li>//ncfsrv01-mk/Company/Accounts - Marc/Account B/09 - Alfandari Private Equities Ltd/Own Book/AOB Global Termination List.xlsx</li>
+             </ul>
+        </form>
+    </div>
+    <br />
+{{ block.super }}
+{% endblock %}

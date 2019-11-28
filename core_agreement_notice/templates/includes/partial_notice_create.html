@@ -1,0 +1,28 @@
+{% load widget_tweaks %}
+
+
+<form method="post" action="{% url 'core_agreement_notice:notice_create' agreement_id %}" class="js-notice-create-form">
+  {% csrf_token %}
+  <div class="modal-header">
+    <h4 class="modal-title">Add Notice</h4>
+    <button type="button" class="close" data-dismiss="modal" aria-label="Close" >
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body" onclose="location.reload()">
+    {% include 'includes/partial_notice_form.html' %}
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+    <button type="submit" class="btn btn-primary" >Create Notice</button>
+  </div>
+</form>
+
+<script>
+    $(function() {
+        $('#modal-notice').on('hidden.bs.modal', function () {
+ location.reload();
+})
+    });
+
+</script>

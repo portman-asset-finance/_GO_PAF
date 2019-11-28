@@ -1,0 +1,44 @@
+{% load widget_tweaks %}
+
+
+    {% if state == 'red' %}
+    <div class="alert alert-danger" id="dd-date-invalid">
+        {% if next_due_date %}
+            <p>Next due date is on {{ next_due_date|date:"d/m/Y" }}</p>
+        {% endif %}
+        <p>Setup will be active on {{ setup_active_date|date:"d/m/Y" }}</p>
+        <p>The earliest due date possible will be on {{ call_active_date|date:"d/m/Y" }}</p>
+        <p>In order to hit this date, the latest call must be made on {{ earliest_call_date|date:"d/m/Y" }}</p>
+    </div>
+    {% endif %}
+    {% if state == 'blue' %}
+    <div class="alert alert-info" id="dd-date-valid">
+        {% if next_due_date %}
+            <p>Next due date is on {{ next_due_date|date:"d/m/Y" }}</p>
+        {% endif %}
+        <p>Setup will be active on {{ setup_active_date|date:"d/m/Y" }}</p>
+        <p>In order to hit this due date, the latest call must be made on {{ earliest_call_date|date:"d/m/Y" }}</p>
+    </div>
+    {% endif %}
+
+
+<form method="post" id="id-create-dd-form">
+    {% if error %}
+        <div class="alert alert-danger">
+            <b>Error:</b> {{ error }}
+        </div>
+    {% endif %}
+    {% csrf_token %}
+    {% for field in form %}
+        <div class="form-group{% if field.errors %} has-errors{% endif %}">
+            <label for="{{ field.id_for_label }}" class="control-label">{{ field.label }}</label>
+            {% render_field field class="form-control" %}
+            {% for error in field.errors %}
+                <p class="help-block" style="color:red">{{ error }}</p>
+            {% endfor %}
+        </div>
+    {% endfor %}
+    <div class="form-group">
+        <button class="btn btn-success" type="submit">Create</button>
+    </div>
+</form>

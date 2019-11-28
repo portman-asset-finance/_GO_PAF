@@ -1,0 +1,50 @@
+{% load staticfiles %}
+<form method="post"
+      action="#"
+      class="js-arrear-update-formx">
+  {% csrf_token %}
+  <div class="modal-header">
+      <div class="page-header m-b-0">
+        <h5 class="go-header-title-trailer" style="color: #8dabc4">Payment Receipt for</h5>
+        <h5 class="go-header-title-trailer">{{ agreement_detail.agreementnumber }}</h5>
+        <h5 class="go-header-title-trailer">{{ agreement_customer.customercompany }}</h5>
+      </div>
+      <button type="button" class="close go-modal-close" aria-label="Close">
+           <span aria-hidden="true">&times;</span>
+        </button>
+  </div>
+  <div class="modal-body">
+    <div style="width:380px; margin: 0 auto !important; margin-top: 15px !important; padding-bottom:10px;">
+        <div class="row">
+            <div class="col-sm-4">
+                <div class="form-group text-right arrears-detail-margin-bottom ">
+                    <div class="input-group" style="margin-left: 8px !important;">
+                        <p class="form-control-plaintext form-control-sm" >
+                            <h5>Receipt Value</h5>
+                        </p>
+                    </div>
+                </div>
+             </div>
+            <div class="col-sm-7">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="card_receipt_cur_1" class="input-group-text"
+                                style="border-color: #2acfd2 !important; color: #2acfd2 !important;">£</span>
+                        </div>
+                        <input id="card_receipt_val_1" type="text" name="arrear_val_1"
+                               class="form-control form-control-sm arrears-money-style"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               style="border-color: #2acfd2 !important; color: #2acfd2 !important;"
+                               placeholder="0.00">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button id="btn-dismiss-receipt-modal" type="button" class="btn btn-default go-modal-close" data-dismiss="modal">Close</button>
+    <button id="btn-update-receipt" type="submit" class="btn btn-success">Confirm Receipt</button>
+  </div>
+</form>

@@ -1,0 +1,88 @@
+<form method="post" action="{% url 'core_agreement_editor:modalchangevalues' agreement_id %}?transaction_id={{ transaction_id}}" id="change-values-form">
+    {% csrf_token %}
+            <div class="modal-body">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="edit_dates_agreement_modalLabel">Change Values For {{ transactiondate|date:"d-m-Y"}}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+{#                {% if rental != '0.00' %}#}
+                    <p></p>
+                    {% if transactiondate >= comparisondate  %}
+                        <label class="control-label">Current Rental Value (NET)</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">&pound;</span>
+                                </div>
+                                <input class="form-control" name="changed_rental" type="text" id="changed_rental" value="{{ rental }}">
+                            </div>
+                        <p></p>
+    {#                    {% if rf != '0.00' %}#}
+                        <label class="control-label">Current Risk Fee Value (NET)</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">&pound;</span>
+                                </div>
+                                <input class="form-control" name="changed_risk_fee" type="text" id="changed_risk_fee" value="{{ rf }}">
+                            </div>
+                        <p></p>
+    {#                    {% endif %}#}
+                        {% if bamf != '0.00' %}
+                          <label class="control-label">Current BAMF Value (NET)</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">&pound;</span>
+                                </div>
+                                <input class="form-control" name="changed_bamf_fee" type="text" id="changed_bamf_fee" value="{{ bamf }}">
+                            <input class="form-control" name="old_bamf_fee" value="{{ bamf }}" hidden>
+                            </div>
+                        <p></p>
+                        {% endif  %}
+                    {% endif %}
+                    {% if transactiondate < comparisondate  %}
+                        {% if docfee != '0.00' %}
+                            <label class="control-label">Current Doc Fee (NET)</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">&pound;</span>
+                                    </div>
+                                    <input class="form-control" name="changed_doc_fee" type="text" id="changed_doc_fee" value="{{ docfee }}">
+                            </div>
+                        <p></p>
+                        {% endif  %}
+                        {% if docfee2 != '0.00' %}
+                            <label class="control-label">Current Doc Fee 2(NET)</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">&pound;</span>
+                                    </div>
+                                    <input class="form-control" name="changed_doc_fee2" type="text" id="changed_doc_fee2" value="{{ docfee2 }}">
+                            </div>
+                        <p></p>
+                        {% endif  %}
+                    {% endif %}
+                    <input type="hidden" name="submit_type" id="submit_type">
+                    <button type="button" class="btn btn-success"  id="submit_single">Just This Transaction</button>
+                    {% if transactiondate >= comparisondate  %}
+                    <button type="button" class="btn btn-success" id="submit_all">All Future Transactions</button>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+</form>
+
+<script type="text/javascript">
+    $("#submit_single").click(function(e) {
+        $("#submit_type").val("single");
+        $("#change-values-form").submit();
+    });
+
+    $("#submit_all").click(function() {
+        $("#submit_type").val("future");
+        $("#change-values-form").submit();
+    });
+</script>

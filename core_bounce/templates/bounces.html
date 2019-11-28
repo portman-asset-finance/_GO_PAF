@@ -1,0 +1,282 @@
+{% extends 'dashboard_base.html' %}
+{% load staticfiles %}
+{% load humanize %}
+
+{% block content %}
+
+        <style type="text/css">
+        .dataTables_filter input {
+            border-radius: 4px;
+            border: 1px solid #e8e8e8;
+            padding: 4px 3px;
+        }
+        #drop-bacs-file:hover,
+        #drop-datacash-file:hover
+        {
+            background-color: #f7fbff;
+            cursor: pointer;
+        }
+        #id-notes td {
+            padding-left: 18px;
+            padding-right: 18px;
+        }
+        #id-notes th, td {
+            vertical-align: top !important;
+        }
+        #bacsBar {
+            width: 10%;
+            height: 30px;
+            background-color: #2acfd2;
+            text-align: center; /* To center it horizontally (if you want) */
+            line-height: 30px; /* To center it vertically */
+            color: white;
+        }
+
+        #dcBar {
+            width: 10%;
+            height: 30px;
+            background-color: #2acfd2;
+            text-align: center; /* To center it horizontally (if you want) */
+            line-height: 30px; /* To center it vertically */
+            color: white;
+        }
+    </style>
+
+    <div class="page-header">
+        <h2 style="color: #8dabc4">BACS File Processing</h2>
+    </div>
+
+    {% if bacs_error %}
+        <div class="row server-message">
+            <div class="col-sm-12">
+                <div class="alert alert-danger">
+                    {{ bacs_error }}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if udd_success %}
+        <div class="row server-message">
+            <div class="col-sm-12">
+                <div class="alert alert-success">
+                    <i class="fa fa-check"></i> BACS File Uploaded and Processed.
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-body">
+            <div>
+                <h3 id="bacs_process_message" hidden="true">
+                    <i class="fa fa-pulse fa-spinner bacs_wait_message" hidden="true"></i>
+                    Processing BACS Files...
+                </h3>
+                <h3 id="bacs_tidy_message" hidden="true">
+                    <i class="fa fa-pulse fa-spinner bacs_wait_message" hidden="true"></i>
+                    Tidying Up...
+                </h3>
+            </div>
+            <b class="bacs_wait_message" hidden="true">Please do not navigate away from this screen.</b>
+            <div id="bacsProgress" hidden="true">
+                <div id="bacsBar"></div>
+            </div>
+            <div class="card-body text-center drop-bacs-file" style="border:1px dashed #334a65;" id="drop-bacs-file">
+                <span class="text-thin drop-bacs-file">click or drop files here to upload</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-header">
+        <h2 style="color: #8dabc4">Datacash File Processing   {{ test }}</h2>
+    </div>
+
+    {% if datacash_error %}
+        <div class="row server-message">
+            <div class="col-sm-12">
+                <div class="alert alert-danger">
+                    {{ datacash_error }}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if datacash_drawdowns %}
+        <div class="row server-message">
+            <div class="col-sm-12">
+                <div class="alert alert-success">
+                    <i class="fa fa-check"></i> Datacash Drawdowns Uploaded and Processed.
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if datacash_setups %}
+        <div class="row server-message">
+            <div class="col-sm-12">
+                <div class="alert alert-success">
+                    <i class="fa fa-check"></i> Datacash Setups Uploaded and Processed.
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-body">
+            <div>
+                <h3 id="dc_process_message" hidden="true">
+                    <i class="fa fa-pulse fa-spinner dc_wait_message" hidden="true"></i>
+                    Processing DataCash Files...
+                </h3>
+                <h3 id="dc_tidy_message" hidden="true">
+                    <i class="fa fa-pulse fa-spinner dc_wait_message" hidden="true"></i>
+                    Tidying Up...
+                </h3>
+            </div>
+            <b class="dc_wait_message" hidden="true">Please do not navigate away from this screen.</b>
+            <div id="dcProgress" hidden="true">
+                <div id="dcBar"></div>
+            </div>
+            <div class="card-body text-center drop-datacash-file" style="border:1px dashed #334a65;" id="drop-datacash-file">
+                <span class="text-thin drop-files drop-datacash-file">click or drop files here to upload</span>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}
+{% block page-js %}
+
+    <script type="text/javascript" src="/static/static_core_notes/dropzone.js"></script>
+
+    <script type="text/javascript">
+
+        var bacs_progress_bar_elem;
+        var bacs_progress_bar_start_time;
+        var bacs_progress_bar_end_time;
+        var bacs_bar_width = 0;
+        var bacs_interval_id;
+        var bacs_time_diff;
+        var bacs_incoming_perc;
+        var bacs_wait_time;
+
+        var dc_progress_bar_elem;
+        var dc_progress_bar_start_time;
+        var dc_progress_bar_end_time;
+        var dc_bar_width = 0;
+        var dc_interval_id;
+        var dc_time_diff;
+        var dc_incoming_perc;
+        var dc_wait_time;
+
+        $(function() {
+
+            $(".drop-bacs-file").dropzone({
+                maxFilesize: 5, // MB
+                timeout: 3000000,
+                url: "{% url 'core_bounce:process_bacs_file' %}",
+                init: function() {
+                    this.on('sending', function(file, xhr) {
+
+                        {# Format Progress Bar and File Dropzone #}
+                        $('.drop-bacs-file').hide();
+                        $('.drop-datacash-file').hide();
+                        $('.server-message').hide();
+                        $('#bacsProgress').attr("hidden", false);
+                        $('#bacs_process_message').attr("hidden", false);
+                        $('.bacs_wait_message').attr("hidden", false);
+
+                        {# Process Progress Bar #}
+                        bacs_bar_width = 0;
+                        bacs_progress_bar_elem = document.getElementById("bacsBar");
+                        bacs_progress_bar_elem.style.width = bacs_bar_width + '%';
+                        bacs_progress_bar_start_time = new Date();
+                        bacs_interval_id = setInterval(bacs_progress_frame, 2400);
+
+                        {# set csrf token #}
+                        xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                    });
+                },
+                success: function(data, res) {
+
+                    $('#bacs_process_message').attr("hidden", true);
+                    $('#bacs_tidy_message').attr("hidden", false);
+                    bacs_progress_bar_end_time = new Date();
+                    bacs_time_diff = 240000 - (bacs_progress_bar_end_time - bacs_progress_bar_start_time);
+                    bacs_incoming_perc = Math.round(((240000 - bacs_time_diff)/240000) * 100);
+                    bacs_bar_width = bacs_incoming_perc;
+                    clearInterval(bacs_interval_id);
+                    bacs_interval_id = setInterval(bacs_progress_frame, 40);
+                    bacs_wait_time = (100 - (Math.round(((240000 - bacs_time_diff)/240000) * 100))) * 40;
+                    setTimeout(function(){ location.href = "{% url 'core_bounce:process_bacs_file' %}"; }, bacs_wait_time);
+                }
+            });
+
+            $(".drop-datacash-file").dropzone({
+                maxFilesize: 5, // MB
+                timeout: 3000000,
+                url: "{% url 'core_bounce:process_datacash_file' %}",
+                init: function() {
+                    this.on('sending', function(file, xhr) {
+
+                        {# Format Progress Bar and File Dropzone #}
+                        $('.drop-bacs-file').hide();
+                        $('.drop-datacash-file').hide();
+                        $('.server-message').hide();
+                        $('#dcProgress').attr("hidden", false);
+                        $('#dc_process_message').attr("hidden", false);
+                        $('.dc_wait_message').attr("hidden", false);
+
+                        {# Process Progress Bar #}
+                        dc_bar_width = 0;
+                        dc_progress_bar_elem = document.getElementById("dcBar");
+                        dc_progress_bar_elem.style.width = dc_bar_width + '%';
+                        dc_progress_bar_start_time = new Date();
+                        dc_interval_id = setInterval(dc_progress_frame, 2400);
+
+                        xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                    });
+                },
+                success: function(data, res) {
+
+                    $('#dc_process_message').attr("hidden", true);
+                    $('#dc_tidy_message').attr("hidden", false);
+                    dc_progress_bar_end_time = new Date();
+                    dc_time_diff = 240000 - (dc_progress_bar_end_time - dc_progress_bar_start_time);
+                    dc_incoming_perc = Math.round(((240000 - dc_time_diff)/240000) * 100);
+                    dc_bar_width = dc_incoming_perc;
+                    clearInterval(dc_interval_id);
+                    dc_interval_id = setInterval(dc_progress_frame, 40);
+                    dc_wait_time = (100 - (Math.round(((240000 - dc_time_diff)/240000) * 100))) * 40;
+                    setTimeout(function(){ location.href = "{% url 'core_bounce:process_datacash_file' %}"; }, dc_wait_time);
+                }
+            });
+
+        });
+
+
+        function bacs_progress_frame() {
+
+            if (bacs_bar_width >= 100) {
+                clearInterval(bacs_interval_id);
+            } else {
+                bacs_bar_width++;
+                bacs_progress_bar_elem.style.width = bacs_bar_width + '%';
+                bacs_progress_bar_elem.innerHTML = bacs_bar_width + '%';
+            }
+        }
+
+        function dc_progress_frame() {
+
+            if (dc_bar_width >= 100) {
+                clearInterval(dc_interval_id);
+            } else {
+                dc_bar_width++;
+                dc_progress_bar_elem.style.width = dc_bar_width + '%';
+                dc_progress_bar_elem.innerHTML = dc_bar_width + '%';
+            }
+        }
+
+    </script>
+
+{% endblock %}

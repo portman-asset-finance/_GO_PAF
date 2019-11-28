@@ -1,0 +1,41 @@
+<thead>
+    <tr>
+        <th>Reference</th>
+        <th>Account Name</th>
+        <th>Sort code</th>
+        <th>Account No</th>
+        <th>User</th>
+        <th>Created</th>
+        <th>Cancelled</th>
+    </tr>
+</thead>
+<tbody>
+    {% for dd in records %}
+        <tr>
+            <td>{{ dd.reference }}</td>
+            <td>{{ dd.account_name }}</td>
+            <td>{{ dd.sort_code }}</td>
+            <td>{{ dd.account_number }}</td>
+            <td>{{ dd.user }}</td>
+            <td>{{ dd.created|date:"d/m/Y" }}</td>
+            <td>{% if dd.cancelled_date %}
+                    {{ dd.cancelled_date|date:"d/m/Y" }}
+                {% else %}
+                    {% if dd.dd_reference %}
+                    <button class="btn btn-danger btn-sm pull-right" data-revoke="{% url 'core_direct_debits:cancel_ddi' dd.id %}">
+                       Revoke &times;
+                    </button>
+                    {% else %}
+                        <span class="badge badge-danger text-thin">No DD reference</span>
+                    {% endif %}
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+</tbody>
+<script type="text/javascript">
+    {% if not future %}
+        $(".js-create-dd-form").hide();
+        $("#id-error-message").html("This agreement has no future transactions.").show();
+    {% endif %}
+</script>

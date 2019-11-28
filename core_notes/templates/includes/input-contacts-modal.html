@@ -1,0 +1,257 @@
+{% if values.contact_type == 'Phone/Email Only' %}
+    <script type="text/javascript">
+        var elements = document.getElementsByClassName('not_phone_or_email') ;
+        for(var i = 0; i < elements.length; i++) {
+            elements[i].style.display = 'none';
+        }
+    </script>
+{% endif %}
+<div class="modal-header">
+    <h3 class="modal-title">Contact Details</h3>
+    <a class="close" data-dismiss="modal">&times;</a>
+</div>
+<div class="modal-body">
+    {% if contact.error %}
+        <div class="alert alert-danger">
+            {{ contact.error }}
+        </div>
+    {% endif %}
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            <label class="control-label">Contact Type</label>
+            <select class="form-control{% if contact.errors.contact_type %} error{% endif %}" name="contact_type" id="contact_type" data-validate="true" onchange="yesnoCheck();" id="contact_type">
+                <option value="">Please Select</option>
+                {% for t in contact_types %}
+                    <option value="{{ t.contact_type_description }}" {% if values.contact_type == t.contact_type_description %}selected{% endif %}>{{ t.contact_type_description }}</option>
+                {% endfor %}
+            </select>
+            {% if contact.errors.contact_type %}
+            <div class="invalid-feedback display-block">
+                {{ contact.errors.contact_type }}
+            </div>
+            {% endif %}
+        </div>
+        <div class="form-group col-md-6">
+            <label class="control-label">Contact Priority</label>
+            <select class="form-control{% if contact.errors.contact_priority %} error{% endif %}" name="contact_priority" id="contact_priority" data-validate="true">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+            </select>
+            {% if contact.errors.contact_priority %}
+            <div class="invalid-feedback display-block">
+                {{ contact.errors.contact_priority }}
+            </div>
+            {% endif %}
+        </div>
+        <div id ="ifYes" class="form-group col-md-12" {% if values.contact_type != 'Guarantor' %}style="display: none;"{% endif %} data-bob="{{ values.contact_type }}">
+            <label class="control-label">Guarantor Info</label>
+            <input class="form-control" type="text" name="contact_guarantor_info" autocomplete="off" data-validate="true" maxlength="149" value="{{ contact.values.contact_guarantor_info }}">
+        </div>
+        <div class="form-group col-md-6 not_phone_or_email">
+            <label class="control-label">First Name</label>
+            <div class="input-group">
+                <div class="input-group-prepend{% if contact.errors.contact_first_name %} error-border{% endif %}">
+                    <span class="input-group-text"><i class="fa fa-user"></i></span>
+                </div>
+                <input class="form-control{% if contact.errors.contact_first_name %} error{% endif %}" type="text" id="contact_first_name" name="contact_first_name" value="{{ contact.values.contact_first_name }}" autocomplete="off" id="id-customer-contact-name" data-validate="true" maxlength="35">
+            </div>
+            {% if contact.errors.contact_first_name %}
+                <div class="invalid-feedback display-block">
+                    {{ contact.errors.contact_first_name }}
+                </div>
+            {% endif %}
+        </div>
+        <div class="form-group col-md-6 not_phone_or_email">
+            <label class="control-label">Surname</label>
+            <div class="input-group">
+                <div class="input-group-prepend{% if contact.errors.contact_last_name %} error-border{% endif %}">
+                    <span class="input-group-text"><i class="fa fa-user"></i></span>
+                </div>
+                <input class="form-control{% if contact.errors.contact_last_name %} error{% endif %}" type="text" id="contact_last_name" name="contact_last_name" value="{{ contact.values.contact_last_name }}" autocomplete="off" id="id-customer-contact-name" data-validate="true" maxlength="35">
+            </div>
+            {% if contact.errors.contact_last_name %}
+            <div class="invalid-feedback display-block">
+                {{ contact.errors.contact_last_name }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="form-row not_phone_or_email">
+        <div class="form-group col-md-12">
+            <label class="control-label">Post Code Search</label>
+            <div class="input-group">
+                <input class="form-control" type="text" id="id-postcode-search" autocomplete="xyz"
+                        data-validate="true" maxlength="10">
+                <div class="input-group-append" style="cursor: pointer;" id="postcode-search">
+                     <span class="input-group-text"><i class="fa fa-search"></i></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-row" id="address-search-results" style="display:none;">
+        <div class="form-group col-md-12">
+            <label class="control-label text-success">Please select an address from the list below or enter the details manually</label>
+            <select id="address-select" class="form-control"></select>
+        </div>
+    </div>
+    <div class="form-row not_phone_or_email">
+        <div class="form-group col-md-6">
+            <label class="control-label">Address Line 1</label>
+            <input class="form-control{% if contact.errors.contact_address_1 %} error{% endif %}" type="text"
+                   name="contact_address_1" value="{{ contact.values.contact_address_1 }}" id="id-address-line-1"
+                   autocomplete="off" data-validate="true" maxlength="35">
+            {% if contact.errors.contact_address_1 %}
+            <div class="invalid-feedback display-block">
+                 {{ contact.errors.contact_address_1 }}
+            </div>
+            {% endif %}
+        </div>
+        <div class="form-group col-md-6">
+            <label class="control-label">Address Line 2</label>
+            <input class="form-control{% if contact.errors.contact_address_2 %} error{% endif %}" type="text"
+                    name="contact_address_2" value="{{ contact.values.contact_address_2 }}" id="id-address-line-2"
+                    autocomplete="off" data-validate="true" maxlength="35">
+            {% if contact.errors.contact_address_2 %}
+                <div class="invalid-feedback display-block">
+                    {{ contact.errors.contact_address_2 }}
+                </div>
+            {% endif %}
+        </div>
+        <div class="form-group col-md-6">
+            <label class="control-label">Address Line 3</label>
+            <input class="form-control{% if contact.errors.contact_address_3 %} error{% endif %}" type="text"
+                    name="contact_address_3" value="{{ contact.values.contact_address_3 }}" id="id-address-line-3"
+                    autocomplete="off" data-validate="true" maxlength="35">
+            {% if contact.errors.contact_address_3 %}
+                <div class="invalid-feedback display-block">
+                    {{ contact.errors.contact_address_3 }}
+                </div>
+            {% endif %}
+        </div>
+        <div class="form-group col-md-6">
+            <label class="control-label">Address Line 4</label>
+            <input class="form-control{% if contact.errors.contact_address_4 %} error{% endif %}" type="text"
+                    name="contact_address_4" value="{{ contact.values.contact_address_4 }}" id="id-address-line-4"
+                    autocomplete="off" maxlength="35">
+            {% if errors.contact_address_4 %}
+                <div class="invalid-feedback display-block">
+                    {{ contact.errors.contact_address_4 }}
+                </div>
+            {% endif %}
+        </div>
+        <div class="form-group col-md-6">
+            <label class="control-label">Address Line 5</label>
+            <input class="form-control{% if contact.errors.contact_address_5 %} error{% endif %}" type="text"
+                    name="contact_address_5" value="{{ contact.values.contact_address_5 }}" id="id-address-line-5"
+                    autocomplete="off" maxlength="35">
+            {% if contact.errors.contact_address_5 %}
+                <div class="invalid-feedback display-block">
+                     {{ contact.errors.contact_address_5 }}
+                </div>
+            {% endif %}
+        </div>
+        <div class="form-group col-md-6">
+            <label class="control-label">Postcode</label>
+            <input class="form-control{% if contact.errors.contact_postcode %} error{% endif %}" type="text"
+                    name="contact_postcode" value="{{ contact.values.contact_postcode }}" id="id-postcode" autocomplete="off"
+                    data-validate="true" maxlength="8">
+            {% if contact.errors.contact_postcode %}
+            <div class="invalid-feedback display-block">
+                {{ contact.errors.contact_postcode }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col-md-6" id="id-contact-description" {% if values.contact_type != 'Phone/Email Only' %}style="display: none;"{% endif %}>
+            <label class="control-label">Contact Description</label>
+            <div class="input-group">
+                <div class="input-group-prepend{% if contact.errors.contact_description %} error-border{% endif %}">
+                    <span class="input-group-text"><i class="fa fa-user"></i></span>
+                </div>
+                <input class="form-control{% if contact.errors.contact_description %} error{% endif %}" type="text" name="contact_description" autocomplete="off" data-validate="true" maxlength="149" value="{{ contact.values.contact_description }}">
+            </div>
+            {% if contact.errors.contact_description %}
+                <div class="invalid-feedback display-block">
+                    {{ contact.errors.contact_description }}
+                </div>
+            {% endif %}
+        </div>
+        <div class="form-group col-md-6">
+            <label class="control-label">Mobile Number</label>
+            <div class="input-group">
+                <div class="input-group-prepend{% if contact.errors.contact_mobile %} error-border{% endif %}">
+                    <span class="input-group-text"><i class="fa fa-mobile-phone"></i></span>
+                </div>
+                <input class="form-control{% if contact.errors.contact_mobile %} error{% endif %}" type="text" id="contact_mobile" name="contact_mobile" value="{{ contact.values.contact_mobile }}" autocomplete="off" id="id-customer-mobile" onkeypress="return isNumber(event)" data-validate="true">
+            </div>
+            {% if contact.errors.contact_mobile %}
+                <div class="invalid-feedback display-block">
+                    {{ contact.errors.contact_mobile }}
+                </div>
+            {% endif %}
+        </div>
+        <div class="form-group col-md-6">
+            <label class="control-label">Phone Number</label>
+            <div class="input-group">
+                <div class="input-group-prepend{% if contact.errors.contact_phone %} error-border{% endif %}">
+                    <span class="input-group-text"><i class="fa fa-phone"></i></span>
+                </div>
+                <input class="form-control{% if contact.errors.contact_phone %} error{% endif %}" type="text" id="contact_phone" name="contact_phone" value="{{ contact.values.contact_phone }}" autocomplete="off" id="id-customer-phone" onkeypress="return isNumber(event)" data-validate="true">
+            </div>
+            {% if contact.errors.contact_phone %}<div class="invalid-feedback display-block">
+                {{ contact.errors.contact_phone }}
+            </div>
+            {% endif %}
+        </div>
+        <div class="form-group col-md-6">
+            <label class="control-label">Email</label>
+            <div class="input-group">
+                <div class="input-group-prepend{% if contact.errors.contact_email %} error-border{% endif %}">
+                    <span class="input-group-text">@</span>
+                </div>
+                <input class="form-control{% if contact.errors.contact_email %} error{% endif %}" type="text" id="contact_email" name="contact_email" value="{{ contact.values.contact_email }}" autocomplete="off" id="id-customer-email" data-validate="true" maxlength="200">
+            </div>
+            {% if contact.errors.contact_email %}
+                <div class="invalid-feedback display-block">
+                    {{ contact.errors.contact_email }}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="form-row not_phone_or_email">
+        <div class="form-group col-md-4">
+            <label class="control-label">Social Media 1</label>
+            <input class="form-control" type="text" id="social_media1" name="social_media1" autocomplete="off" value="{{ contact.values.social_media1 }}" maxlength="35">
+        </div>
+        <div class="form-group col-md-4">
+            <label class="control-label">Social Media 2</label>
+            <input class="form-control" type="text" id="social_media2" name="social_media2" autocomplete="off" value="{{ contact.values.social_media2 }}" maxlength="35">
+        </div>
+        <div class="form-group col-md-4">
+            <label class="control-label">Social Media 3</label>
+            <input class="form-control" type="text" id="social_media3" name="social_media3" autocomplete="off" value="{{ contact.values.social_media3 }}" maxlength="35">
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-success" id="add_contact_continue" type="button">
+        <i class="fa fa-thumbs-up"></i> Continue
+    </button>
+    <button class="btn btn-danger" data-dismiss="modal" id="input-contacts-modal-back" type="button">
+        <i class="fa fa-thumbs-down"></i> Back
+    </button>
+</div>
+
+<script type="text/javascript">
+    $("#id-postcode-search").focus(function() {
+        $("#postcode-search").addClass("active_input_border");
+    });
+    $("#id-postcode-search").focusout(function() {
+        $("#postcode-search").removeClass("active_input_border");
+    });
+</script>

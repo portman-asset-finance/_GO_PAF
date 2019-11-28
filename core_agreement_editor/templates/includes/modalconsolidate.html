@@ -1,0 +1,253 @@
+{% load crispy_forms_tags %}
+{% load humanize %}
+
+<style type="text/css">
+    #id-agreements-to-consolidate input {
+        text-transform: uppercase;
+    }
+    ::-webkit-input-placeholder { /* WebKit browsers */
+        text-transform: none;
+    }
+    :-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+        text-transform: none;
+    }
+    ::-moz-placeholder { /* Mozilla Firefox 19+ */
+        text-transform: none;
+    }
+    :-ms-input-placeholder { /* Internet Explorer 10+ */
+        text-transform: none;
+    }
+    ::placeholder { /* Recent browsers */
+        text-transform: none;
+    }
+</style>
+
+<form method="post" action="{% url 'core_agreement_editor:modalconsolidate' agreement_id %}" id="consolidate-form">
+    {% csrf_token %}
+    <div class="modal-header">
+        <h5 class="modal-title" id="edit_dates_agreement_modalLabel"><b>Consolidation</b></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    <div class="modal-body">
+        <div class="alert alert-danger" id="id-error-message" style="display: none;">
+            Hello, world!
+        </div>
+        <div>
+            <table class="table table-hover" id="id-agreements-to-consolidate">
+                <tr>
+                    <th style="width: 20%">Agreement No.</th>
+                    <th style="width: 35%">Customer Company</th>
+                    <th style="width: 25%">Outstanding Principal</th>
+                    <th style="width: 20%">Status</th>
+                </tr>
+                 {% for row in consolidated_agreements %}
+                     <tr data-row-no="{{ forloop.counter }}">
+                         <td><input type="text" placeholder="Agreement No." class="form-control" id="id-agreement-{{ forloop.counter }}" name="agreement-{{ forloop.counter }}" value="{{ row.agreement_id }}" data-member-no="{{ forloop.counter }}" readonly></td>
+                         <td><p id="id-agreement-{{ forloop.counter }}-text1">{{ row.customercompany }}</p></td>
+                         <td><p id="id-agreement-{{ forloop.counter }}-text2">{% if row.paymentsum %}&pound;{% endif %}{{ row.paymentsum|floatformat:2|intcomma }}</p></td>
+                         <td>
+                             <span id="id-agreement-{{ forloop.counter }}-text3">{{ row.status }}</span>
+                                 <i class="pull-right text-danger fa fa-remove remove-consol" data-member-no="{{ forloop.counter }}" style="cursor: pointer;"></i>
+                             </span>
+                         </td>
+                     </tr>
+                 {% endfor %}
+                 <tr data-isinitial="true">
+                     <td><input type="text" placeholder="Agreement No." class="form-control" name="agreement-{{ number_of_consolidated_agreements }}" id="id-agreement-{{ number_of_consolidated_agreements }}" data-member-no="{{ number_of_consolidated_agreements }}"></td>
+                     <td><p id="id-agreement-{{ number_of_consolidated_agreements }}-text1"></p></td>
+                     <td><p id="id-agreement-{{ number_of_consolidated_agreements }}-text2"></p></td>
+                     <td><p id="id-agreement-{{ number_of_consolidated_agreements }}-text3"></p></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-success" type="button" id="submit-consol" data-dismiss="modal">
+            <i class="fa fa-thumbs-up"></i>
+            Consolidate Selected Agreements
+        </button>
+        <button class="btn btn-danger" data-dismiss="modal">
+            <i class="fa fa-thumbs-down"></i>
+            Cancel
+        </button>
+    </div>
+</form>
+
+    <script type="text/javascript">
+
+        var ii = {{ number_of_consolidated_agreements }} ;
+
+        $("#submit_single").click(function() {
+            $("#submit_type").val("singledates");
+            $("#consolidate-form").submit();
+        });
+
+        $("#submit_all").click(function() {
+            $("#submit_type").val("futuredates");
+            $("#consolidate-form").submit();
+        });
+
+        var $errorMessage = $("#id-error-message") ;
+
+        $("#id-agreements-to-consolidate").on("keyup", "[id^=id-agreement]", function(e) {
+
+            var t = this ;
+
+            var charCode = e.which ? e.which : e.keyCode ;
+
+            var agreement_id = $(t).val();
+
+            if(!agreement_id) {
+                if (agreement_id !== 0) return ;
+            }
+            if(agreement_id.length < 4) {
+                return ;
+            }
+
+            var agreement_ids = document.querySelectorAll('[data-member-no]');
+            for (var i = 0; i < agreement_ids.length; i++) {
+                if (agreement_ids[i].id !== t.id) {
+                    if (agreement_ids[i].value === agreement_id) {
+                        t.value = "" ;
+                        return ;
+                    }
+                }
+            }
+
+            var i = $(t).attr("data-member-no");
+            ii = parseInt(i) + 1 ;
+
+            $.ajax({
+                url: "{% url 'core_agreement_editor:agreement_detail' agreement_id %}?agreement_id=" + agreement_id,
+                dataType: "json",
+                success: function(data) {
+                    if(data.success) {
+                        $("#id-agreement-" + i + "-text1").html(data.customercompany);
+                        $("#id-agreement-" + i + "-text2").html("£" + parseFloat(data.paymentsum).toFixed(2));
+                        $("#id-agreement-" + i + "-text3").html(data.status);
+                        if ($("#id-agreement-" + ii).length === 0) {
+                            $("#id-agreements-to-consolidate").append(_buildNextRow());
+                        }
+                    } else if(data.error) {
+                        $("#id-agreement-" + i + "-text1").html("");
+                        $("#id-agreement-" + i + "-text2").html("");
+                        $("#id-agreement-" + i + "-text3").html("");
+                        $errorMessage.html(data.error).show() ;
+                        setTimeout(function() {
+                            $errorMessage.html("").hide();
+                        }, 3000);
+                    }
+                },
+                error: function() {
+                }
+            });
+
+        });
+
+        var clicked = false ;
+
+        $(".remove-consol").click(function() {
+
+            var parent = $(this).parent().parent() ;
+
+            if (clicked) return ;
+
+            clicked = true ;
+
+            var $id = $(this).attr("data-member-no");
+            var agreement_id = $("#id-agreement-" + $id).val();
+            if (!agreement_id) {
+                clicked = false ;
+                return ;
+            }
+
+            $.ajax({
+                url: '{% url 'core_agreement_editor:remove_consolidation_agreement' agreement_id %}?agreement_id_to_remove=' + agreement_id ,
+                method: 'POST',
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                },
+                success: function(data) {
+                    parent.remove() ;
+                    clicked = false ;
+                    if (data.consolidations) {
+                        $("#id-consolidate-btn").html("Consolidation of " + data.consolidations) ;
+                    } else {
+                        $("#id-consolidate-btn").html("Consolidate Into This Agreement") ;
+                    }
+                },
+                error: function(data) {
+                    alert(JSON.stringify(data)) ;
+                    clicked = false ;
+                }
+            });
+
+        });
+
+        $("#submit-consol").click(function() {
+
+            var $this = $(this) ;
+
+            var agreementSelectors = $("[data-member-no]");
+
+            // var number_of_agreements = ii - 1 ;
+            var number_of_agreements = agreementSelectors.length - 1 ;
+
+            {#var agreement_ids = document.querySelectorAll('[data-member-no]');#}
+            {#alert(agreement_ids.length) ;#}
+
+            var agreements = [] ;
+            for (var i = 0; i < number_of_agreements + 100; i++) {
+                if ($("#id-agreement-" + i + "-text3").html() === "LIVE") {
+                    var aid = $("#id-agreement-" + i).val();
+                    if (aid) agreements.push(aid);
+                }
+            }
+
+            if (agreements.length > 0) {
+
+                $this.attr("disabled", true) ;
+
+                $.ajax({
+                    method: 'POST',
+                    url: '{% url 'core_agreement_editor:modalconsolidate' agreement_id %}',
+                    data: { agreements: agreements },
+                    dataType: 'json',
+                    beforeSend: function(xhr    ) {
+                       xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                    },
+                    success: function(data) {
+                        $this.attr("disabled", false) ;
+                        $("#agreementoriginalprincipal").val(data.total_principal);
+                        $("#modal-editor").modal('hide');
+                        if (data.consolidations) {
+                            $("#id-consolidate-btn").html("Consolidation of " + data.consolidations) ;
+                        } else {
+                            $("#id-consolidate-btn").html("Consolidate Into This Agreement") ;
+                        }
+                    },
+                    error: function(data) {
+                        alert(JSON.stringify(data));
+                        $this.attr("disabled", false) ;
+                        $("#modal-editor").modal('hide');
+                    }
+                 }) ;
+
+             }
+
+        });
+
+        function _buildNextRow() {
+
+            return '<tr>' +
+                '<td><input type="text" placeholder="Agreement No." class="form-control" name="agreement-' + ii + '" id="id-agreement-' + ii + '" data-member-no="' + ii + '"></td>' +
+                '<td><p id="id-agreement-' + ii + '-text1"></p></td>\n' +
+                '<td><p id="id-agreement-' + ii + '-text2"></p></td>\n' +
+                '<td><p id="id-agreement-' + ii + '-text3"></p></td>\n' +
+                '</tr>';
+
+        }
+
+    </script>

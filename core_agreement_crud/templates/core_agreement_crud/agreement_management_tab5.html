@@ -1,0 +1,207 @@
+{% extends "dashboard_base.html" %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+{% load dashboard_extras %}
+{% block metadescription %}
+   GO Dashboard
+{% endblock %}
+{% block title %}
+   GO Dashboard
+{% endblock %}
+{% block page-css %}
+{% endblock %}
+{% block content %}
+    <div class="page-header">
+       <h2 class="inline-block"> {{ agreement_detail.agreementnumber }}&nbsp; &nbsp;</h2>&nbsp;
+            <h2 class="inline-block">{{ agreement_customer.customercompany }}&nbsp; &nbsp;</h2>&nbsp;
+            <h2 class="inline-block" data-toggle="tooltip" data-placement="bottom"
+                title="Sales Representative">{{ agreement_detail.agreementauthority }}&nbsp; &nbsp;</h2>&nbsp;
+            {% if agreement_regulated_flag %}
+                <button type="button" class="btn btn-success btn-w-sm" data-toggle="popover" data-trigger="hover"   title="" data-content="This is a regulated agreement,                         please deal with accordingly." data-original-title="Regulated Agreement" aria-describedby="popover676999">
+                    <i class="mdi mdi-help-circle-outline"></i>&nbsp;Regulated
+                </button>
+            {% endif %}
+            <div class="inline-block">
+                {% if  agreement_detail.agreementdefname != 'Hire Purchase' and agreement_detail.agreementdefname != 'Management Fee' %}
+                    <span class="badge badge-info badge-lg">{{ agreement_detail.agreementdefname }}</span>
+                {% else %}
+                    <span class="badge badge-primary badge-lg">{{ agreement_detail.agreementdefname }}</span>
+                {% endif %}
+                {% if agreement_detail.agreementclosedflag_id == 902 %}
+                    <span class="badge badge-danger badge-lg">Closed</span>
+                {% endif %}
+                {% if agreement_detail.agreementddstatus_id == 'I' %}
+                    <span class="badge badge-danger badge-lg">DD Inactive</span>
+                {% endif %}
+               {% if agreement_detail.agreement_stage == '4'%}
+                    <nav class="breadcrumb breadcrumb-dash">&nbsp;
+                        <a class="breadcrumb-item text-success agreement-list" href="{%  url 'core_agreement_crud:AgreementEnquiryList' %}"><i class="ti-list p-r-5"></i>Agreement List</a>
+                        <span class="breadcrumb-item active">Agreement Detail</span>
+                    </nav>
+                   <a href='javascript:void(window.open("{% url 'notes:main' %}?customer_id={{ agreement_customer.customernumber }}&agreement_id={{ agreement_detail.agreementnumber }}", "core_notes", "scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no, width=2000,height=1000,left=0,top=0"));' class="text-white m-r-15 font-size-16"><span class="btn btn-success btn-float  btn-rounded m-l-10 p-r-10 p-l-10 m-b-0"><i class="ti-write m-r-5"  data-customer-id="{{ agreement_customer.customernumber }}" data-agreement-id="{{ agreement_detail.agreementnumber }}"></i>NOTES</span></a>
+              {% else %}
+                    <nav class="breadcrumb breadcrumb-dash">&nbsp;
+                        <a class="breadcrumb-item text-success" href="{%  url 'core_agreement_crud:AgreementEnquiryList' %}"><i class="ti-list p-r-5"></i>Agreement List</a>
+                        <span class="breadcrumb-item active">Agreement Detail</span>
+                    </nav>
+                {% endif %}
+            </div>
+    </div>
+    <div class="card">
+        <div class="card-header border bottom">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-sm-10 offset-sm-1">
+                        <ul class="nav wizard wizard-success">
+                            <li class="nav-item">
+                                <a class="nav-link completed" href="{#%  url 'core_agreement_crud:agreement_management_tab2' %#}"></a>
+                                <div class="nav-title">Customer Detail</div>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link completed" href=""></a>
+                                <div class="nav-title">Payment Detail</div>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link completed" href=""></a>
+                                <div class="nav-title">Agreement Detail</div>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link completed" href=""></a>
+                                <div class="nav-title">Account Statement</div>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link active" href=""></a>
+                                <div class="nav-title">Guarantors</div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-8 offset-sm-2">
+                 <form class="m-t-45" method="post" action="{% url 'core_agreement_crud:agreement_management_tab5' agreement_id %}">
+                     {% csrf_token %}
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label class="control-label">Guarantor 1 Name</label>
+                            <input class="form-control" type="text" >
+                            <div class="invalid-feedback">
+                                Guarantor Required
+                            </div>
+                        </div>
+
+                        <div class="form-group col-md-6">
+                            <label class="control-label">Guarantor 1 Relationship</label>
+                            <input class="form-control" type="fixed" >
+                            <div class="invalid-feedback">
+                                Guarantor Relationship Required
+                            </div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label class="control-label">Phone Number</label>
+                            <input class="form-control" type="fixed" >
+                            <div class="invalid-feedback">
+                                Guarantor Phone Number Required
+                            </div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label class="control-label">Contact Type</label>
+                            <input class="form-control" type="fixed" >
+                            <div class="invalid-feedback">
+                                Contact Type Required
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            <label class="control-label">Post Code Search</label>
+                            <input class="form-control" type="text">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label class="control-label">Address Line 1</label>
+                            <input class="form-control" type="text" >
+                            <div class="invalid-feedback">
+                                Address Line 1 Required
+                            </div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label class="control-label">Address Line 2</label>
+                            <input class="form-control" type="text" >
+                            <div class="invalid-feedback">
+                                Address Line 2 Required
+                            </div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label class="control-label">Address Line 3</label>
+                            <input class="form-control" type="text">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label class="control-label">Address Line 4</label>
+                            <input class="form-control" type="text">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label class="control-label">Address Line 5</label>
+                            <input class="form-control" type="text">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label class="control-label">Postcode</label>
+                            <input class="form-control" type="text" >
+                            <div class="invalid-feedback">
+                                Postcode Required
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="text-sm-right">
+                            <a class="btn btn-warning btn-rounded" href="{%  url 'core_agreement_crud:agreement_management_tab4' agreement_id %}">
+                                <span class="title" id="myModal5">Back</span>
+                            </a>
+                            <a class="btn btn-gradient-success btn-rounded" href="{%  url 'core_agreement_crud:AgreementEnquiryList'%}">
+                                <span class="title">Finish</span>
+                            </a>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}
+{% block page-js %}
+
+    <script src="{% static 'core_agreement_crud.js' %}"></script>
+
+    <script>
+        (function() {
+            'use strict';
+            window.addEventListener('load', function() {
+                // Fetch all the forms we want to apply custom Bootstrap validation styles to
+                var forms = document.getElementsByClassName('needs-validation');
+                // Loop over them and prevent submission
+                var validation = Array.prototype.filter.call(forms, function(form) {
+                    form.addEventListener('submit', function(event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                        }, false);
+                });
+                }, false);
+        })();
+    </script>
+    <script type="text/javascript" >
+        function preventBack(){window.history.forward();}
+        setTimeout("preventBack()", 0);
+        window.onunload=function(){null};
+    </script>
+    <script>
+
+    </script>
+{% endblock %}

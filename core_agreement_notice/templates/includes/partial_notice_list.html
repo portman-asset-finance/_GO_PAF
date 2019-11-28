@@ -1,0 +1,25 @@
+{% for notice in notice_list_qs %}
+  <tr>
+    <td>{{ notice.agreement_number }}</td>
+    <td>{{ notice.get_notice_given_display }}</td>
+    <td>{{ notice.notice_date|date:'d/m/Y' }}</td>
+    <td>{{ notice.secondary_date|date:'d/m/Y' }}</td>
+    <td>
+      <button type="button"
+              class="btn btn-warning btn-sm js-update-notice"
+              data-url="{% url 'core_agreement_notice:notice_update' notice.id %}">
+              <span class="mdi mdi-table-edit"></span> Edit
+      </button>
+        <button type="button"
+              class="btn btn-danger btn-sm js-delete-notice"
+              data-url="{% url 'core_agreement_notice:notice_delete' notice.id %}">
+          <span class="mdi mdi-delete"></span> Delete
+      </button>
+    </td>
+  </tr>
+{% empty %}
+  <tr>
+    <td colspan="7" class="text-center">No Notices</td>
+  </tr>
+{% endfor %}
+

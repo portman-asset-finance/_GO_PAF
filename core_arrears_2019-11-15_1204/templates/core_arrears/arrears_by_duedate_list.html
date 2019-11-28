@@ -1,0 +1,414 @@
+{% extends "dashboard_base.html" %}
+{% load staticfiles %}
+{% load humanize %}
+{% load widget_tweaks %}
+{% load dashboard_extras %}
+{% block metadescription %}
+	Apellio Arrears By Due Date
+{% endblock %}
+{% block title %}
+	Apellio Arrears By Due Date
+{% endblock %}
+{% block page-css %}
+{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2 class="header-title" style="color: #8dabc4">COLLECTIONS BY DUE DATE</h2>
+</div>
+<div class="card">
+    <div class="card-header border bottom p-b-10">
+        <form method="get" class="form-inline">
+                <span class="m-b-20 m-r-15"><h4 class="text-thin">Filter by: </h4></span>
+                <input type="text" class="form-control m-b-20 m-r-15" placeholder="Agreement ref..." name="ara_agreement_id__contains" value="{{ filter.ara_agreement_id__contains }}">
+                <span class="m-b-20 m-r-15"> and </span>
+                <input type="text" class="form-control m-b-20 m-r-15" placeholder="Customer Name..." name="ara_customercompanyname__contains" value="{{ filter.ara_customercompanyname__contains }}">
+                <span class="m-b-20 m-r-15"> and </span>
+                <input type="date" class="form-control m-b-20 m-r-15" placeholder="Due date..." name="ara_due_date" value="{{ filter.ara_due_date }}">
+                <span class="m-b-20 m-r-15"> and </span>
+                <select class="m-b-20 m-r-15 form-control" name="agreement_phase">
+                    <option value="" {% if not agreement_phase_filter %}selected{% endif %}>All Phases</option>
+                    <option value="1" {% if agreement_phase_filter == '1' %}selected{% endif %}>Primary</option>
+                    <option value="2" {% if agreement_phase_filter == '2' %}selected{% endif %}>Secondary</option>
+                </select>
+                <span class="m-b-20 m-r-15"> and </span>
+                <select class="m-b-20 m-r-15 form-control" name="outstanding_balance">
+                    <option value="" {% if not outstanding_balance_filter %}selected{% endif %}>Current Balances</option>
+                    <option value="1" {% if outstanding_balance_filter == '1' %}selected{% endif %}>Zero Balances</option>
+                    <option value="2" {% if outstanding_balance_filter == '2' %}selected{% endif %}>All Balances</option>
+                </select>
+                <span class="m-b-20 m-r-15"> and </span>
+                <select class="m-b-20 m-r-15 form-control" name="ara_agent_id">
+                    {% if collections_management %}
+                        <option value="" {% if not filter.ara_agent_id %}selected{% endif %}>All Agents</option>
+                    {% endif %}
+                    {% for agent in collection_agents %}
+                        <option value="{{ agent.id }}" {% if filter_agent_id == agent.id %}selected{% endif %}>{{ agent.username }} </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-icon btn-success m-b-20" data-keep-referer="true">
+                    <i class="mdi mdi-magnify"></i>
+                </button>
+                {% if has_filter %}
+                    <a class="btn btn-icon btn-warning m-b-20" href="{% url 'core_arrears:arrears_by_duedate_view' %}">
+                        <i class="mdi mdi-refresh"></i>
+                    </a>
+                {% endif %}
+            </form>
+        <div class="row border top p-t-10 p-b-0 m-b-0">
+            <div class="col-md-3 p-r-5">
+                <div class="card m-b-0">
+                    <div class="card-body p-l-10 p-r-10">
+                        <span class="status primary"></span>
+                        <span class="m-b-10 font-size-14 ">Arrears ({{ arrears_count }})</span>
+                        <div class="float-right">
+                            <b class=" font-size-14 text-dark">{{ arrears_total|floatformat:2|intcomma }}</b>
+                            <span class=" font-size-12">GBP</span>
+                        </div>
+                        <div class="progress progress-sm m-t-15 m-b-0">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ arrears_percent }}%"
+                                 aria-valuenow="{{ arrears_total }}" aria-valuemin="0" aria-valuemax="{{ arrears_total }}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 p-r-5 p-l-5">
+                <div class="card m-b-0">
+                    <div class="card-body p-l-10 p-r-10">
+                        <span class="status success"></span>
+                        <span class="m-b-10 font-size-14 ">Collected ({{ collected_count }})</span>
+                        <div class="float-right">
+                            <b class=" font-size-14 text-dark">{{ collected_total|floatformat:2|intcomma }}</b>
+                            <span class=" font-size-12">GBP</span>
+                        </div>
+                        <div class="progress progress-sm m-t-15 m-b-0">
+                            <div class="progress-bar bg-gradient-success" role="progressbar" style="width: {{ collected_percent }}%" aria-valuenow="{{ collected_total }}" aria-valuemin="0" aria-valuemax="{{ collected_total }}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 p-r-5 p-l-5">
+                <div class="card m-b-0">
+                    <div class="card-body p-l-10 p-r-10">
+                        <span class="status info"></span>
+                        <span class="m-b-10 font-size-14 ">Adjusted ({{ adjusted_count }})</span>
+                        <div class="float-right">
+                            <b class=" font-size-14 text-dark">{{ adjusted_total|floatformat:2|intcomma }}</b>
+                            <span class=" font-size-12">GBP</span>
+                        </div>
+                        <div class="progress progress-sm m-t-15 m-b-0">
+                            <div class="progress-bar bg-gradient-info" role="progressbar" style="width: {{ adjusted_percent }}%" aria-valuenow="{{ adjusted_total }}" aria-valuemin="0" aria-valuemax="{{ adjusted_total }}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 p-l-5">
+                <div class="card m-b-0">
+                    <div class="card-body p-l-10 p-r-10">
+                        <span class="status danger"></span>
+                        <span class="m-b-10 font-size-14 ">Balance ({{ balance_count }})</span>
+                        <div class="float-right">
+                            <b class=" font-size-14 text-dark">{{ balance_total|floatformat:2|intcomma }}</b>
+                            <span class=" font-size-12">GBP</span>
+                        </div>
+                        <div class="progress progress-sm m-t-15 m-b-0">
+                            <div class="progress-bar bg-gradient-danger" role="progressbar" style="width: {{ balance_percent }}%" aria-valuenow="{{ balance_total }}" aria-valuemin="0" aria-valuemax="{{ balance_total }}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+    </div>
+    <div class="card-body p-t-10">
+        {% if server_messages %}
+            <div class="alert alert-success alert-float alert-dismissible fade show p-t-5 p-b-5 ">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close" style="padding-top: 0.3rem">
+                    <span aria-hidden="true">×</span>
+                </button>
+                <div>
+                    <table>
+                        {{ server_messages |safe}}
+                    </table>
+                </div>
+            </div>
+        {% endif %}
+        <div class="table-overflow">
+            <table class="table table-hover table-sm border">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Agreement</th>
+                        <th>Customer</th>
+                        <th style="border-right:1px solid gainsboro"></th>
+                        <th class="text-center">Due Date</th>
+                        <th>Phase</th>
+                        <th style="border-right:1px solid gainsboro"></th>
+                        <th class="text-right">Arrears Value</th>
+                        <th></th>
+                        <th style="border-right:1px solid gainsboro"></th>
+                        <th class="text-right">Collected Value</th>
+                        <th class="text-right">Adjustment Value</th>
+                        <th style="border-right:1px solid gainsboro"></th>
+                        <th class="text-right">Balance Value</th>
+                        <th style="border-right:1px solid gainsboro"></th>
+                        <th class="text-center">Last Updated</th>
+                        <th class="text-right">Agent</th>
+                        <th class="text-center">
+                            {% if collections_management %}
+                                <a id="record-new-agent" class="btn btin-icon btn-success m-b-10 d-inline" style="margin-left:auto; color: white;">
+                                <span class="icon-holder">
+                                    <i class="fa fa-user"></i>
+                                </span>
+                                <span class="title">New Agent</span>
+                                </a>
+                            {% endif %}
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for arrears in arrears_list_qs %}
+                        <tr>
+                            <td> {# Agreement #}
+                                <span class="title">{{ arrears.ara_agreement_id }}</span>
+                            </td>
+                            <td> {# Customer #}
+                                <span class="">{{ arrears.ara_customercompanyname|view_truncate:25 }}</span>
+                            </td>
+                            <td style="border-right:1px solid gainsboro"></td>
+                            <td class="text-center">
+                                <span>{{ arrears.ara_due_date|date:"d/m/Y"  }}</span>
+                            </td>
+                            <td>
+                                {% if arrears.ara_transactionsourceid == 'SP1' or arrears.ara_transactionsourceid == 'GO1' %}
+                                    <span class="m-b-0">Prim.</span>
+                                {% else %}
+                                     <span class="m-b-0">Sec.</span>
+                                {% endif %}
+                            </td>
+                            <td style="border-right:1px solid gainsboro"></td>
+                            <td class="text-right"> {# Arrears Value #}
+                                <span class="text-primary">£{{ arrears.ara_arrears_value_grossofvat|floatformat:2|intcomma }}</span>
+                            </td>
+                            <td><span class="font-size-11"><i>{{ arrears.ara_return_description }}</i></span></td>
+                            <td style="border-right:1px solid gainsboro"></td>
+                            <td class="text-right "> {# Collected Value #}
+                                <span class="text-success">£{{ arrears.ara_collected_value_grossofvat|floatformat:2|intcomma }} - </span>
+                            </td>
+                            <td class="text-right"> {# Written-off Value #}
+                                <span class="text-info">£{{ arrears.ara_writtenoff_value_grossofvat|floatformat:2|intcomma }}</span>
+                            </td>
+                            <td style="border-right:1px solid gainsboro"></td>
+                            <td class="text-right"> {# Balance Value #}
+                                <span   {% if arrears.ara_balance_value_grossofvat > 0 %}
+                                            style="color: #fd3259;"
+                                        {% else %}
+                                            style="color: forestgreen;"
+                                        {% endif %}>£{{ arrears.ara_balance_value_grossofvat|floatformat:2|intcomma }}</span>
+                            </td>
+                            <td style="border-right:1px solid gainsboro"></td>
+                            <td class="text-center">
+                                <span class="">{{ arrears.ara_status_date|date:"d/m/Y"}}</span>
+                            </td>
+                            <td class="text-right"> {# Status #}
+                                {% if arrears.ara_agent_id == None %}
+                                    <span class="">unallocated</span>
+                                {% else %}
+                                    <span class="">{{ arrears.ara_agent_id.username }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center font-size-18">
+                                <a href="{% url 'dashboard:AgreementEnquiryDetail' arrears.ara_agreement_id %}" class="text-success m-r-15"><i class="ti-layers"></i></a>
+                                <a href="{% url 'core_arrears:arrears_by_arrears_summary_view' arrears.ara_agreement_id %}" class="text-success m-r-15"><i class="ti-wallet"></i></a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="modal fade" data-keyboard=false id="modal-record-new-agent" style="margin-top: 155px !important; margin-left: 70px;">
+            <div class="modal-dialog" style="border: 1px solid #2acfd2 !important;">
+                <div class="modal-content text-center" style="color: #CE272D; text-align: center !important;">
+                    <div class="card" style="margin-bottom: 8px !important;">
+                        <div class="card-body" style="border-bottom: 1px solid #2acfd2; padding: 5px !important;">
+                            <div style="width:380px; margin: 0 auto !important; margin-top: 15px !important; padding-bottom:10px;">
+                                <div class="row">
+                                    <div class="col-sm-5">
+                                        <div class="form-group text-right m-b-0">
+                                            <div class="input-group" style="margin-left: 8px !important;">
+                                                <p class="form-control-plaintext form-control-sm" >
+                                                    <h5>Transfer to Agent</h5>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-7">
+                                        <div class="input-group">
+                                            <select id="target_agent" name="target_agent"
+                                                    style="border-color: #2acfd2 !important; color: #2acfd2 !important;"
+                                                    class="form-control" type="text">
+                                                    {% for agent in collection_agents %}
+                                                        <option value="{{ agent.id }}">{{ agent.username }}</option>
+                                                    {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="transfer-error"></div>
+                        </div>
+                    </div>
+                    <div style="text-align: right !important;">
+                            <button id="btn-confirm-new-agent" type="button" class="btn btn-outline btn-success">Confirm Transfer</button>
+                            <button id="btn-dismiss-new-agent-modal" type="button" class="btn btn-outline btn-info" data-dismiss="modal">Cancel and Close</button>
+                    </div>
+                </div>
+            </div>
+          </div>
+    </div>
+    <div class="card-footer border bottom text-center">
+        <div >
+            <div class="dataTables_paginate paging_simple_numbers">
+                <ul class="pagination">
+                    {% if arrears_list_qs.has_previous %}
+                        <li class="paginate_button page-item previous">
+                        {% if 'ara_agreement_id' in request.get_full_path %}
+                            <a href="{{ request.get_full_path }}&page={{ arrears_list_qs.previous_page_number }}" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                        {% else %}
+                            <a href="?page={{ arrears_list_qs.previous_page_number }}" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                        {% endif %}
+                        </li>
+                    {% else %}
+                    <li class="paginate_button page-item previous disabled">
+                        <a href="#" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                    </li>
+                    {% endif %}
+                    {% for i in arrears_list_qs.paginator.page_range %}
+                        {% if arrears_list_qs.number == i %}
+                            <li class="paginate_button page-item active">
+                                {% if 'ara_agreement_id' in request.get_full_path %}
+                                    <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                {% else %}
+                                    <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                {% endif %}
+                            </li>
+                        {% else %}
+                            {% if arrears_list_qs.number < i %}
+                                {% if arrears_list_qs.number|add:"1" >= i %}
+                                    <li class="paginate_button page-item">
+                                        {% if 'ara_agreement_id' in request.get_full_path %}
+                                            <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% else %}
+                                            <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% endif %}
+                                    </li>
+                                {% else %}
+                                    {% if arrears_list_qs.paginator.num_pages == i %}
+                                        <li class="paginate_button page-item disabled">
+                                            <a href="#" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">
+                                                <i class="mdi mdi-dots-horizontal"></i>
+                                            </a>
+                                        </li>
+                                        <li class="paginate_button page-item">
+                                            {% if 'ara_agreement_id' in request.get_full_path %}
+                                                <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% endif %}
+                                        </li>
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                            {% if arrears_list_qs.number > i %}
+                                {% if arrears_list_qs.number|add:"-2" < i  %}
+                                    <li class="paginate_button page-item">
+                                        {% if 'ara_agreement_id' in request.get_full_path %}
+                                            <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% endif %}
+                                    </li>
+                                {% else %}
+                                    {% if 1 == i %}
+                                        <li class="paginate_button page-item">
+                                            {% if 'ara_agreement_id' in request.get_full_path %}
+                                                <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% endif %}
+                                        </li>
+                                        <li class="paginate_button page-item disabled">
+                                            <a href="#" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">
+                                                <i class="mdi mdi-dots-horizontal"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                            {% endif %}
+                        {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                    {% if arrears_list_qs.has_next %}
+                        <li class="paginate_button page-item next" id="dt-opt_next">
+                            {% if 'ara_agreement_id' in request.get_full_path %}
+                                <a href="{{ request.get_full_path }}&page={{ arrears_list_qs.next_page_number }}" aria-controls="dt-opt" data-dt-idx="3" tabindex="0" class="page-link">Next</a>
+                            {% else %}
+                                <a href="?page={{ arrears_list_qs.next_page_number }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">Next</a>
+                            {% endif %}
+                        </li>
+                    {% else %}
+                        <li class="paginate_button page-item next disabled" id="dt-opt_next">
+                            <a href="#" aria-controls="dt-opt" data-dt-idx="3" tabindex="0" class="page-link">Next</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block page-js %}
+    <script>
+        $(function() {
+
+            {#  Handle click event on button requesting record payment modal #}
+            $("#record-new-agent").click(function () {
+                $('#transfer-error').html('');
+                $("#modal-record-new-agent").modal({backdrop: 'static'});
+            });
+
+            {# Dismiss/Cancel requesting record payment modal and reinstate underlying modal#}
+            $("#btn-dismiss-new-agent-modal").click(function () {
+            });
+
+            $("#btn-confirm-new-agent").click(function () {
+                recordNewAgent();
+            });
+
+            function recordNewAgent(obj) {
+
+                let target_url = '';
+                let new_agent = 0;
+                new_agent = $('#target_agent').val();
+
+                if (location.search) {
+                    target_url = "{% url 'core_arrears:change_target_agent' %}" + location.search + '&new_agent=' + new_agent;
+                } else {
+                    target_url = "{% url 'core_arrears:change_target_agent' %}" + '?new_agent=' + new_agent;
+                }
+
+                $.ajax({
+                    method: 'POST',
+                    url: target_url,
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}") ;
+                    },
+                    success: function(data) {
+                        $("#modal-record-new-agent").modal("hide");
+                        location.href = "{% url 'core_arrears:arrears_by_duedate_view' %}" + location.search
+                    },
+                    error: function(data) {
+                        alert(JSON.stringify(data));
+                    }
+                 });
+            }
+        });
+
+    </script>
+{% endblock %}

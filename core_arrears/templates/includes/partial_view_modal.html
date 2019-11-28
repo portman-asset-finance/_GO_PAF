@@ -1,0 +1,48 @@
+{% load staticfiles %}
+<form method="post"
+      action="{% url 'core_arrears:arrear_receipt_view' agreement arrear allocation%}"
+      data-url="{% url 'core_arrears:arrears_by_arrears_summary_view' agreement %}"
+      class="js-cancel-allocation-form">
+  {% csrf_token %}
+  <div class="modal-header">
+      <div class="page-header m-b-0">
+        <h4 class="header-title">{{ agreement_detail.agreementnumber }}</h4>
+        <h4 class="header-title">{{ agreement_customer.customercompany }}</h4>
+        <h4 class="header-title" data-toggle="tooltip" data-placement="bottom"
+        title="Sales Representative">{{ agreement_detail.agreementauthority }}</h4>
+        {% if agreement_regulated_flag %}
+            <button type="button" class="btn btn-success btn-w-sm" data-toggle="popover" data-trigger="hover"   title="" data-content="This is a regulated agreement, please deal with accordingly." data-original-title="Regulated Agreement" aria-describedby="popover676999">
+                <i class="mdi mdi-help-circle-outline"></i>&nbsp;Regulated
+            </button>
+        {% endif %}
+        <h4 class="go-header-title-trailer" style="color: #f16528 !important;">{{ arrears_agreement_phase }}</h4>
+        <h4 class="go-header-title-trailer" style="color: #dc473c !important;"><u>{{ arrears_due_date|date:"d/m/Y"}}</u></h4>
+        <div class="header-sub-title">
+            {% if  agreement_detail.agreementdefname != 'Hire Purchase' and agreement_detail.agreementdefname != 'Management Fee' %}
+                <span class="badge badge-info badge-lg">{{ agreement_detail.agreementdefname }}</span>
+            {% else %}
+                <span class="badge badge-primary badge-lg">{{ agreement_detail.agreementdefname }}</span>
+            {% endif %}
+            {% if agreement_detail.agreementclosedflag_id == 902 %}
+                <span class="badge badge-danger badge-lg">Closed</span>
+            {% endif %}
+            {% if agreement_detail.agreementddstatus_id == 'I' %}
+                <span class="badge badge-danger badge-lg">DD Inactive</span>
+            {% endif %}
+            <a href='javascript:void(window.open("{% url 'notes:main' %}?customer_id={{ agreement_customer.customernumber }}&agreement_id={{ agreement_detail.agreementnumber }}", "core_notes", "scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no, width=2000,height=1000,left=0,top=0"));' class="text-white m-r-15 font-size-16"><span class="btn btn-success btn-float  btn-rounded m-l-10 p-r-10 p-l-10 m-b-0"><i class="ti-write m-r-5"  data-customer-id="{{ agreement_customer.customernumber }}" data-agreement-id="{{ agreement_detail.agreementnumber }}"></i>NOTES</span></a>
+       </div>
+      </div>
+      <button id="btn-dismiss-collection-modal" type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+      </button>
+  </div>
+  <div class="modal-body">
+    {% include 'includes/partial_collection_view.html' %}
+  </div>
+  <div class="modal-footer">
+    <button id="btn-dismiss-modal" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+    {% if cancelled_flag != 'X' %}
+        <button id="btn-cancel-allocation" type="submit" class="btn btn-success">Cancel Allocation</button>
+    {% endif %}
+  </div>
+</form>

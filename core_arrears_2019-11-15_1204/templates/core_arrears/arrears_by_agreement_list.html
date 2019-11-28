@@ -1,0 +1,293 @@
+{% extends "dashboard_base.html" %}
+{% load staticfiles %}
+{% load humanize %}
+{% load widget_tweaks %}
+{% load dashboard_extras %}
+{% block metadescription %}
+	Apellio Arrears By Agreement
+{% endblock %}
+{% block title %}
+	Apellio Arrears By Agreement
+{% endblock %}
+{% block page-css %}
+{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2 class="header-title" style="color: #8dabc4">ARREARS BY AGREEMENT</h2>
+</div>
+<div class="card">
+    <div class="card-header border bottom p-b-10">
+        <form method="get" class="form-inline">
+                <span class="m-b-20 m-r-15"><h4 class="text-thin">Filter by: </h4></span>
+                <input type="text" class="form-control m-b-20 m-r-15" placeholder="Agreement ref..." name="arr_agreement_id__contains" value="{{ filter.arr_agreement_id__contains }}">
+                <span class="m-b-20 m-r-15"> and </span>
+                <input type="text" class="form-control m-b-20 m-r-15" placeholder="Customer Name..." name="arr_customercompanyname__contains" value="{{ filter.arr_customercompanyname__contains }}">
+                <span class="m-b-20 m-r-15"> and </span>
+                <select class="m-b-20 m-r-15 form-control" name="current_arrears">
+                    <option value="" {% if not current_arrears_filter %}selected{% endif %}>Current Arrears Only</option>
+                    <option value="2" {% if current_arrears_filter == '2' %}selected{% endif %}>Current and Historic Arrears</option>
+                    <option value="1" {% if current_arrears_filter == '1' %}selected{% endif %}>Historic Arrears Only</option>
+                </select>
+                <span class="m-b-20 m-r-15"> and </span>
+                <select class="m-b-20 m-r-15 form-control" name="unallocated_recpts">
+                    <option value="" {% if not unallocated_recpts_filter %}selected{% endif %}>All Unallocated Receipt Balances</option>
+                    <option value="1" {% if unallocated_recpts_filter == '1' %}selected{% endif %}>Current Unallocated Receipts</option>
+                    <option value="2" {% if unallocated_recpts_filter == '2' %}selected{% endif %}>Zero Unallocated Receipts</option>
+                </select>
+                <button type="submit" class="btn btn-icon btn-success m-b-20" data-keep-referer="true">
+                    <i class="mdi mdi-magnify"></i>
+                </button>
+                {% if has_filter %}
+                    <a class="btn btn-icon btn-warning m-b-20" href="{% url 'core_arrears:arrears_by_agreement_view' %}">
+                        <i class="mdi mdi-refresh"></i>
+                    </a>
+                {% endif %}
+            </form>
+        <div class="row border top p-t-10 p-b-0 m-b-0">
+            <div class="col-md-3 p-r-5">
+                <div class="card m-b-0">
+                    <div class="card-body p-l-10 p-r-10">
+                        <span class="status primary"></span>
+                        <span class="m-b-10 font-size-14 ">Arrears to Date</span>
+                        <div class="float-right">
+                            <b class=" font-size-14 text-dark">{{ arrears_to_date_total|floatformat:2|intcomma }}</b>
+                            <span class=" font-size-12">GBP</span>
+                        </div>
+                        <div class="progress progress-sm m-t-15 m-b-0">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ arrears_to_date_percent }}%"
+                                 aria-valuenow="{{ arrears_to_date_total }}" aria-valuemin="0" aria-valuemax="{{ arrears_to_date_total }}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 p-r-5 p-l-5">
+                <div class="card m-b-0">
+                    <div class="card-body p-l-10 p-r-10">
+                        <span class="status success"></span>
+                        <span class="m-b-10 font-size-14 ">Collected & Adjusted to Date</span>
+                        <div class="float-right">
+                            <b class=" font-size-14 text-dark">{{ collected_adjusted_to_date_total|floatformat:2|intcomma }}</b>
+                            <span class=" font-size-12">GBP</span>
+                        </div>
+                        <div class="progress progress-sm m-t-15 m-b-0">
+                            <div class="progress-bar bg-gradient-success" role="progressbar" style="width: {{ collected_adjusted_to_date_percent }}%" aria-valuenow="{{ collected_adjusted_to_date_total }}" aria-valuemin="0" aria-valuemax="{{ collected_adjusted_to_date_total }}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 p-r-5 p-l-5">
+                <div class="card m-b-0">
+                    <div class="card-body p-l-10 p-r-10">
+                        <span class="status danger"></span>
+                        <span class="m-b-10 font-size-14 ">Current Arrears</span>
+                        <div class="float-right">
+                            <b class=" font-size-14 text-dark">{{ current_arrear_total|floatformat:2|intcomma }}</b>
+                            <span class=" font-size-12">GBP</span>
+                        </div>
+                        <div class="progress progress-sm m-t-15 m-b-0">
+                            <div class="progress-bar bg-gradient-danger" role="progressbar" style="width: {{ current_arrear_percent }}%" aria-valuenow="{{ current_arrear_total }}" aria-valuemin="0" aria-valuemax="{{ current_arrear_total }}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 p-l-5">
+                <div class="card m-b-0">
+                    <div class="card-body p-l-10 p-r-10">
+                        <span class="status info"></span>
+                        <span class="m-b-10 font-size-14 ">Unallocated Receipts</span>
+                        <div class="float-right">
+                            <b class=" font-size-14 text-dark">{{ unallocated_receipts_total|floatformat:2|intcomma }}</b>
+                            <span class=" font-size-12">GBP</span>
+                        </div>
+                        <div class="progress progress-sm m-t-15 m-b-0">
+                            <div class="progress-bar bg-gradient-info" role="progressbar" style="width: {{ unallocated_receipts_percent }}%" aria-valuenow="{{ unallocated_receipts_total }}" aria-valuemin="0" aria-valuemax="{{ unallocated_receipts_total }}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+    </div>
+    <div class="card-body p-t-10">
+        {% if server_messages %}
+            <div class="alert alert-success alert-float alert-dismissible fade show p-t-5 p-b-5 ">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close" style="padding-top: 0.3rem">
+                    <span aria-hidden="true">×</span>
+                </button>
+                <div>
+                    <table>
+                        {{ server_messages |safe}}
+                    </table>
+                </div>
+            </div>
+        {% endif %}
+        <div class="table-overflow">
+            <table class="table table-hover table-sm border">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Agreement</th>
+                        <th>Customer</th>
+                        <th style="border-right:1px solid gainsboro"></th>
+                        <th class="text-right">Arrears to Date</th>
+                        <th style="border-right:1px solid gainsboro"></th>
+                        <th class="text-right">Collected to Date</th>
+                        <th class="text-right">Adjustments to Date</th>
+                        <th style="border-right:1px solid gainsboro"></th>
+                        <th class="text-right">Current Arrears</th>
+                        <th style="border-right:1px solid gainsboro"></th>
+                        <th class="text-right">Unallocated Recpts</th>
+                        <th style="border-right:1px solid gainsboro"></th>
+                        <th class="text-center">Last Updated</th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for arrears in arrears_list_qs %}
+                            <tr>
+                                <td> {# Agreement #}
+                                    <span class="title">{{ arrears.arr_agreement_id }}</span>
+                                </td>
+                                <td> {# Customer #}
+                                    <span class="">{{ arrears.arr_customercompanyname|view_truncate:30 }}</span>
+                                </td>
+                                <td style="border-right:1px solid gainsboro"></td>
+                                <td class="text-right"> {# Arrears Value #}
+                                    <span class="text-primary">£{{ arrears.arr_arrears_value_grossofvat|floatformat:2|intcomma }}</span>
+                                </td>
+                                <td style="border-right:1px solid gainsboro"></td>
+                                <td class="text-right "> {# Collected Value #}
+                                    <span style="color: forestgreen;">£{{ arrears.arr_collected_value_grossofvat|floatformat:2|intcomma }} - </span>
+                                </td>
+                                <td class="text-right"> {# Written-off Value #}
+                                    <span class="" style="color: #f16528">£{{ arrears.arr_writtenoff_value_grossofvat|floatformat:2|intcomma }}</span>
+                                </td>
+                                <td style="border-right:1px solid gainsboro"></td>
+                                <td class="text-right"> {# Balance Value #}
+                                    <span   {% if arrears.arr_balance_value_grossofvat > 0 %}
+                                                style="color: #fd3259;"
+                                            {% else %}
+                                                style="color: forestgreen;"
+                                            {% endif %}>£{{ arrears.arr_balance_value_grossofvat|floatformat:2|intcomma }}</span>
+                                </td>
+                                <td style="border-right:1px solid gainsboro"></td>
+                                <td class="text-right text-info"> {# Unallocated Receipts #}
+                                    <span>£{{ arrears.arr_unallocated_value_grossofvat|floatformat:2|intcomma }}</span>
+                                </td>
+                                <td style="border-right:1px solid gainsboro"></td>
+                                <td class="text-center"> {# Status Date #}
+                                    <span class="">{{ arrears.arr_status_date|date:"d/m/Y"}}</span>
+                                </td>
+                                <td class="text-right font-size-18">
+                                    <a href="{% url 'dashboard:AgreementEnquiryDetail' arrears.arr_agreement_id %}" class="text-success m-r-15"><i class="ti-layers"></i></a>
+                                </td>
+                                <td class="text-right font-size-18">
+                                    <a href="{% url 'core_arrears:arrears_by_arrears_summary_view' arrears.arr_agreement_id %}" class="text-success m-r-15"><i class="ti-wallet"></i></a>
+                                </td>
+                            </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer border bottom text-center">
+        <div >
+            <div class="dataTables_paginate paging_simple_numbers">
+                <ul class="pagination">
+                    {% if arrears_list_qs.has_previous %}
+                    <li class="paginate_button page-item previous">
+                        {% if 'agreementnumber' in request.get_full_path %}
+                            <a href="{{ request.get_full_path }}&page={{ arrears_list_qs.previous_page_number }}" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                        {% else %}
+                            <a href="?page={{ arrears_list_qs.previous_page_number }}" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                        {% endif %}
+                        </li>
+                    {% else %}
+                    <li class="paginate_button page-item previous disabled">
+                        <a href="#" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                    </li>
+                    {% endif %}
+                    {% for i in arrears_list_qs.paginator.page_range %}
+                        {% if arrears_list_qs.number == i %}
+                            <li class="paginate_button page-item active">
+                                {% if 'arr_agreement_id' in request.get_full_path %}
+                                    <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                {% else %}
+                                    <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                {% endif %}
+                            </li>
+                        {% else %}
+                            {% if arrears_list_qs.number < i %}
+                                {% if arrears_list_qs.number|add:"1" >= i %}
+                                    <li class="paginate_button page-item">
+                                        {% if 'arr_agreement_id' in request.get_full_path %}
+                                            <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% else %}
+                                            <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% endif %}
+                                    </li>
+                                {% else %}
+                                    {% if arrears_list_qs.paginator.num_pages == i %}
+                                        <li class="paginate_button page-item disabled">
+                                            <a href="#" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">
+                                                <i class="mdi mdi-dots-horizontal"></i>
+                                            </a>
+                                        </li>
+                                        <li class="paginate_button page-item">
+                                            {% if 'arr_agreement_id' in request.get_full_path %}
+                                                <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% endif %}
+                                        </li>
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                            {% if arrears_list_qs.number > i %}
+                                {% if arrears_list_qs.number|add:"-2" < i  %}
+                                    <li class="paginate_button page-item">
+                                        {% if 'arr_agreement_id' in request.get_full_path %}
+                                            <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% endif %}
+                                    </li>
+                                {% else %}
+                                    {% if 1 == i %}
+                                        <li class="paginate_button page-item">
+                                            {% if 'arr_agreement_id' in request.get_full_path %}
+                                                <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% endif %}
+                                        </li>
+                                        <li class="paginate_button page-item disabled">
+                                            <a href="#" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">
+                                                <i class="mdi mdi-dots-horizontal"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                            {% endif %}
+                        {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                    {% if arrears_list_qs.has_next %}
+                        <li class="paginate_button page-item next" id="dt-opt_next">
+                            {% if 'arr_agreement_id' in request.get_full_path %}
+                                <a href="{{ request.get_full_path }}&page={{ arrears_list_qs.next_page_number }}" aria-controls="dt-opt" data-dt-idx="3" tabindex="0" class="page-link">Next</a>
+                            {% else %}
+                                <a href="?page={{ arrears_list_qs.next_page_number }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">Next</a>
+                            {% endif %}
+                        </li>
+                    {% else %}
+                        <li class="paginate_button page-item next disabled" id="dt-opt_next">
+                            <a href="#" aria-controls="dt-opt" data-dt-idx="3" tabindex="0" class="page-link">Next</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block page-js %}
+{% endblock %}

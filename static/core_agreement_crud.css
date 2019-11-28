@@ -1,0 +1,6 @@
+
+.error-border {
+    border: 1px solid #fd3259 ;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+}

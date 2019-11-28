@@ -1,0 +1,411 @@
+{% extends 'dashboard_base.html' %}
+{% load dashboard_extras %}
+{% load staticfiles %}
+{% load humanize %}
+
+{% block content %}
+
+    <div class="page-header">
+        <h2 class="header-title" style="color: #8dabc4">ACCOUNTS BATCHES</h2>
+    </div>
+    <div class="row" id="id_process_batch_error" style="display: none;">
+        <div class="col-sm-12">
+            <div class="alert alert-danger">
+                <span class="process_batch_error_text"></span>
+                <button type="button" class="close" data-dismiss="alert" hidden>
+                    &times;
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header p-b-0 m-b-0 border bottom">
+            <form method="get" class="form-inline">
+{#                <span class="m-b-20 m-r-15"><h4 class="text-thin">Filter by: </h4></span>#}
+{#                <input type="text" class="form-control m-b-20 m-r-15" placeholder="Batch ref..." name="reference__contains" value="{{ filter.reference__contains }}">#}
+{#                <span class="m-b-20 m-r-15"> and </span>#}
+{#                <input type="date" class="form-control m-b-20 m-r-15" placeholder="Due date..." name="due_date" value="{{ filter.due_date }}">#}
+{#                <span class="m-b-20 m-r-15"><h4 class="text-thin"> and </h4></span>#}
+{#                <select class="m-b-20 m-r-15 form-control" name="status">#}
+{#                    <option value="">Status</option>#}
+{#                    <option value="OPEN">OPEN</option>#}
+{#                    <option value="PROCESSING">PROCESSING</option>#}
+{#                    <option value="SENT">SENT</option>#}
+{#                    <option value="RECEIVED">RECEIVED</option>#}
+{#                </select>#}
+{#                <button type="submit" class="btn btn-icon btn-success m-b-20">#}
+{#                    <i class="mdi mdi-magnify"></i>#}
+{#                </button>#}
+{#                {% if filter %}#}
+{#                    <a class="btn btn-icon btn-warning m-b-20" href="{% url 'core_dd_drawdowns:view_batches' %}">#}
+{#                        <i class="mdi mdi-refresh"></i>#}
+{#                    </a>#}
+{#                {% endif %}#}
+{#                <button data-toggle="modal" data-target="#new-batch-filter" data-backdrop="static" data-keyboard="false" class="btn btn-success m-b-20" type="button" style="margin-left:auto">#}
+{#                    <i class="fa fa-plus"></i> New Batch#}
+{#                </button>#}
+            </form>
+        </div>
+        <div class="card-body">
+            <div class="col-sm-12">
+                <table class="table table-bordered table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th><b>Accounts Batch Ref</b></th>
+                            <th><b>Type</b></th>
+                            <th class="text-right"><b>NET Debit Amount</b></th>
+                            <th class="text-right"><b>NET Credit Amount</b></th>
+{#                            <th><b>Total Tax Amount</b></th>#}
+                            <th><b>Status</b></th>
+                            <th><b>Created Date</b></th>
+                            <th><b>Details</b></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in records %}
+                            <tr>
+                                <td width="209">{{ row.sage_batch_ref }}</td>
+                                <td width="134">{{ row.sage_batch_type }}</td>
+                                <td width="152" class="text-right">&pound;{{ row.total_debit_amount|floatformat:2|intcomma }}</td>
+                                <td width="157" class="text-right">&pound;{{ row.total_credit_amount|floatformat:2|intcomma }}</td>
+{#                                <td width="146" class="text-right">&pound;</td>#}
+                                <td width="178" class ="font-size-18">
+                                    {% if row.status == 'NOT RECORDED' %}
+                                        <span class="badge badge-danger">NOT RECORDED &nbsp; <i class="fa fa-remove"></i></span>
+                                    {% elif row.status == 'RECORDED' %}
+                                        <span class="badge badge-success" style="background-color:forestgreen">RECORDED &nbsp; <i class="fa fa-check"></i></span>
+                                    {% else %}
+                                        <span class="badge badge-danger">{{ row.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td width="116">{{ row.created|date:"d/m/Y" }}</td>
+                                <td width="149">{{ row.batch_header.reference }}</td>
+                                <td width="90" class ="font-size-18">
+                                    {% if row.processed %}
+                                        {% if row.status == 'NOT RECORDED' %}
+                                            <a data-keep-referer="true" data-loader="{{ row.id }}" class="text-success fa fa-pencil" href="{%  url 'core_sage_export:view_batch' row.sage_batch_ref %}" ></a>
+                                        {% else %}
+                                            <a class="text-success fa fa-eye" href="{%  url 'core_sage_export:view_batch' row.sage_batch_ref %}"></a>
+                                            <a href="{% url 'core_sage_export:sage_xlsx' row.sage_batch_ref %}">
+                                                <i class="fa fa-money text-success"></i>
+                                            </a>
+                                        {% endif %}
+{#                                        <a ><i id="show_all" class = "fa fa-search text-success"></i></a>#}
+                                        {#{{ row.sage_batch_ref }}#}
+{#                                        <a ><i id="show_sp_only" class = "fa fa-search text-success" hidden></i></a>#}
+                                        <i class="fa fa-chevron-right cursor-pointer title-icons" data-contact-id="{{ row.id }}" id="toggle_batch_details_{{ row.id }}_right"></i>
+                                        <i class="fa fa-chevron-down cursor-pointer title-icons" style="display: none;" id="toggle_batch_details_{{ row.id }}_down" data-contact-id="{{ row.id }}"></i>
+                                    {% else %}
+                                        <div class="font-size-12">
+                                            <button class="btn btn-primary btn-sm id_load_process_batch"
+                                                    data-count="{{ batch_numbers|get_item:row.sage_batch_ref }}"
+                                                    data-url="{% url 'core_sage_export:process_batch' row.sage_batch_ref %}"
+                                                    data-batch-url="{% url 'core_sage_export:view_batch' row.sage_batch_ref %}">
+                                                Retrieve Batch &rarr;
+                                            </button>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% for row2 in records2 %}
+                                {%  if row.sage_batch_ref == row2.sage_batch_ref_id %}
+                                    <tr class="SPH table-light SP batch_details_{{ row.id }}" style="display: none">
+{#                                        <div id="batch_details_{{ row.id }}">#}
+                                            <td width="209" class ="text-muted" style="background-color: #f7fbff"></td>
+                                            <td width="134" class ="text-muted" style="background-color: #f7fbff">{{ row2.account_reference  }} </td>
+                                            <td width="152" class ="text-muted text-right" style="background-color: #f7fbff">&pound;{{ row2.batch_detail_total|floatformat:2|intcomma }}</td>
+                                            <td width="157" class ="text-muted text-right" style="background-color: #f7fbff">-&pound;{{ row2.batch_detail_total|floatformat:2|intcomma }}</td>
+{#                                            <td width="146"  class="text-muted text-right"style="background-color: #f7fbff">&pound;</td>#}
+                                            <td width="178" style="background-color: #f7fbff"></td>
+                                            <td width="116" style="background-color: #f7fbff"></td>
+                                            <td width="149" style="background-color: #f7fbff"> {{ row2.sage_batch_ref_id }} </td>
+        {#                                    <td>{{ row2.sage_batch_details }} {{ row2.sage_batch_ref_id }} </td>#}
+                                            <td width="90" class ="font-size-18" style="background-color: #f7fbff">
+                                                {% if row2.status.text_code == 'OPEN' %}
+                                                    <a data-keep-referer="true" data-loader="{{ row2.id }}" class="text-success fa fa-pencil"
+        {#                                               href="{%  url 'core_sage_export:view_batch' row.sage_batch_ref %}" #}
+                                                    ></a>
+                                                    <i class="fa fa-spinner fa-pulse" id="loading_{{ row2.id }}" style="display: none;"></i>
+                                                {% else %}
+        {#                                            <a class="text-success fa fa-eye" href="{%  url 'core_sage_export:view_batch' row.sage_batch_ref %}"></a>#}
+                                                    <a class="text-success fa fa-pencil"
+        {#                                               href="{%  url 'core_sage_export:view_batch' row.sage_batch_ref %}"#}
+                                                    ></a>
+                                                {% endif %}
+                                            </td>
+                                    </tr>
+{#                                    </div>#}
+                                {% endif %}
+                            {% endfor %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            <div>
+                <div class="dataTables_paginate paging_simple_numbers">
+                    <ul class="pagination">
+                        {% if records.has_previous %}
+                            <li class="paginate_button page-item previous">
+                                {% if 'agreementnumber' in request.get_full_path %}
+                                    <a href="{{ request.get_full_path }}&page={{ records.previous_page_number }}" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                                {% else %}
+                                    <a href="?page={{ records.previous_page_number }}" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                                {% endif %}
+                            </li>
+                        {% else %}
+                            <li class="paginate_button page-item previous disabled">
+                                <a href="#" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                            </li>
+                        {% endif %}
+                        {% for i in records.paginator.page_range %}
+                            {% if records.number == i %}
+                                <li class="paginate_button page-item active">
+                                    {% if 'agreementnumber' in request.get_full_path %}
+                                        <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                    {% else %}
+                                        <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                    {% endif %}
+                                </li>
+                            {% else %}
+                            {% if records.number < i %}
+                                {% if records.number|add:"1" >= i %}
+                                    <li class="paginate_button page-item">
+                                        {% if 'agreementnumber' in request.get_full_path %}
+                                            <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% else %}
+                                            <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% endif %}
+                                    </li>
+                                {% else %}
+                                {% if records.paginator.num_pages == i %}
+                                    <li class="paginate_button page-item disabled">
+                                        <a href="#" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">
+                                            <i class="mdi mdi-dots-horizontal"></i>
+                                        </a>
+                                    </li>
+                                    <li class="paginate_button page-item">
+                                        {% if 'agreementnumber' in request.get_full_path %}
+                                            <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% else %}
+                                            <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% endif %}
+                                    </li>
+                                {% endif %}
+                                {% endif %}
+                            {% endif %}
+                                {% if records.number > i %}
+                                    {% if records.number|add:"-2" < i  %}
+                                        <li class="paginate_button page-item">
+                                            {% if 'agreementnumber' in request.get_full_path %}
+                                                <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% endif %}
+                                        </li>
+                                    {% else %}
+                                    {% if 1 == i %}
+                                        <li class="paginate_button page-item">
+                                            {% if 'agreementnumber' in request.get_full_path %}
+                                                <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% endif %}
+                                        </li>
+                                        <li class="paginate_button page-item disabled">
+                                            <a href="#" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">
+                                                <i class="mdi mdi-dots-horizontal"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if records.has_next %}
+                            <li class="paginate_button page-item next" id="dt-opt_next">
+                                {% if 'agreementnumber' in request.get_full_path %}
+                                    <a href="{{ request.get_full_path }}&page={{ records.next_page_number }}" aria-controls="dt-opt" data-dt-idx="3" tabindex="0" class="page-link">Next</a>
+                                {% else %}
+                                    <a href="?page={{ records.next_page_number }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">Next</a>
+                                {% endif %}
+                            </li>
+                        {% else %}
+                            <li class="paginate_button page-item next disabled" id="dt-opt_next">
+                                <a href="#" aria-controls="dt-opt" data-dt-idx="3" tabindex="0" class="page-link">Next</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade in" id="new-batch-filter">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Create New Batch</h2>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger" id="due-date-error" style="display:none;"></div>
+                    <div class="form">
+                        <div class="form-group">
+                            <label class="control-label"><b>Due Date</b></label>
+                            <input type="date" class="form-control" id="batch-due-date" maxlength="8" max="2100-12-31">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <i class="fa fa-spinner fa-pulse fa-2x create-new-batch-loading" style="display:none;"></i>
+                    <button class="btn btn-success create-new-batch">
+                        <i class="fa fa-thumbs-up"></i>
+                        Create
+                    </button>
+                    <button class="btn btn-danger" id="cancel-create-new-batch"  data-dismiss="modal">
+                        <i class="fa fa-thumbs-down"></i>
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade in" id="id_process_batch_modal">
+        <div class="modal-dialog">
+            <div class="modal-content text-center">
+                <div class="modal-header">
+                    <h4 class="modal-title">Please wait...</h4>
+                </div>
+                <div class="modal-body text-bold">
+                    <div class="col-sm-12">
+                        <div class="alert alert-danger">
+                            <i class="fa fa-pulse fa-spinner fa-2x"></i>
+                            <h2>Retrieving in progress...</h2>
+                            <b>Please do not navigate away from this screen.</b>
+                            <div id="myProgress">
+                                <div id="myBar">10%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block page-js %}
+
+    <script src="{% static 'core_dd_drawdowns.js' %}"></script>
+
+    <script type="text/javascript">
+
+        var count = 0 ;
+
+        $(function() {
+
+            if(typeof(Storage) !== "undefined") {
+                sessionStorage.removeItem('batchListReferer');
+            }
+
+            $("[data-keep-referer='true']").click(function() {
+                if(typeof(Storage) !== "undefined") {
+                    sessionStorage.batchListReferer = location.href;
+                }
+            });
+
+            $("[id^=toggle_batch_details]").click(function() {
+                var batch_id = $(this).attr("data-contact-id");
+                $(".batch_details_" + batch_id).toggle('slow');
+                var toggleIds = "[id^=toggle_batch_details_" + batch_id + "]";
+                $(toggleIds).toggle();
+            });
+
+            var batchProgressError = $("#id_process_batch_error");
+            var batchProgressModal = $("#id_process_batch_modal");
+
+            var $this ;
+
+            $(".id_load_process_batch").click(function() {
+
+                batchProgressError.hide() ;
+
+                $this = $(this) ;
+
+                $("body").css("cursor", "wait") ;
+                batchProgressModal.modal({"backdrop": "static", "keyboard": false});
+
+                count = parseInt($this.attr("data-count")) ;
+
+                //progress(0, 99, $("#progressBar"));
+
+                move();
+
+            });
+
+            batchProgressModal.on('shown.bs.modal', function() {
+                $.ajax({
+                    method: 'GET',
+                    url: $this.attr("data-url"),
+                    success: function (data) {
+                        if ('error' in data) {
+                            $("#id_process_batch_error .process_batch_error_text").html("<b>Error:</b> " + data.error);
+                            batchProgressError.show();
+                            $("body").css("cursor", "pointer");
+                            batchProgressModal.modal("hide");
+                        } else if ('already_complete' in data) {
+                            location.reload() ;
+                        } else {
+                            location.href = $this.attr("data-batch-url");
+                        }
+                    },
+                    error: function (data) {
+                        alert(JSON.stringify(data));
+                        $("body").css("cursor", "pointer");
+                        batchProgressModal.modal("hide");
+                    }
+                })
+        });
+
+        });
+
+        function progress(timeleft, timetotal, $element) {
+            var progressBarWidth = timeleft * $element.width() / timetotal;
+            $element.find('div').animate({ width: progressBarWidth }, 0).html(Math.floor(timeleft) + "%");
+            if(timeleft < 100) {
+                setTimeout(function() {
+                    var t = timeleft + (100 / count) ;
+                    console.log(t) ;
+                    progress(t, timetotal, $element);
+                }, 100);
+            }
+        }
+
+        function move() {
+
+            console.log(count);
+
+            var elem = document.getElementById("myBar");
+
+            elem.style.width = '0%';
+
+            var width = 10;
+
+            var id = setInterval(frame, count);
+
+            function frame() {
+
+                if (width >= 100) {
+                    clearInterval(id);
+                } else {
+                    width++;
+                    elem.style.width = width + '%';
+                    elem.innerHTML = width * 1 + '%';
+                }
+            }
+        }
+    </script>
+
+{% endblock %}

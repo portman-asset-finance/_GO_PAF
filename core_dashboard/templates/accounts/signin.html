@@ -1,0 +1,63 @@
+{% extends "accounts_signin_base.html" %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% block metadescription %}
+	Apellio Login
+{% endblock %}
+{% block title %}
+	Login - Apellio
+{% endblock %}
+{% block content %}
+	<div class="app">
+        <div class="layout bg-gradient-info">
+            <div class="container">
+                <div class="row full-height align-items-center">
+                    <div class="col-md-7 d-none d-md-block">
+                        <img class="img-fluid" src="{% static 'assets/images/logo/logo-white.png'%}" alt="">
+                        <div class="m-t-15 m-l-20">
+                            <h1 class="font-weight-light font-size-35 text-white">Nationwide Corporate Finance</h1>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="card card-shadow">
+                            <div class="card-body">
+                                <div class="p-h-15 p-v-40">
+                                    <h2>Login</h2>
+                                    <p class="m-b-15 font-size-13">Please enter your user name and password to login</p>
+                                    <form method="post" action="{% url 'signin' %}">
+                                        {% csrf_token %}
+                                        <div class="form-group" >
+                                            <input type="text" class="form-control" name="username"
+                                                   id="username" placeholder="User Name">
+                                        </div>
+                                        <div class="form-group" >
+                                            <input type="password" class="form-control" name="password"
+                                                   id="password" placeholder="Password">
+                                        </div>
+                                    <div>
+                                      <input type="submit" class="btn btn-block btn-lg btn-gradient-success"
+                                             value="login" />
+                                    </div>
+                                    </form>
+                                    {% if form.errors %}
+                                        <div class="alert alert-danger">
+                                            <div class="d-flex align-items-center justify-content-start">
+                                                <span class="alert-icon">
+                                                    <i class="ti-alert"></i>
+                                                </span>
+                                                <span>Invalid User or Password</span>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    <div class="text-center m-t-30">
+                                        <a href="/admin" class="text-gray text-link text-opacity">Admin Site Login</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

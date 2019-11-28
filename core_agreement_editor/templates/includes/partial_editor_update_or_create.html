@@ -1,0 +1,187 @@
+{% load dashboard_extras %}
+{% load staticfiles %}
+<form method="post" action="{% url 'core_agreement_editor:update_or_create' agreement_id %}" class="js-editor-update-form">
+    {% csrf_token %}
+    <div class="modal-body">
+        <div class="modal-header">
+            <h5 class="modal-title" id="edit_agreement_modalLabel">Edit Agreement For {{ transactiondate|date:"d-m-Y"}} </h5>
+{#            <button type="button" class="close" data-dismiss="modal" aria-label="Close">#}
+{#                <span aria-hidden="true">&times;</span>#}
+{#            </button>#}
+        </div>
+        <div class="modal-body">
+            <p></p>
+            {% if transactiondate|is_in_past %}
+                <button type="button" class="btn btn-success change-dates-btn" data-url="{% url 'core_agreement_editor:modalchangefees' agreement_id %}?transaction_id={{ transaction_id }}">Remove Fees</button>
+            {% else %}
+                <button type="button" class="btn btn-success change-dates-btn" data-url="{% url 'core_agreement_editor:modalchangedate' agreement_id %}?transaction_id={{ transaction_id }}">Change Dates</button>
+                <button type="button" class="btn btn-success change-dates-btn" data-url="{% url 'core_agreement_editor:modalchangefees' agreement_id %}?transaction_id={{ transaction_id }}">Remove Fees</button>
+{#                <button type="button" class="btn btn-success change-dates-btn" data-url="{% url 'core_agreement_editor:modalchangevalues' agreement_id %}?transaction_id={{ transaction_id }}">Change Values</button>#}
+            {% endif %}
+            <p></p>
+        </div>
+    </div>
+    <div class="modal-footer">
+{#        <button type="submit" class="btn btn-primary">Update editor</button>#}
+        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+    </div>
+</form>
+
+<script type="text/javascript">
+    $(".change-dates-btn").click(function() {
+        loadForm(null, this, function() {
+            alert('donw!');
+        });
+    })
+</script>
+
+{#<div class="modal fade" id="edit_dates_agreement_modal" tabindex="-1" role="dialog" aria-labelledby="edit_dates_agreement_modalLabel" aria-hidden="true">#}
+{#        <div class="modal-dialog" role="document">#}
+{#            <div class="modal-content">#}
+{#                <div class="modal-header">#}
+{#                    <h5 class="modal-title" id="edit_dates_agreement_modalLabel">Change Dates</h5>#}
+{#                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">#}
+{#                        <span aria-hidden="true">&times;</span>#}
+{#                    </button>#}
+{#                </div>#}
+{#                <div class="modal-body">#}
+{#                    <p></p>#}
+{#                    <label class="control-label">Current Date</label>#}
+{#                        <div class="input-group">#}
+{#                            <div class="input-group-prepend{% if errors.agreementupfrontdate %} error-border{% endif %}">#}
+{#                                <span class="input-group-text"><i class="fa fa-calendar"></i></span>#}
+{#                            </div>#}
+{#                            <input class="form-control{% if errors.agreementupfrontdate %} error{% endif %}" name="" type="date" readonly value="{{ transaction.transactiondate|date:"d/m/Y"}}">#}
+{#                        </div>#}
+{#                                            <label class="control-label">Changed Date</label>#}
+{#                        <div class="input-group">#}
+{#                            <div class="input-group-prepend{% if errors.agreementupfrontdate %} error-border{% endif %}">#}
+{#                                <span class="input-group-text"><i class="fa fa-calendar"></i></span>#}
+{#                            </div>#}
+{#                            <input class="form-control{% if errors.agreementupfrontdate %} error{% endif %}" name="" type="date">#}
+{#                        </div>#}
+{#                 <p></p>#}
+{#                    <button type="button" class="btn btn-success" data-toggle="modal" data-dismiss="modal">Just This Transaction</button>#}
+{#                    <button type="button" class="btn btn-success" data-toggle="modal" data-dismiss="modal">All Future Transactions</button>#}
+{##}
+{##}
+{#                    <p></p>#}
+{#                </div>#}
+{#                <div class="modal-footer">#}
+                    {#                     <button type="button" class="btn btn-success" action="{%  url 'core_agreement_crud:agreement_management_tab12' agreement_id %}">Yes</button>#}
+{#                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>#}
+{##}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+    <div class="modal fade" id="edit_fees_agreement_modal" tabindex="-1" role="dialog" aria-labelledby="edit_fees_agreement_modalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="edit_fees_agreement_modalLabel">Remove Fees</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p></p>
+                    <label class="control-label">Current Risk Fee</label>
+                        <div class="input-group">
+                                <div class="input-group-prepend{% if errors.agreementinstalmentnet %} error-border{% endif %}">
+                                    <span class="input-group-text">&pound;</span>
+                                </div>
+                                <input class="form-control{% if errors.agreementinstalmentnet %} error{% endif %}" name="" type="text" id="" value="{{ values.agreementinstalmentnet }}" readonly>
+                                   <!--onchange="InstalmentsvatChange(this.form), RiskFeeChange(this.form), DateImplementedChange(this.form), formatCurrency(this)">-->
+                            </div>
+                <p></p>
+
+                        <div class="input-group">
+                            Remove Risk Fee &nbsp; &nbsp;
+                            <div class="switch d-inline m-r-10">
+                                <input id="switch-1" type="checkbox" unchecked="">
+                                <label for="switch-1"></label>
+                            </div>
+                        </div>
+                    <label class="control-label">Current BAMF</label>
+                        <div class="input-group">
+                                <div class="input-group-prepend{% if errors.agreementinstalmentnet %} error-border{% endif %}">
+                                    <span class="input-group-text">&pound;</span>
+                                </div>
+                                <input class="form-control{% if errors.agreementinstalmentnet %} error{% endif %}" name="" type="text" id="" value="{{ values.agreementinstalmentnet }}" readonly>
+                                   <!--onchange="InstalmentsvatChange(this.form), RiskFeeChange(this.form), DateImplementedChange(this.form), formatCurrency(this)">-->
+                            </div>
+                <p></p>
+                        <div class="input-group">
+                            Remove BAMF &nbsp; &nbsp; &nbsp; &nbsp;
+                            <div class="switch d-inline m-r-10">
+                                <input id="switch-2" type="checkbox" unchecked="">
+                                <label for="switch-2"></label>
+                            </div>
+                        </div>
+                 <p></p>
+                    <button type="button" class="btn btn-success" data-toggle="modal" data-dismiss="modal">Just This Transaction</button>
+                    <button type="button" class="btn btn-success" data-toggle="modal" data-dismiss="modal">All Future Transactions</button>
+
+
+                    <p></p>
+                </div>
+                <div class="modal-footer">
+                    {#                     <button type="button" class="btn btn-success" action="{%  url 'core_agreement_crud:agreement_management_tab12' agreement_id %}">Yes</button>#}
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="edit_values_agreement_modal" tabindex="-1" role="dialog" aria-labelledby="edit_values_agreement_modalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="edit_values_agreement_modalLabel">Change Values</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p></p>
+                    <label class="control-label">Current Transaction Value</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend{% if errors.agreementinstalmentnet %} error-border{% endif %}">
+                                <span class="input-group-text">&pound;</span>
+                            </div>
+                            <input class="form-control{% if errors.agreementinstalmentnet %} error{% endif %}" name="" type="text" id="" value="{{ values.agreementinstalmentnet }}" readonly>
+                                   <!--onchange="InstalmentsvatChange(this.form), RiskFeeChange(this.form), DateImplementedChange(this.form), formatCurrency(this)">-->
+                        </div>
+                    <p></p>
+{#                    <button type="button" class="btn btn-success" data-toggle="modal" data-dismiss="modal">Just This Transaction</button>#}
+{#                    <button type="button" class="btn btn-success" data-toggle="modal" data-dismiss="modal">All Future Transactions</button>#}
+{#                    <p></p>#}
+                    <label class="control-label">Current Risk Fee Value</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend{% if errors.agreementinstalmentnet %} error-border{% endif %}">
+                                <span class="input-group-text">&pound;</span>
+                            </div>
+                            <input class="form-control{% if errors.agreementinstalmentnet %} error{% endif %}" name="" type="text" id="" value="{{ values.agreementinstalmentnet }}" readonly>
+                                   <!--onchange="InstalmentsvatChange(this.form), RiskFeeChange(this.form), DateImplementedChange(this.form), formatCurrency(this)">-->
+                        </div>
+                    <p></p>
+                      <label class="control-label">Current BAMF Value</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend{% if errors.agreementinstalmentnet %} error-border{% endif %}">
+                                <span class="input-group-text">&pound;</span>
+                            </div>
+                            <input class="form-control{% if errors.agreementinstalmentnet %} error{% endif %}" name="" type="text" id="" value="{{ values.agreementinstalmentnet }}" readonly>
+                                   <!--onchange="InstalmentsvatChange(this.form), RiskFeeChange(this.form), DateImplementedChange(this.form), formatCurrency(this)">-->
+                        </div>
+                    <p></p>
+                    <button type="button" class="btn btn-success" data-toggle="modal" data-dismiss="modal">Just This Transaction</button>
+                    <button type="button" class="btn btn-success" data-toggle="modal" data-dismiss="modal">All Future Transactions</button>
+                </div>
+                <div class="modal-footer">
+                    {#                     <button type="button" class="btn btn-success" action="{%  url 'core_agreement_crud:agreement_management_tab12' agreement_id %}">Yes</button>#}
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>

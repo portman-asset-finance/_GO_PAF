@@ -1,0 +1,257 @@
+{% extends "dashboard_base.html" %}
+{% load staticfiles %}
+{% load humanize %}
+{% load widget_tweaks %}
+{% load ddic_extras %}
+{% block metadescription %}
+	GO DDIC Enquiry
+{% endblock %}
+{% block title %}
+	GO DDIC Enquiry
+{% endblock %}
+{% block page-css %}
+    <link href="{% static 'assets/vendor/bootstrap-datepicker/dist/css/bootstrap-datepicker3.css'%}" rel="stylesheet">
+{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2 class="header-title" style="color: #8dabc4">DDICs</h2>
+</div>
+<div class="card">
+    <div class="card-header border bottom p-b-10">
+        <form method="get" class="form-inline">
+            <span class="m-b-20 m-r-15"><h4 class="text-thin"><b>Filter by:</b> </h4></span>
+            {% render_field ddic_list.form.agreement_id class="form-control m-b-20 m-r-15" placeholder="APEL Number"%}
+            <span class="m-b-20 m-r-15"><h5 class="text-thin"> and </h5></span>
+            {% render_field ddic_list.form.customercompany class="form-control m-b-20 m-r-15" placeholder="Customer Name"%}
+            <!--<span class="m-b-20 m-r-15"><h5 class="text-thin"> and </h5></span>
+            {#% render_field dd_extract.form.agreement_id class="form-control m-b-20 m-r-15" placeholder="Agreement Type"%#}>-->
+            <span class="m-b-20 m-r-15"><h5 class="text-thin"> and </h5></span>
+            {% render_field ddic_list.form.checked_notes class="form-control m-b-20 m-r-15" placeholder=""%}
+           <!-- <span class="m-b-20 m-r-15"><h5 class="text-thin"> and </h5></span>
+            {#% render_field dd_extract.form.agreement_id class="form-control m-b-20 m-r-15" placeholder="Rental Type"%#}
+            <span class="m-b-20 m-r-15"><h5 class="text-thin"> and </h5></span>
+            <div class="input-group">
+            {#% render_field dd_extract.form.agreement_id type="date" class="form-control m-b-20 m-r-15" autocomplete="off"%#}
+            </div>-->
+            <button type="submit" class="btn btn-icon btn-success m-b-20">
+                <i class="mdi mdi-magnify"></i>
+            </button>
+            {% if has_filter %}
+                <a class="btn btn-icon btn-warning m-b-20" href="{%  url 'core_app_ddic:ddic' %}">
+                    <i class="mdi mdi-refresh"></i>
+                </a>
+            {% endif %}
+        </form>
+        <table class="table table-hover table-sm border">
+            <thead class="thead-light">
+            <tr>
+                <th>Agreement</th>
+                <th>DD Reference</th>
+                <th class="text-center">DDIC Deadline</th>
+                <th>Customer</th>
+                <th class="text-center">Sort Code</th>
+                <th class="text-center">Account Number</th>
+                <th class="text-center">Date of Relevant DD</th>
+                <th class="text-right">Value</th>
+                <th class="text-right">Checked</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for ddic in ddic_list_qs %}
+                <tr>
+                    <td> {# Agreement #}
+                        <span class="title">{{ ddic.agreement_id }}</span>
+                    </td>
+                    <td> {# Agreement #}
+                        <span class="title">{{ ddic.ddic_SUReference }}</span>
+                    </td>
+                    <td class="text-center"> {# Customer #}
+                        <span>{{ ddic.ddic_DateOfDocumentDebit|date:"d/m/Y" }}</span>
+                    </td>
+                    <td> {# Customer #}
+                        <span class="">{{ ddic.customercompany }}</span>
+                    </td>
+                    <td class="text-center"> {# Customer #}
+                        <span class="">{{ ddic.ddic_PayerSortCode }}</span>
+                    </td>
+                    <td class="text-center"> {# Customer #}
+                        <span class="">{{ ddic.ddic_PayerAccount }}</span>
+                    </td>
+                    <td class="text-center"> {# Customer #}
+                        <span>{{ ddic.ddic_DateOfOriginalDD|date:"d/m/Y" }}</span>
+                    </td>
+                    <td class="text-right"> {# Customer #}
+                        <span>{{ ddic.ddic_OriginalDDAmount|floatformat:2|intcomma }} GBP</span>
+                    </td>
+                    <td class="text-right">
+                        <div class="switch d-inline m-r-10">
+                            <input class="seqno-check" id="switch_{{ forloop.counter }}"
+                                   type="checkbox" unchecked=""
+                                   data-seqno="{{ ddic.ddic_seqno }}"
+                                   data-date="{{ ddic.ddic_DateOfOriginalDD|date:"Y-m-d" }}"
+                                   data-ddic-type="{{ ddic.ddic_DDIC_Type }}" {% if ddic.checked_notes == 'Checked' %}checked{% endif %}>
+                            <label for="switch_{{ forloop.counter }}"></label>
+                        </div>
+                    </td>
+                    <td class="text-right font-size-18">
+                        <a href="{% url 'dashboard:AgreementEnquiryDetail' ddic.agreement_id%}" class="text-success m-r-15"><i class="ti-layers"></i></a>
+                        <a href='javascript:void(window.open("{% url 'notes:main' %}?customer_id={{ ddic.customer_id }}&agreement_id={{ ddic.agreement_id }}", "core_notes"), rel="noopener", chrome="on");' class="text-success m-r-15"><i class="ti-write"></i></a>
+
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+        <div class="card-footer border bottom text-center">
+            <div >
+                <div class="dataTables_paginate paging_simple_numbers">
+                    <ul class="pagination">
+                        {% if ddic_list_qs.has_previous %}
+                            <li class="paginate_button page-item previous">
+                                {% if 'agreementnumber' in request.get_full_path %}
+                                    <a href="{{ request.get_full_path }}&page={{ ddic_list_qs.previous_page_number }}" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                                {% else %}
+                                    <a href="?page={{ ddic_list_qs.previous_page_number }}" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                                {% endif %}
+                            </li>
+                        {% else %}
+                            <li class="paginate_button page-item previous disabled">
+                                <a href="#" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                            </li>
+                        {% endif %}
+                        {% for i in ddic_list_qs.paginator.page_range %}
+                            {% if ddic_list_qs.number == i %}
+                                <li class="paginate_button page-item active">
+                                    {% if 'agreementnumber' in request.get_full_path %}
+                                        <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                    {% else %}
+                                        <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                    {% endif %}
+                                </li>
+                            {% else %}
+                            {% if ddic_list_qs.number < i %}
+                                {% if ddic_list_qs.number|add:"1" >= i %}
+                                    <li class="paginate_button page-item">
+                                        {% if 'agreementnumber' in request.get_full_path %}
+                                            <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% else %}
+                                            <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% endif %}
+                                    </li>
+                                {% else %}
+                                {% if ddic_list_qs.paginator.num_pages == i %}
+                                    <li class="paginate_button page-item disabled">
+                                        <a href="#" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">
+                                            <i class="mdi mdi-dots-horizontal"></i>
+                                        </a>
+                                    </li>
+                                    <li class="paginate_button page-item">
+                                        {% if 'agreementnumber' in request.get_full_path %}
+                                            <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% else %}
+                                            <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% endif %}
+                                    </li>
+                                {% endif %}
+                                {% endif %}
+                            {% endif %}
+                                {% if ddic_list_qs.number > i %}
+                                    {% if ddic_list_qs.number|add:"-2" < i  %}
+                                        <li class="paginate_button page-item">
+                                            {% if 'agreementnumber' in request.get_full_path %}
+                                                <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% endif %}
+                                        </li>
+                                    {% else %}
+                                    {% if 1 == i %}
+                                        <li class="paginate_button page-item">
+                                            {% if 'agreementnumber' in request.get_full_path %}
+                                                <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% endif %}
+                                        </li>
+                                        <li class="paginate_button page-item disabled">
+                                            <a href="#" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">
+                                                <i class="mdi mdi-dots-horizontal"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if ddic_list_qs.has_next %}
+                            <li class="paginate_button page-item next" id="dt-opt_next">
+                                {% if 'agreementnumber' in request.get_full_path %}
+                                    <a href="{{ request.get_full_path }}&page={{ ddic_list_qs.next_page_number }}" aria-controls="dt-opt" data-dt-idx="3" tabindex="0" class="page-link">Next</a>
+                                {% else %}
+                                    <a href="?page={{ ddic_list_qs.next_page_number }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">Next</a>
+                                {% endif %}
+                            </li>
+                        {% else %}
+                            <li class="paginate_button page-item next disabled" id="dt-opt_next">
+                                <a href="#" aria-controls="dt-opt" data-dt-idx="3" tabindex="0" class="page-link">Next</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block page-js %}
+    {% include 'notes_core.html' %}
+    <script src="{% static 'assets/vendor/bootstrap-datepicker/dist/js/bootstrap-datepicker.js'%}"></script>
+    <script>
+        $(function() {
+            $(".seqno-check").click(function() {
+
+                var checked = 'Unchecked';
+                if($(this).is(':checked')) {
+                    checked = 'Checked';
+                }
+
+                $.ajax({
+                    method: 'POST',
+                    data: {
+                        'seqno': $(this).attr('data-seqno'),
+                        'ddic_type': $(this).attr('data-ddic-type'),
+                        'ddic_date': $(this).attr('data-date'),
+                        'checked': checked,
+                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                    },
+                    url: '{% url 'core_app_ddic:update_ddic' %}',
+                    success: function(data) {
+                        if (data.count > 0) {
+                        $("#ddic_new_badge").html(data.count).show();
+                        } else {
+                        $("#ddic_new_badge").html(data.count).hide();
+                        }
+                    },
+                    error: function(data) {
+                        alert(JSON.stringify(data));
+                    }
+                });
+
+                {#$.ajax({#}
+                {#    method: 'GET',#}
+                {#    url: '{% url 'core_ddic:active_ddic' %}',#}
+                {#    success: function(data) {#}
+                {#        if (data.count > 0) {#}
+                {#            $("#ddic_new_badge").html(data.count).show();#}
+                {#        } else {#}
+                {#            $("#ddic_new_badge").html(data.count).hide();#}
+                {#        }#}
+                {#    }#}
+                {# }) #}
+
+            });
+        });
+
+    </script>
+{% endblock %}

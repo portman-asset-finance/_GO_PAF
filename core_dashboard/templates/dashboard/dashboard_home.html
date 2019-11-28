@@ -1,0 +1,338 @@
+{% extends "dashboard_base.html" %}
+{% load staticfiles %}
+{% load humanize %}
+{% load widget_tweaks %}
+{% block metadescription %}
+	GO Dashboard
+{% endblock %}
+{% block title %}
+	GO Dashboard
+{% endblock %}
+{% block page-css %}
+     <link href="{% static 'assets/vendor/bootstrap-datepicker/dist/css/bootstrap-datepicker3.css'%}" rel="stylesheet'">
+{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2 class="header-title" style="color: #8dabc4">DASHBOARD</h2>
+</div>
+<div class="card">
+    <div class="card-body">
+        <div class="tab-info">
+            <ul class="nav nav-tabs" role="tablist">
+                <li class="nav-item">
+                    <a href="#default-tab-1" class="nav-link" role="tab" data-toggle="tab">Business Overview</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#default-tab-2" class="nav-link" role="tab" data-toggle="tab">Sales Performance</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#default-tab-3" class="nav-link" role="tab" data-toggle="tab">Payments Performance</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#default-tab-4" class="nav-link" role="tab" data-toggle="tab">Collections Performance</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#default-tab-5" class="nav-link" role="tab" data-toggle="tab">Accounts Performance</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#default-tab-6" class="nav-link" role="tab" data-toggle="tab">Direct Debit Calendar</a>
+                </li>
+                <li class="nav-item">
+                    {% if healthy %}
+                    <a href="#default-tab-7" class="nav-link active text-success" role="tab" data-toggle="tab">
+                        Apellio HealthCheck <i class="ti ti-face-smile"></i></a>
+                    {% else %}
+                    <a href="#default-tab-7" class="nav-link active text-danger" role="tab" data-toggle="tab">
+                        Apellio HealthCheck <i class="ti ti-face-sad"></i></a>
+                    {% endif %}
+                </li>
+            </ul>
+            <div class="tab-content">
+                <div role="tabpanel" class="tab-pane fade" id="default-tab-1">
+                    <div class="row p-v-20">
+                        <div class="col-md-8">
+                            <div class="card">
+                                    <div class="card-header">
+                                        <h4 class="card-title">In Development</h4>
+                                        <div class="card-toolbar">
+                                            <ul>
+                                                <li>
+                                                    <a class="text-gray" href="javascript:void(0)">
+                                                        <i class="mdi mdi-refresh font-size-20"></i>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="text-gray" href="javascript:void(0)">
+                                                        <i class="mdi mdi-bookmark-outline font-size-20"></i>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="text-gray" href="javascript:void(0)">
+                                                        <i class="mdi mdi-dots-vertical font-size-20"></i>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                    </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div role="tabpanel" class="tab-pane fade" id="default-tab-2">
+                    <div class="row p-v-20">
+                        <div class="col-md-8">
+                            <div class="card">
+                                    <div class="card-header">
+                                        <h4 class="card-title">In Development</h4>
+                                        <div class="card-toolbar">
+                                            <ul>
+                                                <li>
+                                                    <a class="text-gray" href="javascript:void(0)">
+                                                        <i class="mdi mdi-refresh font-size-20"></i>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="text-gray" href="javascript:void(0)">
+                                                        <i class="mdi mdi-bookmark-outline font-size-20"></i>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="text-gray" href="javascript:void(0)">
+                                                        <i class="mdi mdi-dots-vertical font-size-20"></i>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                    </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div role="tabpanel" class="tab-pane fade" id="default-tab-3">
+                    <div class="row p-v-20">
+                        <div class="col-md-8">
+                            <div class="card">
+                                    <div class="card-header">
+                                        <h4 class="card-title">In Development</h4>
+                                        <div class="card-toolbar">
+                                            <ul>
+                                                <li>
+                                                    <a class="text-gray" href="javascript:void(0)">
+                                                        <i class="mdi mdi-refresh font-size-20"></i>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="text-gray" href="javascript:void(0)">
+                                                        <i class="mdi mdi-bookmark-outline font-size-20"></i>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="text-gray" href="javascript:void(0)">
+                                                        <i class="mdi mdi-dots-vertical font-size-20"></i>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                    </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div role="tabpanel" class="tab-pane fade" id="default-tab-4">
+                    <div class="row p-v-20">
+                        <div class="col-md-8">
+                            <div class="card">
+                                    <div class="card-header">
+                                        <h4 class="card-title">In Development</h4>
+                                        <div class="card-toolbar">
+                                            <ul>
+                                                <li>
+                                                    <a class="text-gray" href="javascript:void(0)">
+                                                        <i class="mdi mdi-refresh font-size-20"></i>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="text-gray" href="javascript:void(0)">
+                                                        <i class="mdi mdi-bookmark-outline font-size-20"></i>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="text-gray" href="javascript:void(0)">
+                                                        <i class="mdi mdi-dots-vertical font-size-20"></i>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                    </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div role="tabpanel" class="tab-pane fade" id="default-tab-5">
+                    <div class="row p-v-20">
+                        <div class="col-md-8">
+                            <div class="card">
+                                    <div class="card-header">
+                                        <h4 class="card-title">In Development</h4>
+                                        <div class="card-toolbar">
+                                            <ul>
+                                                <li>
+                                                    <a class="text-gray" href="javascript:void(0)">
+                                                        <i class="mdi mdi-refresh font-size-20"></i>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="text-gray" href="javascript:void(0)">
+                                                        <i class="mdi mdi-bookmark-outline font-size-20"></i>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="text-gray" href="javascript:void(0)">
+                                                        <i class="mdi mdi-dots-vertical font-size-20"></i>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                    </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div role="tabpanel" class="tab-pane fade" id="default-tab-6">
+                     <div class="card m-t-20 col-md-10">
+                        <div class="card-body">
+                            <div class="table-overflow">
+                            <span class="text-right font-size-16 ">
+                                <a href="#" id="datepicker-1" data-provide="datepicker" class="text-success m-l-15 ">
+                                    <span >VIEW CALENDAR</span>
+                                    <i class="mdi mdi-calendar"></i>
+                                </a>
+                            </span>
+                                <table class="table table-hover table-sm border">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th class="text-center">Calendar Due date</th>
+                                            <th class="text-center">Working Due Date</th>
+                                            <th class="text-center">Status</th>
+                                            <th class="text-center">DD Change Cutoff</th>
+                                            <th class="text-center">DD Call Date</th>
+                                            <th class="text-center">Bounce Day 1</th>
+                                            <th class="text-center">Bounce Day 2</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for dd_calender_item in dd_calender_items %}
+                                        <tr {% if dd_calender_item.dd_status_id == 999 %}class="table-info SP"{% endif %}>
+                                            <td class="text-center {% if dd_calender_item.dd_status_id == 999 %}text-dark{% endif %}">
+                                                {{ dd_calender_item.dd_calendar_due_date|date:"d/m/Y" }}</td>
+                                            <td class="text-center {% if dd_calender_item.dd_status_id == 999 %}text-dark{% endif %}">
+                                                {{ dd_calender_item.dd_working_due_date|date:"d/m/Y" }}</td>
+                                            <td class="text-center {% if dd_calender_item.dd_status_id == 999 %}text-dark{% endif %}">
+                                                {{ dd_calender_item.dd_status }}</td>
+                                            <td class="text-center {% if dd_calender_item.dd_status_id == 999 %}text-dark{% endif %}">
+                                                {{ dd_calender_item.dd_change_cutoff_date|date:"d/m/Y" }}</td>
+                                            <td class="text-center {% if dd_calender_item.dd_status_id == 999 %}text-dark{% endif %}">
+                                                {{ dd_calender_item.dd_call_date|date:"d/m/Y" }}</td>
+                                            <td class="text-center {% if dd_calender_item.dd_status_id == 999 %}text-dark{% endif %}">
+                                                {{ dd_calender_item.dd_bounce_date01|date:"d/m/Y" }}</td>
+                                            <td class="text-center {% if dd_calender_item.dd_status_id == 999 %}text-dark{% endif %}">
+                                                {{ dd_calender_item.dd_bounce_date02|date:"d/m/Y" }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div role="tabpanel" class="tab-pane fade in active" id="default-tab-7">
+                    <div class="row p-v-20">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row">
+                                        {% for extension in extensions %}
+                                        <div class="col-sm-3">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <div class="media justify-content-between">
+                                                        <div>
+                                                            <p class="">{{ extension.ap_extension_description }}</p>
+                                                            <h2 class="font-size-28 font-weight-light">{{ extension.ap_extension_last_interface_run|date:"d/m/Y" }}</h2>
+                                                        </div>
+                                                        <div class="align-self-end">
+                                                            {% if today >= extension.ap_extension_next_interface_run %}
+                                                                <i class="ti-close font-size-70 text-danger opacity-08"></i>
+                                                            {% else %}
+                                                                <i class="ti-check font-size-70 text-success opacity-05"></i>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                        {% for dd_extension in dd_extensions %}
+                                        <div class="col-sm-3">
+                                            <div class="card">
+                                                <div class="card-body">
+
+                                                    <div class="media justify-content-between">
+                                                        <div>
+                                                            <p class="">{{ dd_extension.ap_extension_description }}</p>
+                                                            <h2 class="font-size-28 font-weight-light">{{ dd_extension.ap_extension_last_interface_run|date:"d/m/Y" }}</h2>
+                                                        </div>
+                                                        <div class="align-self-end">
+                                                        {% if dd_extension.ap_extension_code == 'bacsrun' %}
+                                                            {% if valid_bacsrun %}
+                                                                <i class="ti-check font-size-70 text-success opacity-05"></i>
+                                                            {% else %}
+                                                                <i class="ti-close font-size-70 text-danger opacity-08"></i>
+                                                            {% endif %}
+                                                        {% endif %}
+                                                        {% if dd_extension.ap_extension_code == 'bounceday1' %}
+                                                            {% if valid_bounce01 %}
+                                                                <i class="ti-check font-size-70 text-success opacity-05"></i>
+                                                            {% else %}
+                                                                <i class="ti-close font-size-70 text-danger opacity-08"></i>
+                                                            {% endif %}
+                                                        {% endif %}
+                                                        {% if dd_extension.ap_extension_code == 'bounceday2' %}
+                                                            {% if valid_bounce02 %}
+                                                                <i class="ti-check font-size-70 text-success opacity-05"></i>
+                                                            {% else %}
+                                                                <i class="ti-close font-size-70 text-danger opacity-08"></i>
+                                                            {% endif %}
+                                                        {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block page-js %}
+
+    <script src="{% static 'assets/vendor/bootstrap-datepicker/dist/js/bootstrap-datepicker.js'%}"></script>
+
+{% endblock %}

@@ -1,0 +1,886 @@
+{% extends "dashboard_base.html" %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+{% load dashboard_extras %}
+{% block metadescription %}
+   Apellio Dashboard
+{% endblock %}
+{% block title %}
+   Apellio Dashboard
+{% endblock %}
+{% block page-css %}
+    <link rel="stylesheet" href="{% static 'core_agreement_crud.css' %}">
+{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h2 class="header-title"> {{ agreement_detail.agreementnumber }}</h2>&nbsp;
+    <h2 class="header-title">{{ agreement_detail.customercompany }}</h2>&nbsp;
+    <h2 class="header-title" data-toggle="tooltip" data-placement="bottom"
+        title="Sales Representative">{{ agreement_detail.agreementauthority }}&nbsp; &nbsp;</h2>&nbsp;
+    {% if agreement_regulated_flag %}
+        <button type="button" class="btn btn-success btn-w-sm" data-toggle="popover" data-trigger="hover"   title="" data-content="This is a regulated agreement,                         please deal with accordingly." data-original-title="Regulated Agreement" aria-describedby="popover676999">
+            <i class="mdi mdi-help-circle-outline"></i>&nbsp;Regulated
+        </button>
+    {% endif %}
+    <div class="header-sub-title">
+           {% if agreement_detail.agreementdefname != 'Hire Purchase' and agreement_detail.agreementdefname != 'Management Fee' %}
+               <span class="badge badge-info badge-lg">{{ agreement_detail.agreementdefname }}</span>
+           {% else %}
+               <span class="badge badge-primary badge-lg">{{ agreement_detail.agreementdefname }}</span>
+           {% endif %}
+           {% if agreement_detail.agreementclosedflag_id == 902 %}
+               <span class="badge badge-danger badge-lg">Closed</span>
+           {% endif %}
+           {% if agreement_detail.agreementddstatus_id == 'I' %}
+               <span class="badge badge-danger badge-lg">DD Inactive</span>
+           {% endif %}
+           {% if agreement_detail.agreement_stage == '4'%}
+                <nav class="breadcrumb breadcrumb-dash">&nbsp;
+                    <a class="breadcrumb-item text-success agreement-list" href="{%  url 'core_agreement_crud:AgreementEnquiryList' %}"><i class="ti-list p-r-5"></i>Agreement List</a>
+                    <span class="breadcrumb-item active">Agreement Detail</span>
+                </nav>
+               <a href='javascript:void(window.open("{% url 'notes:main' %}?customer_id={{ agreement_detail.agreementcustomernumber }}&agreement_id={{ agreement_detail.agreementnumber }}", "core_notes", "scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no, width=2000,height=1000,left=0,top=0"));' class="text-white m-r-15 font-size-16"><span class="btn btn-success btn-float  btn-rounded m-l-10 p-r-10 p-l-10 m-b-0"><i class="ti-write m-r-5"  data-customer-id="{{ agreement_detail.agreementcustomernumber }}" data-agreement-id="{{ agreement_detail.agreementnumber }}"></i>NOTES</span></a>
+           {% else %}
+                <nav class="breadcrumb breadcrumb-dash">&nbsp;
+                    <a class="breadcrumb-item text-success" href="{%  url 'core_agreement_crud:AgreementEnquiryList' %}"><i class="ti-list p-r-5"></i>Agreement List</a>
+                    <span class="breadcrumb-item active">Agreement Detail</span>
+                </nav>
+            {% endif %}
+       </div>
+        {% if agreement_detail.agreement_stage == '4'%}
+            {% if go_id.consolidation_info %}
+                <p><i class="fa fa-clock-o"></i> {{ go_id.consolidation_info}}
+                </p>
+            {% endif %}
+        {% endif %}
+    </div>
+    <div class="card">
+        <div class="card-header border bottom">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-sm-10 offset-sm-1">
+                        <ul class="nav wizard wizard-sucess">
+                            {% if agreement_detail.agreement_stage == '4' %}
+                                <li  class="nav-item">
+                                    <a class="nav-link completed" href="{%  url 'core_agreement_crud:agreement_management_tab1_1' agreement_detail.agreementnumber %}"></a>
+                                    <div class="nav-title">Customer Detail</div>
+                                </li>
+                            {% else %}
+                                <li class="nav-item">
+                                    <a class="nav-link completed"></a>
+                                    <div class="nav-title">Customer Detail</div>
+                                </li>
+                            {% endif %}
+                            {% if agreement_detail.agreement_stage == '4' %}
+                                <li  class="nav-item">
+                                    <a class="nav-link completed" href="{%  url 'core_agreement_crud:agreement_management_tab2' agreement_detail.agreementnumber %}"></a>
+                                    <div class="nav-title">Payment Detail</div>
+                                </li>
+                            {% else %}
+                                <li class="nav-item">
+                                    <a class="nav-link completed"></a>
+                                    <div class="nav-title">Payment Detail</div>
+                                </li>
+                            {% endif %}
+                            {% if agreement_detail.agreement_stage == '4' %}
+                                <li  class="nav-item">
+                                    <a class="nav-link active"></a>
+                                    <div class="nav-title">Agreement Detail</div>
+                                </li>
+                            {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link active" ></a>
+                                <div class="nav-title">Agreement Detail</div>
+                            </li>
+                            {% endif %}
+                            {% if agreement_detail.agreement_stage == '4' %}
+                                <li  class="nav-item">
+                                    <a class="nav-link completed" href="{%  url 'core_agreement_crud:agreement_management_tab4' agreement_detail.agreementnumber %}"></a>
+                                    <div class="nav-title">Account Statement</div>
+                                </li>
+                            {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link"></a>
+                                <div class="nav-title">Account Statement</div>
+                            </li>
+                            {% endif %}
+                           {% comment %} <li class="nav-item">
+                                <a class="nav-link" href=""></a>
+                                <div class="nav-title">Guarantors</div>
+                            </li>{% endcomment %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-8 offset-sm-2">
+                {% if datacash_request %}
+                    <div class="alert alert-success m-t-25">
+                        <b>Success:</b> Direct Debit Instruction Created
+                    </div>
+                {% endif %}
+                {% if error %}
+                    <div class="alert alert-danger m-t-25">
+                        <b>Error:</b> {{ error }}
+                    </div>
+                {% endif %}
+               <form class="m-t-45" method="post" action="{% url 'core_agreement_crud:agreement_management_tab3' agreement_id %}" id="tab3-form">
+                   {% csrf_token %}
+                   {% if transaction_summary_extract_count > 0 or transition_count > 0 %}
+                       <div class="dropdown dropdown-animated">
+                            <button data-toggle="tooltip" class="btn btn-default js-create-editor" id="id-consolidate-btn"
+                                    type="button" data-url="{% url 'core_agreement_editor:modalconsolidate' agreement_id %}" disabled>
+                                {% if consolidations %}
+                                    Consolidation of {{ consolidations }}
+                                {% else %}
+                                    Consolidate Into This Agreement
+                                {% endif %}
+                            </button>
+                       </div>
+                   {% else %}
+                       <div class="dropdown dropdown-animated">
+                            <button data-toggle="tooltip" class="btn btn-success js-create-editor" id="id-consolidate-btn"
+                                    type="button" data-url="{% url 'core_agreement_editor:modalconsolidate' agreement_id %}" {% if consolidation_button_status == "INACTIVE" %}disabled{% endif %}>
+                                {% if consolidations %}
+                                    {{ consolidations }}
+                                {% else %}
+                                    Consolidate Into This Agreement
+                                {% endif %}
+                            </button>
+                       </div>
+                    {% endif %}
+{#                        <div class="dropdown dropdown-animated">#}
+{#                            <button data-toggle="tooltip" class="btn btn-success js-create-editor" id="id-consolidate-btn"#}
+{#                                    type="button" data-url="{% url 'core_agreement_editor:modalaccountinfo' agreement_id %}">#}
+{#                                    Account Information#}
+{#                            </button>#}
+{#                       </div>#}
+                   <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label class="control-label">Documentation Fee (NET)</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend{% if errors.doc_fee %} error-border{% endif %}">
+                                    <span class="input-group-text">&pound;</span>
+                                </div>
+                                {% if transaction_summary_extract_count > 0 or transition_count > 0 %}
+                                    <input class="form-control {% if errors.doc_fee %} error{% endif %}"  type="text" name ="doc_fee" id="doc_fee" onchange="formatCurrency(this)" value="{{ values.doc_fee }}" autocomplete="off" onkeypress="return isCurrency(event)" max="10000000" maxlength="10" readonly>
+                                {% else %}
+                                    <input class="form-control{% if errors.doc_fee %} error{% endif %}"  type="text" name ="doc_fee" id="doc_fee" onchange="formatCurrency(this)" value="{{ values.doc_fee }}" autocomplete="off" onkeypress="return isCurrency(event)" max="10000000" maxlength="10">
+                                {% endif %}
+                            </div>
+                            <div class="invalid-feedback{% if errors.doc_fee %} display-block{% endif %}" id="doc_fee_error">
+                                {{ errors.doc_fee }}
+                            </div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label class="control-label">Term</label>
+                            <input class="form-control{% if errors.term %} error{% endif %}" type="text" name ="term" readonly value="{{ term }}">
+                            {% if errors.term %}
+                                <div class="invalid-feedback display-block">
+                                    {{ errors.term }}
+                                </div>
+                            {% endif %}
+                        </div>
+                      {% comment %}  <div class="form-group col-md-6 hidden">
+                            <label class="control-label">First Payment</label>
+                            <input class="form-control{% if errors.agreementfirstpaymentdate %} error{% endif %}" input type="date" type="date" name ="agreementfirstpaymentdate" readonly value="{{ agreement_detail.agreementfirstpaymentdate }}">
+                            {% if errors.agreementfirstpaymentdate %}
+                                <div class="invalid-feedback display-block">
+                                    {{ errors.agreementfirstpaymentdate }}
+                                </div>
+                            {% endif %}
+                        </div>{% endcomment %}
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label class="control-label">Instalments (NET)</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend{% if errors.agreementinstalmentnet %} error-border{% endif %}">
+                                    <span class="input-group-text">&pound;</span>
+                                </div>
+                                {% if transaction_summary_extract_count > 0 or transition_count > 0 %}
+                                    <input class="form-control{% if errors.agreementinstalmentnet %} error{% endif %}" name="agreementinstalmentnet" type="text" id="agreementinstalmentnet" value="{{ values.agreementinstalmentnet }}" autocomplete="off" onkeypress="return isCurrency(event);" max="10000000" maxlength="10" readonly>
+                                {% else %}
+                                    <input class="form-control{% if errors.agreementinstalmentnet %} error{% endif %}" name="agreementinstalmentnet" type="text" id="agreementinstalmentnet" value="{{ values.agreementinstalmentnet }}" autocomplete="off" onkeypress="return isCurrency(event);" max="10000000" maxlength="10">
+                                       <!--onchange="InstalmentsvatChange(this.form), RiskFeeChange(this.form), DateImplementedChange(this.form), formatCurrency(this)">-->
+                                {% endif %}
+                            </div>
+                            {% if errors.agreementinstalmentnet %}
+                                <div class="invalid-feedback display-block">
+                                    {{ errors.agreementinstalmentnet }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group col-md-4" hidden>
+                            <label class="control-label">Instalments (VAT)</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend{% if errors.agreementinstalmentvat %} error-border{% endif %}">
+                                    <span class="input-group-text">&pound;</span>
+                                </div>
+                                <input class="form-control{% if errors.agreementinstalmentvat %} error{% endif %}" type="float" name="agreementinstalmentvat" id="agreementinstalmentvat" readonly value="{{ values.agreementinstalmentvat }}" autocomplete="off" >
+                            </div>
+                            {% if errors.agreementinstalmentvat %}
+                                <div class="invalid-feedback display-block">
+                                    {{ errors.agreementinstalmentvat }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label class="control-label">Instalments (GROSS)</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend{% if errors.agreement_instalment_gross %} error-border{% endif %}">
+                                    <span class="input-group-text">&pound;</span>
+                                </div>
+                                <input class="form-control{% if errors.agreement_instalment_gross %} error{% endif %}" name="agreement_instalment_gross" id="agreement_instalment_gross" readonly value="{{ values.agreement_instalment_gross }}" autocomplete="off">
+                            </div>
+                            {% if errors.agreement_instalment_gross %}
+                                <div class="invalid-feedback display-block">
+                                    {{ errors.agreement_instalment_gross }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6" hidden>
+                            <label class="control-label">Date Implemented </label>
+                            <div class="input-group">
+                                <div class="input-group-prepend{% if errors.DateImplemented %} error-border{% endif %}">
+                                    <span class="input-group-text"><i class="fa fa-calendar"></i></span>
+                                </div>
+                                <input class="form-control{% if errors.DateImplemented %} error{% endif %}" type="text" name="DateImplemented" readonly id="DateImplemented" value="{{ values.DateImplemented }}">
+                            </div>
+                            {% if errors.DateImplemented %}
+                                <div class="invalid-feedback display-block">
+                                    {{ errors.DateImplemented }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label class="control-label">Principal (NET)</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend{% if errors.agreementoriginalprincipal %} error-border{% endif %}">
+                                    <span class="input-group-text">&pound;</span>
+                                </div>
+                                {% if transaction_summary_extract_count > 0 or transition_count > 0 %}
+                                    <input class="form-control{% if errors.agreementoriginalprincipal %} error{% endif %}" type="text" id="agreementoriginalprincipal" name="agreementoriginalprincipal" type="text" value="{{ values.agreementoriginalprincipal }}" autocomplete="off" max="10000000" maxlength="10" readonly>
+                                {% else %}
+                                    <input class="form-control{% if errors.agreementoriginalprincipal %} error{% endif %}" type="text" id="agreementoriginalprincipal" name="agreementoriginalprincipal" type="text" value="{{ values.agreementoriginalprincipal }}" autocomplete="off" max="10000000" maxlength="10">
+                                {% endif %}
+                            </div>
+                            {% if errors.agreementoriginalprincipal %}
+                                <div class="invalid-feedback display-block">
+                                    {{ errors.agreementoriginalprincipal }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label class="control-label">Finance Charges (NET)</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend{% if errors.agreementcharges %} error-border{% endif %}">
+                                    <span class="input-group-text">&pound;</span>
+                                </div>
+                                <input class="form-control{% if errors.agreementcharges %} error{% endif %}" type="text" name="agreementcharges" id="agreementcharges" readonly value="{{ values.agreementcharges }}">
+                            </div>
+                            {% if errors.agreementcharges %}
+                                <div class="invalid-feedback display-block">
+                                    {{ errors.agreementcharges }}
+                                </div>
+                            {% endif %}
+                        </div>
+{#                    TODO: PAF Changes - Start#}
+                       {% if go_id.risk_flag == 1 %}
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Risk Fee (NET)</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend{% if errors.risk_fee %} error-border{% endif %}">
+                                        <span class="input-group-text">&pound;</span>
+                                    </div>
+                                    <input class="form-control{% if errors.risk_fee %} error{% endif %}" type="text" name="risk_fee" type="text" id="risk_fee" value="{{ values.risk_fee }}" autocomplete="off" max="10000000" maxlength="10" readonly>
+    {#                            TODO: Read Only for most users but editable for special users#}
+                                </div>
+                                {% if errors.risk_fee %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.risk_fee }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="form-group col-md-6" hidden>
+                                <label class="control-label">Risk Fee (NET)</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend{% if errors.risk_fee %} error-border{% endif %}">
+                                        <span class="input-group-text">&pound;</span>
+                                    </div>
+                                    <input class="form-control{% if errors.risk_fee %} error{% endif %}" type="text" name="risk_fee" type="text" id="risk_fee" value="{{ values.risk_fee }}" autocomplete="off" max="10000000" maxlength="10" readonly>
+    {#                            TODO: Read Only for most users but editable for special users#}
+                                </div>
+                                {% if errors.risk_fee %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.risk_fee }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {#                    TODO: PAF Changes - End#}
+                        <div class="form-group col-md-6">
+                            <label class="control-label">Total Fees (NET)</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend{% if errors.agreement_total_fees %} error-border{% endif %}">
+                                    <span class="input-group-text">&pound;</span>
+                                </div>
+                                <input class="form-control{% if errors.agreement_total_fees %} error{% endif %}" type="fixed" name="agreement_total_fees" id="TotalFee" readonly value="{{ values.agreement_total_fees }}">
+                            </div>
+                            {% if errors.agreement_total_fees %}
+                                <div class="invalid-feedback display-block">
+                                    {{ errors.agreement_total_fees }}
+                                </div>
+                            {% endif %}
+                        </div>
+{#                        <div class="form-group col-md-6" hidden>#}
+{#                            <input class="form-control{% if errors.profile %} error{% endif %}" type="hidden" name ="profile" readonly value="{{ profile }}">#}
+{#                            {% if errors.profile %}#}
+{#                                <div class="invalid-feedback display-block">#}
+{#                                    {{ errors.profile }}#}
+{#                                </div>#}
+{#                            {% endif %}#}
+{#                        </div>#}
+{#                    </div>#}
+{#                    <div class="form-row">#}
+                        <div class="form-group col-md-6">
+                            <label class="control-label">Total Payable (NET)</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend{% if errors.agreement_payable_net %} error-border{% endif %}">
+                                    <span class="input-group-text">&pound;</span>
+                                </div>
+                                <input class="form-control{% if errors.agreement_payable_net %} error{% endif %}" type="fixed" name="agreement_payable_net" id="agreement_payable_net" readonly value="{{ values.agreement_payable_net }}">
+                            </div>
+                            {% if errors.agreement_payable_net %}
+                                <div class="invalid-feedback display-block">
+                                    {{ errors.agreement_payable_net }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label class="control-label">Total Payable (GROSS)</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend{% if errors.agreement_payable_gross %} error-border{% endif %}">
+                                    <span class="input-group-text">&pound;</span>
+                                </div>
+                                <input class="form-control" type="float" {#placeholder="if lease 1.2 * NET"#} name="agreement_payable_gross" id="agreement_payable_gross" readonly value="{{ values.agreement_payable_gross }}">
+                                <div class="input-group-append" style="cursor: pointer;" id="postcode-search">
+                                    <span class="input-group-text"><i type="button" class="fa fa-calculator " data-toggle="modal" data-target="#myModal"></i></span>
+                                </div>
+                            </div>
+{#                            <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal">Open Modal</button>#}
+                            {% if errors.agreement_payable_gross %}
+                                <div class="invalid-feedback display-block">
+                                    {{ errors.agreement_payable_gross }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                   <div class="form-group">
+                       <input type="hidden" name="pmt_failed_but_continue" id="pmt_failed">
+                        <div class="text-sm-right">
+                            <a class="btn btn-warning btn-rounded" href="{%  url 'core_agreement_crud:agreement_management_tab2' agreement_id %}">
+                                <span class="title">Back</span>
+                            </a>
+                            {% if transaction_summary_extract_count > 0 or transition_count > 0 %}
+                                <a class="btn btn-gradient-success btn-rounded" href="{%  url 'core_agreement_crud:agreement_management_tab4' agreement_id %}">
+                                <span class="title">Save/Next</span>
+                            </a>
+                            {% else %}
+                                <button type="submit" class="btn btn-gradient-success btn-rounded">
+                                    <span class="title">Save/Next</span>
+                                </button>
+                            {% endif %}
+
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade in" id="failed-pmt-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Warning</h2>
+                </div>
+                <div class="modal-body">
+                    <p>The ratio between Principal and Instalments is outside the norm. </p>
+                    <p>Please double check.</p>
+                    <p>If correct Continue otherwise Update.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-warning" hidden>
+                        Archive Contact
+                    </button>
+                    <button class="btn btn-success" id="continue-to-tab-4">
+                        Continue
+                    </button>
+                    <button class="btn btn-danger" data-dismiss="modal" id="update-tab3">
+                        Update
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="modal-editor">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+            </div>
+        </div>
+    </div>
+
+<div id="myModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+
+    <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+{#            <button type="button" class="close" data-dismiss="modal">&times;</button>#}
+{#            <h4 class="modal-title">Modal Header</h4>#}
+          </div>
+          <table class="modal-body">
+              <table class="table table-hover" id="id-agreements-to-consolidate">
+                  <tr>
+                      <th class="text-right">In Total</th>
+                      <th><input class="form-control border border-info" readonly style="width: 30%"></th>
+                      <th class="text-right ">Not In Total</th>
+                      <th><input class="form-control collected-active-border-color " readonly style="width: 24%"></th>
+                  </tr>
+                  <tr>
+                      <th style="width: 30%"></th>
+                      <th style="width: 10%"></th>
+                      <th style="width: 30%">NET</th>
+                      <th style="width: 30%">GROSS</th>
+{#                       <th style="width: 25%">Oursanding Principal</th>#}
+{#                       <th style="width: 20%">Status</th>#}
+
+                  </tr>
+                  <tr data-isinitial="true">
+                      <th style="width: 20%">Principal</th>
+                      <th></th>
+                      <th><input class="form-control border border-info{% if errors.agreementoriginalprincipal %} error{% endif %}" type="text" id="agreementoriginalprincipaloriginal" name="agreementoriginalprincipaloriginal" type="text" value="{{ values.agreementoriginalprincipal }}" autocomplete="off" max="10000000" maxlength="10" readonly></th>
+                      <th><input class="form-control border border-info{% if errors.agreementoriginalprincipal %} error{% endif %}" type="text" id="agreementoriginalprincipalgross" name="agreementoriginalprincipalgross" type="text" value="{{ values.agreementoriginalprincipal }}" autocomplete="off" max="10000000" maxlength="10" readonly></th>
+                  </tr>
+                    <tr data-isinitial="true">
+                       <th style="width: 20%">Instalments</th>
+                       <th></th>
+                       <th><input class="form-control {% if errors.agreementinstalmentnet %} error{% endif %}" name="agreementinstalmentnetoriginal" type="text" id="agreementinstalmentnetoriginal"  autocomplete="off" onkeypress="return isCurrency(event);" max="10000000" maxlength="10" readonly></th>
+                       <th><input class="form-control {% if errors.agreement_instalment_gross %} error{% endif %}" name="agreement_instalment_gross_original" type="text" id="agreement_instalment_gross_original" autocomplete="off" onkeypress="return isCurrency(event);" max="10000000" maxlength="10" readonly></th>
+                    </tr>
+                  <tr data-isinitial="true">
+                      <th style="width: 20%">Finance Charges</th>
+                      <th></th>
+                      <th><input class="form-control border border-info{% if errors.agreementcharges %} error{% endif %}" type="text" name="agreementchargesoriginal" id="agreementchargesoriginal" readonly value="{{ values.agreementcharges }}"></th>
+                      <th><input class="form-control border border-info{% if errors.agreementcharges %} error{% endif %}" type="text" name="agreementchargesgross" id="agreementchargesgross" readonly value="{{ values.agreementcharges }}"></th>
+                  </tr>
+                  <tr data-isinitial="true">
+                      <th style="width: 20%">Total Fees</th>
+                      <th><i class="fa fa-chevron-right cursor-pointer title-icons" id="toggle_contact_details_right"></i>
+                          <i class="fa fa-chevron-down cursor-pointer title-icons" style="display: none;" id="toggle_contact_details_down"></i></h2>
+                      </th>
+                      <th><input class="form-control border border-info {% if errors.agreement_total_fees %} error{% endif %}" type="text" name="TotalFeeoriginal" id="TotalFeeoriginal" readonly value="{{ values.agreement_total_fees }}"></th>
+                      <th><input class="form-control border border-info{% if errors.agreement_total_fees %} error{% endif %}"type="text" name="TotalFeeGross" id="TotalFeeGross" readonly value="{{ values.agreement_total_fees }}"></th>
+                  </tr>
+              </table>
+              <table class="table table-hover" id="contact_details" style="display: none;">
+                  {#TODO: GO#110 - Start #}
+                  <tr data-isinitial="true">
+                      <th style="width: 30%">Doc Fee</th>
+                      <th style="width: 10%"></th>
+                      <th style="width: 30%"><input class="form-control {% if errors.doc_fee %} error{% endif %}"  type="text" name ="doc_fee_original" id="doc_fee_original" onchange="formatCurrency(this)" value="{{ values.doc_fee_original }}" autocomplete="off" onkeypress="return isCurrency(event)" max="10000000" maxlength="10" readonly></th>
+                      <th style="width: 30%"><input class="form-control {% if errors.doc_fee %} error{% endif %}"  type="text" name ="doc_fee_gross" id="doc_fee_gross" onchange="formatCurrency(this)" value="{{ values.doc_fee_gross }}" autocomplete="off" onkeypress="return isCurrency(event)" max="10000000" maxlength="10" readonly></th>
+                  </tr>
+                  {% if go_id.broker_id == 2 %}
+                      <tr data-isinitial="true">
+                          <th style="width: 30%">Doc Fee 2</th>
+                          <th style="width: 10%"></th>
+                           <th style="width: 30%"><input class="form-control {% if errors.agreementinstalmentnet %} error{% endif %}" type="text" name ="doc_fee_2_original" id="doc_fee_2_original" onchange="formatCurrency(this)" value="{{ values.doc_fee_2_original }}" autocomplete="off" onkeypress="return isCurrency(event);" max="10000000" maxlength="10" readonly></th>
+                           <th style="width: 30%"><input class="form-control {% if errors.agreement_instalment_gross %} error{% endif %}" type="text" name ="doc_fee_2_gross" id="doc_fee_2_gross" onchange="formatCurrency(this)" value="{{ values.doc_fee_2_gross }}" autocomplete="off" onkeypress="return isCurrency(event);" max="10000000" maxlength="10" readonly></th>
+                      </tr>
+                  {% endif %}
+                  {% if go_id.risk_flag == 1 %}
+                      <tr data-isinitial="true">
+                          <th style="width: 20%">Risk Fee</th>
+                          <th></th>
+                          <th><input class="form-control {% if errors.risk_fee %} error{% endif %}" type="text" name="risk_fee_total" type="text" id="risk_fee_total" value="{{ values.risk_fee_total }}" autocomplete="off" max="10000000" maxlength="10" readonly></th>
+                          <th><input class="form-control {% if errors.risk_fee %} error{% endif %}" type="text" name="risk_fee_total_gross" type="text" id="risk_fee_total_gross" value="{{ values.risk_fee_gross_total }}" autocomplete="off" max="10000000" maxlength="10" readonly></th>
+                      </tr>
+                  {% endif %}
+                  {% if go_id.bamf_flag == 1 %}
+                      <tr data-isinitial="true">
+                          <th style="width: 20%">BAMF Fee</th>
+                          <th></th>
+                          <th><input class="form-control {% if errors.bamf_fee %} error{% endif %}" type="text" name="bamf_fee" type="text" id="bamf_fee" value="{{ values.bamf_fee }}" autocomplete="off" max="10000000" maxlength="10" readonly></th>
+                          <th><input class="form-control {% if errors.bamf_fee_gross %} error{% endif %}" type="text" name="bamf_fee_gross" type="text" id="bamf_fee_gross" value="{{ values.bamf_fee_gross }}" autocomplete="off" max="10000000" maxlength="10" readonly></th>
+                      </tr>
+                  {% endif %}
+                  {% if go_id.amf_flag == 1 %}
+                      <tr data-isinitial="true">
+                          <th style="width: 20%">AMF Fee</th>
+                          <th></th>
+                          <th><input class="form-control {% if errors.amf_fee %} error{% endif %}" type="text" name="amf_fee" type="text" id="amf_fee" value="{{ values.amf_fee }}" autocomplete="off" max="10000000" maxlength="10" readonly></th>
+                          <th><input class="form-control {% if errors.amf_fee_gross %} error{% endif %}" type="text" name="amf_fee_gross" type="text" id="amf_fee_gross" value="{{ values.amf_fee_gross }}" autocomplete="off" max="10000000" maxlength="10" readonly></th>
+                      </tr>
+                  {% endif %}
+                   {#TODO: GO#110 - End #}
+              </table>
+              <table class="table table-hover" id="id-agreements-to-consolidate">
+                  <tr data-isinitial="true">
+                      <th style="width: 30%">Total Payable</th>
+                      <th style="width: 10%"></th>
+                      <th style="width: 30%"><input class="form-control border border-info" {% if errors.agreement_payable_net %} error{% endif %}" type="fixed" name="agreement_payable_net2" id="agreement_payable_net2" readonly value="{{ values.agreement_payable_net }}"></th>
+                      <th style="width: 30%"><input class="form-control border border-info" type="float" name="agreement_payable_gross2" id="agreement_payable_gross2" readonly value="{{ values.agreement_payable_gross }}"></th>
+                  </tr>
+              </table>
+              <div class="modal-footer">
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              </div>
+          </table>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
+{% block page-js %}
+    <script src="{% static 'static_core_agreement_editor_template/js/editors.js' %}"></script>
+    <script src="{% static 'moment-with-locales.js' %}"></script>
+
+    <script src="{% static 'easyautocomplete/jquery.easy-autocomplete.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'easyautocomplete/easy-autocomplete.css' %}">
+    <script src="{% static 'core_agreement_crud.js' %}"></script>
+
+    <script type="text/javascript">
+        {% if pmt_failed %}
+            $("#failed-pmt-modal").modal({"backdrop": "static"});
+        {% endif %}
+    </script>
+
+    <script>
+        (function() {
+
+            'use strict';
+            window.addEventListener('load', function() {
+                // Fetch all the forms we want to apply custom Bootstrap validation styles to
+                var forms = document.getElementsByClassName('needs-validation');
+                // Loop over them and prevent submission
+                var validation = Array.prototype.filter.call(forms, function(form) {
+                    form.addEventListener('submit', function(event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                        }, false);
+                });
+                }, false);
+        })();
+    </script>
+     <script>
+        $(function() {
+
+            $("#continue-to-tab-4").click(function() {
+                $("#pmt_failed").val('true');
+                $("#tab3-form").submit();
+            });
+
+            $("#update-tab3").click(function() {
+                $("#pmt_failed").val('');
+            });
+
+            {#var profile = $("#profile");#}
+            var docFee = $("#doc_fee");
+            var docFeeoriginal = $("#doc_fee_original");
+            var docFeeGross = $("#doc_fee_gross");
+            var riskFee = $("#risk_fee");
+            var riskFeeGross = $("#risk_fee_gross");
+            var riskFeeTotal = $("#risk_fee_total");
+            var riskFeeTotalGross = $("#risk_fee_total_gross");
+            var charges = $("#agreementcharges");
+            var chargesoriginal = $("#agreementchargesoriginal");
+            var chargesgross = $("#agreementchargesgross");
+            var totalFee = $("#TotalFee");
+            var totalFeeoriginal = $("#TotalFeeoriginal");
+            var totalFeeGross = $("#TotalFeeGross");
+            var principle = $("#agreementoriginalprincipal");
+            var principleoriginal = $("#agreementoriginalprincipaloriginal");
+            var principlegross = $("#agreementoriginalprincipalgross");
+            var payableNet = $("#agreement_payable_net");
+            var payableGross = $("#agreement_payable_gross");
+            var instalmentsNet = $("#agreementinstalmentnet");
+            var instalmentsNetoriginal = $("#agreementinstalmentnetoriginal");
+            var instalmentsVat = $("#agreementinstalmentvat");
+            var instalmentsGross = $("#agreement_instalment_gross");
+            var instalmentsGrossoriginal = $("#agreement_instalment_gross_original");
+            var dateimplemented = $("#DateImplemented");
+            var bamffee = $("#bamf_fee");
+            var bamffeegross = $("#bamf_fee_gross");
+             {#TODO: GO#110 - Start#}
+            var amffee = $("#amf_fee");
+            var amffeegross = $("#amf_fee_gross");
+            var docFee2original = $("#doc_fee_2_original");
+            var docFee2Gross = $("#doc_fee_2_gross");
+
+            {#TODO: GO#110 - End #}
+
+            var payableNet2 = $("#agreement_payable_net2");
+            var payableGross2 = $("#agreement_payable_gross2");
+
+
+            var original_risk_fee = 0;
+            if (docFee.val()){calculate()}
+            docFee.on('change', calculate);
+            docFee.on('change', soft_validation);
+            principle.on('change', calculate);
+            instalmentsNet.on('change', calculate);
+
+            function soft_validation() {
+                if (docFee.val() > 5000) {
+                    $("#doc_fee_error").removeClass("display-block").addClass("display-block").html("Doc Fee is higher than £5000, are you sure?")
+                } else {
+                    $("#doc_fee_error").removeClass("display-block").html("");
+                }
+            }
+
+            function calculate() {
+
+                var instalmentNetAmount = parseFloat(instalmentsNet.val().replace(",", ""));
+                instalmentsNetoriginal.val(convert(instalmentNetAmount));
+
+
+                if(({{ agreement_detail.agreementagreementtypeid.agreementdefid }}) == 5){
+                    var instalmentsVatAmount = instalmentNetAmount * 0;
+                    instalmentsVat.val(convert(instalmentsVatAmount));
+
+                    var instalmentsGrossAmount = instalmentNetAmount;
+                    instalmentsGross.val(convert(instalmentsGrossAmount));
+                    instalmentsGrossoriginal.val(convert(instalmentsGrossAmount));
+
+                }
+                else if (({{ agreement_detail.agreementagreementtypeid.agreementdefid }}) == 1) {
+                    var instalmentsVatAmount = instalmentNetAmount * 0.2;
+                    instalmentsVat.val(convert(instalmentsVatAmount));
+
+                    // Instalments Gross
+                    var instalmentsGrossAmount = instalmentNetAmount * 1.2;
+                    instalmentsGross.val(convert(instalmentsGrossAmount));
+                    instalmentsGrossoriginal.val(convert(instalmentsGrossAmount));
+                }
+
+                // Risk Fee
+                var riskFeeAmount = 0;
+
+                if (({{ broker }})==2){
+                    riskFeeAmount = 0;
+                }
+
+                else if (({{ go_id.risk_flag }}) == 0) {
+                    riskFeeAmount = 0;
+                }
+
+                else if(instalmentsGrossAmount > 3000) {
+                    riskFeeAmount = 300;
+                }
+                else if(instalmentsGrossAmount > 2000) {
+                    riskFeeAmount = 200;
+                }
+                else if(instalmentsGrossAmount >= 500) {
+                    riskFeeAmount = 100;
+                }
+                {#TODO: GO#110 - Start #}
+                original_risk_fee = riskFeeAmount / 1.2;
+                riskFee.val(convert(original_risk_fee));
+                riskFeeGross.val(convert(riskFeeAmount));
+                {#TODO: GO#110 - End #}
+                var now = new Date();
+                dateimplemented.val(now.getDate() + "/" + now.getMonth() + "/" + now.getFullYear());
+
+                var principleAmount = parseFloat(principle.val().replace(",", ""));
+
+                var chargesAmount = (instalmentNetAmount * {{ term }}) - principleAmount;
+                charges.val(convert(chargesAmount));
+                chargesoriginal.val(convert(chargesAmount));
+
+                if (({{ agreement_detail.agreementagreementtypeid.agreementdefid }}) == 1) {
+                    chargesAmountgross = chargesAmount*1.2
+                    chargesgross.val(convert(chargesAmountgross));
+
+                }
+                else if (({{ agreement_detail.agreementagreementtypeid.agreementdefid }}) == 5) {
+                    chargesAmountgross = chargesAmount
+                    chargesgross.val(convert(chargesAmountgross));
+                }
+
+                var docFeeAmount = parseFloat(docFee.val().replace(",", ""));
+                var riskFeeAmount = parseFloat(riskFee.val().replace(",", ""));
+
+                {#TODO: GO#110 - Start #}
+                var BAMF = Math.floor({{ term }}/ 6);
+                if (({{ broker }})==2){
+                    var BAMF = Math.floor({{ term }}/ 12);
+                }
+
+                if (({{ broker }})==2){
+                    riskFeeAmount = 0;
+                }
+                if (({{ go_id.bamf_flag }}) == 0) {
+                    BAMF = 0;
+                }
+                if (({{ go_collection_schedule }}) == 3) {
+                    var AMF = Math.floor({{ term }}/ 12);
+                }
+                else if (({{ go_collection_schedule }}) == 4) {
+                   var AMF = Math.floor({{ term }}/ 3);
+                }
+                if (({{ go_id.amf_flag }}) == 0) {
+                    AMF = 0;
+                }
+                var b1 =AMF * {{ amf_amount }}
+                var b1 =AMF * 195;
+                var b = BAMF * 195;
+                var c = (original_risk_fee) * {{ term }};
+
+                if(({{ broker }})==2) {
+                    var e = instalmentNetAmount;
+                }
+                else if (({{ broker }})!=2){
+                    var e = 0;
+                 }
+                {#if(({{ broker }})==2){#}
+                {#    var e = instalmentNetAmount;#}
+                {# }#}
+                else {
+                    var e = 0;
+                 }
+
+                var d = b + b1 + c + e + parseFloat(docFeeAmount);
+                totalFee.val(convert(d));
+                totalFeeoriginal.val(convert(d));
+                {#TODO: GO#110 - End #}
+
+                {#TODO: GO#110 - Start #}
+                g = docFeeAmount * 1.2;
+                f = d*1.2;
+                bamffee.val(convert(b));
+                amffee.val(convert(b1));
+                h = b*1.2;
+                h1=b1*1.2
+                bamffeegross.val(convert(h));
+                amffeegross.val(convert(h1));
+                docFeeoriginal.val(convert(docFeeAmount));
+                docFeeGross.val(convert(g));
+                docFee2original.val(convert(e));
+                docFee2Gross.val(convert(e));
+                riskFeeTotal.val(convert(c));
+                i=c*1.2;
+                if (({{ agreement_detail.agreementagreementtypeid.agreementdefid }}) == 5 && (({{ broker }})==2)){
+                    i2 = e+h1+g
+                    totalFeeGross.val(convert(i2))
+
+                    i3= e+h1+g+chargesAmount+instalmentsGrossAmount
+                    riskFeeTotalGross.val(convert());
+                    console.log(i3)
+                }
+                else {
+                   totalFeeGross.val(convert(f));
+                   riskFeeTotalGross.val(convert(i));
+                }
+                riskFeeTotalGross.val(convert(i));
+                {#TODO: GO#110 - End #}
+
+                var payableNetAmount = principleAmount + chargesAmount + d;
+                payableNet.val(convert(payableNetAmount));
+                principleoriginal.val(convert(principleAmount));
+
+                if (({{ agreement_detail.agreementagreementtypeid.agreementdefid }}) == 1) {
+                    payableGross.val(convert(payableNetAmount*1.2));
+                    principle.val(convert(principleAmount));
+                    principleAmountgross = principleAmount*1.2;
+                    principlegross.val(convert(principleAmountgross));
+
+                    payableGross2.val(convert(payableNetAmount*1.2));
+                    payableNet2.val(convert(payableNetAmount));
+                }
+                else if (({{ agreement_detail.agreementagreementtypeid.agreementdefid }}) == 5 && (({{ broker }})==2)){
+                    {#TODO: GO#110 - Start #}
+
+                    Gross_wip = g + h1 + e +chargesAmount + principleAmount
+                    payableGross.val(convert(Gross_wip));
+                    principle.val(convert(principleAmount));
+
+                    principleAmountgross = principleAmount
+                    principlegross.val(convert(principleAmountgross));
+
+                    payableGross2.val(convert(Gross_wip));
+                    payableNet2.val(convert(payableNetAmount));
+                    {#TODO: GO#110 - End #}
+
+                }
+                else if (({{ agreement_detail.agreementagreementtypeid.agreementdefid }}) == 5) {
+                    {#TODO: GO#110 - Start #}
+
+                    Gross_wip = payableNetAmount + (d*0.2)
+                    payableGross.val(convert(Gross_wip));
+                    principle.val(convert(principleAmount));
+
+                    principleAmountgross = principleAmount
+                    principlegross.val(convert(principleAmountgross));
+
+                    payableGross2.val(convert(Gross_wip));
+                    payableNet2.val(convert(payableNetAmount));
+                    {#TODO: GO#110 - End #}
+                }
+            }
+        });
+
+        function convert(v) {
+            if(isNaN(v)) return ;
+            return v.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits: 2});
+        }
+
+        function formatCurrency(t) {
+            // Input type MUST be text
+            // t = this
+            t.value = parseFloat(t.value).toFixed(2);
+            if (isNaN(t.value)) t.value = '' ;
+        }
+
+    </script>
+    <script>
+      $('#files_header').click(function(){
+          document.getElementById('files_tab').style.display = '';
+          document.getElementById('contacts_tab').style.display = 'none';
+      });
+
+      $("[id^=toggle_contact_details]").click(function() {
+          {#var contact_id = $(this).attr("data-contact-id");#}
+          $("#contact_details").toggle('slow');
+          var toggleIds = "[id^=toggle_contact_details]";
+          $(toggleIds).toggle();
+      });
+    </script>
+
+
+
+    <script type="text/javascript" >
+
+        function preventBack(){window.history.forward();}
+        setTimeout("preventBack()", 0);
+        window.onunload=function(){null};
+
+        var uri = window.location.toString();
+        if (uri.indexOf("?") > 0) {
+            var clean_uri = uri.substring(0, uri.indexOf("?"));
+            window.history.replaceState({}, document.title, clean_uri);
+        }
+
+    </script>
+{% endblock %}

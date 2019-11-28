@@ -1,0 +1,402 @@
+{% extends 'dashboard_base.html' %}
+{% load staticfiles %}
+{% load humanize %}
+
+{% block content %}
+
+    <div class="page-header">
+        <h2 class="header-title" style="color: #8dabc4">DD BATCH HISTORY</h2>
+    </div>
+
+    {% if error %}
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="alert alert-danger">
+                {{ error }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if invalid_due_date %}
+    <div class="row">
+         <div class="col-sm-12">
+            <div class="alert alert-danger">
+                0 drawdowns found for this due date.
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if created %}
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="alert alert-success">
+                {{ created }} batches have been successfully created.
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if open %}
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="alert alert-success">
+                These batches are already open for this due date. Edit these to include changes.
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-header p-b-0 m-b-0 border bottom">
+            <form method="get" class="form-inline">
+                <span class="m-b-20 m-r-15"><h4 class="text-thin">Filter by: </h4></span>
+                <input type="text" class="form-control m-b-20 m-r-15" placeholder="Batch ref..." name="reference__contains" value="{{ filter.reference__contains }}">
+                <span class="m-b-20 m-r-15"> and </span>
+                <select class="m-b-20 m-r-15 form-control" name="funder">
+                    <option value="" {% if not filter.funder %}selected{% endif %}>Funder</option>
+                {# TODO: PAF Changes - Start#}
+                    <option value="1" {% if filter.funder == '1' %}selected{% endif %}>{{ go_funder1.funder_description }}</option>
+                    <option value="2" {% if filter.funder == '2' %}selected{% endif %}>{{ go_funder2.funder_description }}</option>
+                    <option value="3" {% if filter.funder == '3' %}selected{% endif %}>{{ go_funder3.funder_description }}</option>
+                    <option value="4" {% if filter.funder == '4' %}selected{% endif %}>{{ go_funder4.funder_description }}</option>
+                    <option value="5" {% if filter.funder == '5' %}selected{% endif %}>{{ go_funder5.funder_description }}</option>
+{#                    <option value="6" {% if filter.funder == '6' %}selected{% endif %}>Nationwide</option>#}
+                {#TODO: PAF Changes - End#}
+                </select>
+                <span class="m-b-20 m-r-15"> and </span>
+                <input type="date" class="form-control m-b-20 m-r-15" placeholder="Due date..." name="due_date" value="{{ filter.due_date }}">
+                <span class="m-b-20 m-r-15"><h4 class="text-thin"> and </h4></span>
+                <select class="m-b-20 m-r-15 form-control" name="status">
+                    <option value="">Status</option>
+                    <option value="OPEN">OPEN</option>
+                    <option value="PROCESSING">PROCESSING</option>
+                    <option value="SENT">SENT</option>
+                    <option value="RECEIVED">RECEIVED</option>
+                    <option value="ARCHIVED">ARCHIVED</option>
+                </select>
+                <button type="submit" class="btn btn-icon btn-success m-b-20" data-keep-referer="true">
+                    <i class="mdi mdi-magnify"></i>
+                </button>
+                {% if filter %}
+                    <a class="btn btn-icon btn-warning m-b-20" href="{% url 'core_dd_drawdowns:view_batches' %}">
+                        <i class="mdi mdi-refresh"></i>
+                    </a>
+                {% endif %}
+                <button data-toggle="modal" data-target="#new-batch-filter" data-backdrop="static" data-keyboard="false" class="btn btn-success m-b-20" type="button" style="margin-left:auto">
+                    <i class="fa fa-plus"></i> New Batch
+                </button>
+            </form>
+        </div>
+        <div class="card-body">
+            <div class="col-sm-12">
+                <table class="table table-bordered table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th><b>Reference</b></th>
+                            <th><b>Funder</b></th>
+                            <th><b>Total Count</b></th>
+                            <th><b>Total Amount</b></th>
+                            <th><b>Scheduled Due date</b></th>
+                            <th><b>Actual Due Date</b></th>
+                            <th><b>Status</b></th>
+                            <th><b>User</b></th>
+                            <th><b>Created Date</b></th>
+                            <th>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in records %}
+                            <tr>
+                                <td>{{ row.reference }}</td>
+                                {#TODO: PAF Changes - Start#}
+                                <td>{% if row.funder_id == 1 %}
+                                        <span class="badge badge-default">{{ go_funder1.funder_description }}</span>
+                                    {% elif row.funder_id == 2 %}
+                                        <span class="badge badge-info">{{ go_funder2.funder_description }}</span>
+                                    {% elif row.funder_id == 3 %}
+                                        <span class="badge badge-primary">{{ go_funder3.funder_description }}</span>
+                                    {% elif row.funder_id == 4 %}
+                                        <span class="badge badge-warning">{{ go_funder4.funder_description }}</span>
+                                    {% elif row.funder_id == 5 %}
+                                        <span class="badge badge-success">{{ go_funder5.funder_description }}</span>
+                                    {% else %}
+{#                                        <span class="badge badge-danger">{{ row.status.text_code }}</span>#}
+                                        <span class="badge badge-danger">Funder Error</span>
+                                    {% endif %}</td>
+                                {#TODO: PAF Changes - End#}
+                                <td>{{ row.total_count }}</td>
+                                <td>&pound;{{ row.total_amount|intcomma }}</td>
+                                <td>{{ row.due_date }}</td>
+                                <td>{% if row.call_date %}{{ row.call_date }}{% else %}{{ row.due_date }}{% endif %}</td>
+                                <td>
+                                    {% if row.status.text_code == 'OPEN' %}
+                                        <span class="badge badge-warning">OPEN</span>
+                                    {% elif row.status.text_code == 'RECEIVED' %}
+                                        <span class="badge badge-success" style="background-color:forestgreen">RECEIVED</span>
+                                    {% elif row.status.text_code == 'PROCESSING' %}
+                                        <span class="badge badge-info">PROCESSING</span>
+                                    {% elif row.status.text_code == 'ARCHIVED' %}
+                                        <span class="badge badge-secondary">ARCHIVED</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">{{ row.status.text_code }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{% if row.user %}{{ row.user }}{% else %}lazybatch{% endif %}</td>
+                                <td>{{ row.created }}</td>
+                                <td>
+                                    {% if row.status.text_code == 'OPEN' %}
+                                        <a data-keep-referer="true" data-loader="{{ row.id }}" class="text-success fa fa-pencil" href="{% url 'core_dd_drawdowns:view_batch' row.id %}"></a>
+                                        <i class="fa fa-spinner fa-pulse" id="loading_{{ row.id }}" style="display: none;"></i>
+{#                                        <a class="text-success fa fa-lock" href="{% url 'core_dd_drawdowns:unlock_batch' row.due_date %}"></a>#}
+                                        <div class="pull-right">
+                                            <span id="id-batch-locked" class="text-danger" data-row-id="{{ row.id }}" data-unlock-url="{% url 'core_dd_drawdowns:unlock_batch' row.id %}" style="cursor: pointer;{% if not row.batch_lock %}display:none;{% endif %}" data-toggle="tooltip" data-placement="left" data-title="This batch is currently locked by {{ row.batch_lock.user }} ({{ row.batch_lock.created }}). Please click to unlock.">
+                                                <i class="fa fa-lock"></i>
+                                            </span>
+                                            <i id="id-batch-unlocked" data-unlock-id="{{ row.id }}" class="text-success fa fa-unlock-alt" style="{% if row.batch_lock %}display:none;{% endif %}"></i>
+                                        </div>
+                                    {% else %}
+                                        <a data-keep-referer="true" class="text-success fa fa-eye" href="{% url 'core_dd_drawdowns:view_batch' row.id %}"></a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            <div>
+                <div class="dataTables_paginate paging_simple_numbers">
+                    <ul class="pagination">
+                        {% if records.has_previous %}
+                            <li class="paginate_button page-item previous">
+                                {% if 'agreementnumber' in request.get_full_path %}
+                                    <a href="{{ request.get_full_path }}&page={{ records.previous_page_number }}" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                                {% else %}
+                                    <a href="?page={{ records.previous_page_number }}" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                                {% endif %}
+                            </li>
+                        {% else %}
+                            <li class="paginate_button page-item previous disabled">
+                                <a href="#" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                            </li>
+                        {% endif %}
+                        {% for i in records.paginator.page_range %}
+                            {% if records.number == i %}
+                                <li class="paginate_button page-item active">
+                                    {% if 'agreementnumber' in request.get_full_path %}
+                                        <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                    {% else %}
+                                        <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                    {% endif %}
+                                </li>
+                            {% else %}
+                            {% if records.number < i %}
+                                {% if records.number|add:"1" >= i %}
+                                    <li class="paginate_button page-item">
+                                        {% if 'agreementnumber' in request.get_full_path %}
+                                            <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% else %}
+                                            <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% endif %}
+                                    </li>
+                                {% else %}
+                                {% if records.paginator.num_pages == i %}
+                                    <li class="paginate_button page-item disabled">
+                                        <a href="#" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">
+                                            <i class="mdi mdi-dots-horizontal"></i>
+                                        </a>
+                                    </li>
+                                    <li class="paginate_button page-item">
+                                        {% if 'agreementnumber' in request.get_full_path %}
+                                            <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% else %}
+                                            <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% endif %}
+                                    </li>
+                                {% endif %}
+                                {% endif %}
+                            {% endif %}
+                                {% if records.number > i %}
+                                    {% if records.number|add:"-2" < i  %}
+                                        <li class="paginate_button page-item">
+                                            {% if 'agreementnumber' in request.get_full_path %}
+                                                <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% endif %}
+                                        </li>
+                                    {% else %}
+                                    {% if 1 == i %}
+                                        <li class="paginate_button page-item">
+                                            {% if 'agreementnumber' in request.get_full_path %}
+                                                <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% endif %}
+                                        </li>
+                                        <li class="paginate_button page-item disabled">
+                                            <a href="#" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">
+                                                <i class="mdi mdi-dots-horizontal"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if records.has_next %}
+                            <li class="paginate_button page-item next" id="dt-opt_next">
+                                {% if 'agreementnumber' in request.get_full_path %}
+                                    <a href="{{ request.get_full_path }}&page={{ records.next_page_number }}" aria-controls="dt-opt" data-dt-idx="3" tabindex="0" class="page-link">Next</a>
+                                {% else %}
+                                    <a href="?page={{ records.next_page_number }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">Next</a>
+                                {% endif %}
+                            </li>
+                        {% else %}
+                            <li class="paginate_button page-item next disabled" id="dt-opt_next">
+                                <a href="#" aria-controls="dt-opt" data-dt-idx="3" tabindex="0" class="page-link">Next</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade in" id="new-batch-filter">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Create New Batch</h2>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger" id="due-date-error" style="display:none;"></div>
+                    <div class="form">
+                        <div class="form-group">
+                            <label class="control-label"><b>Due Date</b></label>
+                            <input type="date" class="form-control" id="batch-due-date" maxlength="8" min="2000-01-01" max="2100-12-31">
+                            <div class="invalid-feedback" id="batch-due-date_error"></div>
+                        </div>
+
+                        <div class="form-group" style="display: none;" id="id-call-date">
+                            <label class="control-label"><b>Actual Due Date</b></label>
+                            <input type="date" class="form-control" id="batch-call-date" maxlength="8" min="2000-01-01" max="2100-12-31">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div style="display: none;" class="create-new-batch-loading">
+                        <table style="vertical-align: center; font-size: 12pt;">
+                            <tr>
+                                <td><i class="fa fa-spinner fa-pulse fa-2x"></i></td>
+                                <td>&nbsp;Checking <span id="dd-count-incr"></span>...</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <button class="btn btn-success create-new-batch" data-keep-referer="true">
+                        <i class="fa fa-thumbs-up"></i>
+                        Create
+                    </button>
+                    <button class="btn btn-danger" id="cancel-create-new-batch" data-dismiss="modal">
+                        <i class="fa fa-thumbs-down"></i>
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block page-js %}
+
+
+    <script src="{% static 'core_dd_drawdowns.js' %}"></script>
+
+    <script type="text/javascript">
+
+        var locationUrl = location.href ;
+
+        if(typeof(Storage) !== "undefined") {
+            sessionStorage.removeItem('batchListReferer');
+        }
+
+        $(function() {
+
+            var $batchDueDate = $("#batch-due-date");
+
+            $batchDueDate.change(function() {
+                if ($batchDueDate.val()) {
+                    $("#batch-call-date").val($batchDueDate.val());
+                    $("#id-call-date").show();
+                } else {
+                    $("#id-call-date").hide();
+                }
+                soft_validation($batchDueDate.val());
+            });
+
+            $("[data-keep-referer='true']").click(function() {
+                if(typeof(Storage) !== "undefined") {
+                    sessionStorage.batchListReferer = locationUrl;
+                }
+            });
+
+            $("[data-loader]").click(function() {
+                this.style.display = 'none';
+                $("body").css("cursor", "wait");
+                $("#loading_" + this.getAttribute('data-loader')).show();
+            });
+
+            var lockClicked = false ;
+            $("[data-unlock-url]").click(function() {
+
+                if (lockClicked) return ;
+
+                lockClicked = true ;
+
+                var $this = $(this);
+
+                var id = $this.attr("data-row-id");
+                var url = $this.attr("data-unlock-url");
+
+                $.ajax({
+                    method: 'POST',
+                    url: url,
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                    },
+                    success: function() {
+                        $this.hide();
+                        $("[data-unlock-id='" + id + "']").show();
+                        lockClicked = false ;
+                    },
+                    error: function() {
+                        alert("Failed to unlock.");
+                        lockClicked = false ;
+                    }
+                });
+            });
+        });
+
+        var uri = window.location.toString();
+        if (uri.indexOf("?") > 0) {
+            var clean_uri = uri.substring(0, uri.indexOf("?"));
+            window.history.replaceState({}, document.title, clean_uri);
+         }
+
+        var today = new Date();
+        function soft_validation(val) {
+            if (new Date(val) < today) {
+                $("#batch-due-date_error").removeClass("display-block").addClass("display-block").html("Due Date is in the past, are you sure?")
+            } else {
+                $("#batch-due-date_error").removeClass("display-block").html("");
+            }
+        }
+
+    </script>
+
+
+{% endblock %}

@@ -1,0 +1,943 @@
+{% extends "dashboard_base.html" %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+{% load dashboard_extras %}
+{% block metadescription %}
+   Apellio Dashboard
+{% endblock %}
+{% block title %}
+   Apellio Dashboard
+{% endblock %}
+{% block page-css %}
+    <link rel="stylesheet" href="{% static 'core_agreement_crud.css' %}">
+{% endblock %}
+{% block content %}
+{# TODO: PAF Changes - Start #}
+<style>
+.slidecontainer {
+  width: 100%;
+}
+
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 25px;
+  background: #f0f2f5;
+  outline: none;
+  {#opacity: 0.7;#}
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+
+.slider:hover {
+  opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 25px;
+  height: 25px;
+  background: #2acfd2;
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 25px;
+  height: 25px;
+  background: #2acfd2;
+  cursor: pointer;
+}
+{# TODO: PAF Changes - End #}
+</style>
+<div class="page-header">
+    <h2 class="header-title"> {{ agreement_detail.agreementnumber }}&nbsp; &nbsp;</h2>&nbsp;
+    <h2 class="header-title">{{ agreement_customer.customercompany }}&nbsp; &nbsp;</h2>&nbsp;
+    <h2 class="header-title" data-toggle="tooltip" data-placement="bottom"
+        title="Sales Representative">{{ agreement_detail.agreementauthority }}&nbsp; &nbsp;</h2>&nbsp;
+    {% if agreement_regulated_flag %}
+        <button type="button" class="btn btn-success btn-w-sm" data-toggle="popover" data-trigger="hover"   title="" data-content="This is a regulated agreement,                         please deal with accordingly." data-original-title="Regulated Agreement" aria-describedby="popover676999">
+
+        </button>
+    {% endif %}
+    <div class="header-sub-title">
+        {% if  agreement_detail.agreementdefname != 'Hire Purchase' and agreement_detail.agreementdefname != 'Management Fee' %}
+            <span class="badge badge-info badge-lg">{{ agreement_detail.agreementdefname }}</span>
+        {% else %}
+            <span class="badge badge-primary badge-lg">{{ agreement_detail.agreementdefname }}</span>
+        {% endif %}
+        {% if agreement_detail.agreementclosedflag_id == 902 %}
+            <span class="badge badge-danger badge-lg">Closed</span>
+        {% endif %}
+        {% if agreement_detail.agreementddstatus_id == 'I' %}
+            <span class="badge badge-danger badge-lg">DD Inactive</span>
+        {% endif %}
+        {% if agreement_detail.agreement_stage == '4'%}
+            <nav class="breadcrumb breadcrumb-dash">&nbsp;
+                <a class="breadcrumb-item text-success agreement-list" href="{%  url 'core_agreement_crud:AgreementEnquiryList' %}"><i class="ti-list p-r-5"></i>Agreement List</a>
+                <span class="breadcrumb-item active">Agreement Detail</span>
+            </nav>
+            <a href='javascript:void(window.open("{% url 'notes:main' %}?customer_id={{ agreement_customer.customernumber }}&agreement_id={{ agreement_detail.agreementnumber }}", "core_notes", "scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no, width=2000,height=1000,left=0,top=0"));' class="text-white m-r-15 font-size-16"><span class="btn btn-success btn-float  btn-rounded m-l-10 p-r-10 p-l-10 m-b-0"><i class="ti-write m-r-5"  data-customer-id="{{ agreement_customer.customernumber }}" data-agreement-id="{{ agreement_detail.agreementnumber }}"></i>NOTES</span></a>
+
+        {% else %}
+            <nav class="breadcrumb breadcrumb-dash">&nbsp;
+                <a class="breadcrumb-item text-success" href="{%  url 'core_agreement_crud:AgreementEnquiryList' %}"><i class="ti-list p-r-5"></i>Agreement List</a>
+                <span class="breadcrumb-item active">Agreement Detail</span>
+            </nav>
+        {% endif %}
+    </div>
+    {% if agreement_detail.agreement_stage == '4'%}
+        {% if go_id.consolidation_info %}
+            <p><i class="fa fa-clock-o"></i> {{ go_id.consolidation_info}}
+            </p>
+        {% endif %}
+    {% endif %}
+    </div>
+    <div class="card">
+        <div class="card-header border bottom">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-sm-10 offset-sm-1">
+                        <ul class="nav wizard wizard-success">
+                            {% if agreement_detail.agreement_stage == '4' %}
+                                <li  class="nav-item">
+                                    <a class="nav-link completed" href="{%  url 'core_agreement_crud:agreement_management_tab1_1' agreement_detail.agreementnumber %}"></a>
+                                    <div class="nav-title">Customer Detail</div>
+                                </li>
+                            {% else %}
+                                <li class="nav-item">
+                                    <a class="nav-link completed"></a>
+                                    <div class="nav-title">Customer Detail</div>
+                                </li>
+                            {% endif %}
+                            {% if agreement_detail.agreement_stage == '4' %}
+                                <li  class="nav-item">
+                                    <a class="nav-link active"></a>
+                                    <div class="nav-title">Payment Detail</div>
+                                </li>
+                            {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link active"></a>
+                                <div class="nav-title">Payment Detail</div>
+                            </li>
+                            {% endif %}
+                            {% if agreement_detail.agreement_stage == '4' %}
+                                <li  class="nav-item">
+                                    <a class="nav-link completed" href="{%  url 'core_agreement_crud:agreement_management_tab3' agreement_detail.agreementnumber %}"></a>
+                                    <div class="nav-title">Agreement Detail</div>
+                                </li>
+                            {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link"></a>
+                                <div class="nav-title">Agreement Detail</div>
+                            </li>
+                            {% endif %}
+                            {% if agreement_detail.agreement_stage == '4' %}
+                                <li  class="nav-item">
+                                    <a class="nav-link completed" href="{%  url 'core_agreement_crud:agreement_management_tab4' agreement_detail.agreementnumber %}"></a>
+                                    <div class="nav-title">Account Statement</div>
+                                </li>
+                            {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link"></a>
+                                <div class="nav-title">Account Statement</div>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-8 offset-sm-2">
+                {% if customer_action %}
+                        <div class="alert alert-success m-t-25">
+                            {% if customer_action == 'update' %}
+                                Customer number '{{ agreement_customer.customernumber }}' with company name '{{ agreement_customer.customercompany }}' has been updated.
+                            {% else %}
+                                Customer number '{{ agreement_customer.customernumber }}' with company name '{{ agreement_customer.customercompany }}' has been created.
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% if error %}
+                    <div class="alert alert-danger m-t-25">
+                        <b>Error:</b> {{ error }}
+                    </div>
+                {% endif %}
+                {% if errors %}
+                    <div class="alert alert-danger m-t-25">
+                        Please fix the errors below and try again.
+                    </div>
+                {% endif %}
+                    <form class="m-t-45" method="post" action="{% url 'core_agreement_crud:agreement_management_tab2' agreement_id %}">
+                        {% csrf_token %}
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Agreement Date</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend{% if errors.agreementagreementdate %} error-border{% endif %}">
+                                        <span class="input-group-text"><i class="fa fa-calendar"></i></span>
+                                    </div>
+                                    {% if transaction_summary_extract_count > 0 or transition_count > 0 %}
+                                        <input class="form-control {% if errors.agreementagreementdate %}error{% endif %}" id="agreement-date" name="agreementagreementdate" type="date"
+                                               onchange="agreementupfrontdateChange(this.form),agreementfirstpaymentdateChange(this.form) "
+                                               value="{{ values.agreementagreementdate }}" readonly>
+                                    {% else %}
+                                        <input class="form-control {% if errors.agreementagreementdate %}error{% endif %}" id="agreement-date" name="agreementagreementdate" type="date"
+                                               onchange="agreementupfrontdateChange(this.form),agreementfirstpaymentdateChange(this.form) "
+                                               value="{{ values.agreementagreementdate }}">
+                                    {% endif %}
+                                </div>
+                                {% if errors.agreementagreementdate %}
+                                    <div class="invalid-feedback display-block">
+                                        Agreement Date Required
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Term Length</label>
+                                {% if transaction_summary_extract_count > 0 or transition_count > 0 %}
+                                    <input class="form-control{% if errors.term %} error{% endif %}"  name="term" type="number" min="1" max="999"  value="{{ values.term }}" autocomplete="off" id="term-length" readonly>
+                                {% else %}
+                                    <input class="form-control{% if errors.term %} error{% endif %}"  name="term" type="number" min="1" max="999"  value="{{ values.term }}" autocomplete="off" id="term-length" >
+                                {% endif %}
+                                {% if errors.term %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.term }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {# TODO: PAF Changes Start #}
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Agreement Structure</label>
+                                <div class="slidecontainer">
+                                    {% if upfront_payments_input %}
+                                        <input type="range" min="0" max ={{values.term }}  value="{{ upfront_payments_input }}" class="slider" id="Agreement_Range">
+                                        <p>Upfront : <span id="upfront_payments" name="upfront_payments" value="{{ upfront_payments_input }}"></span> Rentals : <span id="rental_payments" name ="rental_payments" value="{{ rental_payments_input }}" ></span></p>
+                                        <p hidden>Upfront : <input id="upfront_payments_input" name="upfront_payments_input" value="{{ upfront_payments_input }}"> Rentals : <input id="rental_payments_input" name ="rental_payments_input" value="{{ rental_payments_input }}">
+                                    {% else %}
+                                        <input type="range" min="0" max="0" value="{{ upfront_payments_input }}" class="slider" id="Agreement_Range">
+                                        <p>Upfront : <span id="upfront_payments" name="upfront_payments" value="{{upfront_payments_input }}"></span> Rentals : <span id="rental_payments" name ="rental_payments" value="{{ rental_payments_input }}"></span></p>
+                                        <p hidden>Upfront : <input id="upfront_payments_input" name="upfront_payments_input" value="{{ upfront_payments_input }}"> Rentals : <input id="rental_payments_input" name ="rental_payments_input" value="{{ rental_payments_input }}">
+                                    {% endif %}
+{#                                        <p>Upfront : <span id="upfront_payments" name="upfront_payments" value="{{ values.upfront_payments_input }}"></span> Rentals : <span id="rental_payments" name ="rental_payments" value="{{ values.rental_payments_input }}"></span></p>#}
+{#                                        <p >Upfront : <input id="upfront_payments_input" name="upfront_payments_input" value="{{ values.upfront_payments_input }}"> Rentals : <input id="rental_payments_input" name ="rental_payments_input" value="{{ values.rental_payments_input }}">#}
+                                </div>
+                            </div>
+{#                            {% if agreement_detail.agreementdefname == 'Hire Purchase' %}#}
+                                <div class="form-group col-md-6" {% if agreement_detail.agreementdefname != 'Hire Purchase' %} hidden {% endif %}>
+                                    <label class="control-label">Delay VAT</label>
+                                    <div class="slidecontainer">
+                                        {% if upfront_payments_input %}
+                                            <input type="range" min="1" max ={{values.term }}  value="{{ VAT_Payment_input }}" class="slider" id="VAT_Range">
+                                        {% else %}
+                                            <input type="range" min="1" max="1" value="{{ VAT_Payment_input }}" class="slider" id="VAT_Range">
+                                        {% endif %}
+                                        <p>Until Rental : <span id="VAT_Payment" name ="VAT_Payment" value="{{ VAT_Payment_input }}"></span>
+                                        <p hidden>Until Rental : <input id="VAT_Payment_input" name ="VAT_Payment_input" value="{{ VAT_Payment_input }}" ></p>
+                                    </div>
+                                </div>
+{#                            {% endif %}#}
+                        </div>
+                        <div class="form-row">
+                        {# TODO: PAF Changes End #}
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Upfront Date</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend{% if errors.agreementupfrontdate %} error-border{% endif %}">
+                                        <span class="input-group-text"><i class="fa fa-calendar"></i></span>
+                                    </div>
+                                    {% if transaction_summary_extract_count > 0 or transition_count > 0 %}
+                                        <input class="form-control{% if errors.agreementupfrontdate %} error{% endif %}" name="agreementupfrontdate" type="date" id="up-front-date" value="{{ values.agreementupfrontdate }}" readonly>
+                                    {% else %}
+                                        <input class="form-control{% if errors.agreementupfrontdate %} error{% endif %}" name="agreementupfrontdate" type="date" id="up-front-date" value="{{ values.agreementupfrontdate }}" readonly>
+                                    {% endif %}
+                                </div>
+                                {% if errors.agreementupfrontdate %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.agreementupfrontdate }}
+                                    </div>
+                                {% endif %}
+                            {# TODO: PAF Changes - Start#}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Collection Schedule</label>
+                                <select class="form-control" name="go_collection_schedule" data-validate="true" id="id-go_collection_schedule" >
+                                {# TODO: PAF Changes - Start#}
+{#                                    <option value="">Please Select</option>#}
+                                {# TODO: PAF Changes - End#}
+                                    {% for t in go_collection_schedule %}
+                                        <option {% if values.collection_schedule == t.id %}selected{% endif %} value="{{ t.id }}" id="collection_schedule">{{ t }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% if errors.go_collection_schedule %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.go_collection_schedule }}
+                                    </div>
+                                {% endif %}
+                            {# TODO: PAF Changes - End#}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">First Due Date</label>
+                                {# =IF(INT((DAY(E4335)-1)/7)*7<7,28,INT((DAY(E4335)-1)/7)*7)#}
+                                <div class="input-group">
+                                    <div class="input-group-prepend{% if errors.agreementfirstpaymentdate %} error-border{% endif %}">
+                                        <span class="input-group-text"><i class="fa fa-calendar" ></i></span>
+                                    </div>
+                                    {% if transaction_summary_extract_count > 0 or transition_count > 0 %}
+                                        <input class="form-control{% if errors.agreementfirstpaymentdate %} error{% endif %}" name="agreementfirstpaymentdate" type="date" id="first-payment-date" value="{{ values.agreementfirstpaymentdate }}" min="2000-01-01" max="2100-12-31" readonly>
+                                    {% else %}
+                                        <input class="form-control{% if errors.agreementfirstpaymentdate %} error{% endif %}" name="agreementfirstpaymentdate" type="date" id="first-payment-date" value="{{ values.agreementfirstpaymentdate }}" min="2000-01-01" max="2100-12-31" readonly>
+                                    {% endif %}
+                                </div>
+                            {# TODO: PAF Changes - Start#}
+                                <div class="invalid-feedback{% if errors.agreementfirstpaymentdate %} display-block{% endif %}" id =first-payment-date-error>
+                                    {{ errors.agreementfirstpaymentdate  }}
+                                </div>
+                            {# TODO: PAF Changes - Start#}
+                            </div>
+{#                            <div class="form-group col-md-6">#}
+{#                                <label class="control-label">Collection Type</label>#}
+{#                                <input class="form-control{% if errors.agreementcollectiontype %} error{% endif %}" type="fixed" placeholder="Monthly" name="agreementcollectiontype" value="{{ values.agreementcollectiontype }}" readonly>#}
+{#                                 {% if errors.agreementcollectiontype %}#}
+{#                                    <div class="invalid-feedback display-block">#}
+{#                                        {{ errors.agreementcollectiontype }}#}
+{#                                    </div>#}
+{#                                {% endif %}#}
+{#                            </div>#}
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Last Primary Date</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend{% if errors.agreementresidualdate %} error-border{% endif %}">
+                                        <span class="input-group-text"><i class="fa fa-calendar"></i></span>
+                                    </div>
+                                    <input class="form-control{% if errors.agreementresidualdate %} error{% endif %}" name="agreementresidualdate" type="text" value="{{ values.agreementresidualdate }}" readonly id="residual-date">
+                                </div>
+                                 {% if errors.agreementresidualdate %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.agreementresidualdate }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="form-row" id="id-dd-message">
+                            <div class="col-sm-12" id="invalid-dd-date-message" style="display: none;">
+                                <div class="alert alert-danger" id="dd-date-invalid" style="display:none;" %}>
+                                    {% if next_due_date %}
+                                        <p>Next due date is on {{ next_due_date|date:"d/m/Y" }}</p>
+                                    {% endif %}
+                                    <p>Setup will be active on {{ setup_active_date|date:"d/m/Y" }}</p>
+                                    <p>The earliest due date possible will be on {{ call_active_date|date:"d/m/Y" }}</p>
+                                    <p>In order to hit this date, the latest call must be made on <span id="id-span-latest-due-date-invalid"></span></p>
+                                </div>
+                                <div class="alert alert-info" id="dd-date-valid" {% if not values.manual_payments or not go_id.manual_payments %}style="display:none;"{% endif %}>
+                                    {% if next_due_date %}
+                                        <p>Next due date is on {{ next_due_date|date:"d/m/Y" }}</p>
+                                    {% endif %}
+                                    <p>Setup will be active on {{ setup_active_date|date:"d/m/Y" }}</p>
+                                    <p>In order to hit this due date, the latest call must be made on <span id="id-span-latest-due-date-valid"></span></p>
+                                </div>
+                            </div>
+                            <div class="col-sm-12" id="dd-message-area" style="display: none;">
+                                <div class="alert alert-danger">
+                                    <b>Important:</b> Any existing DD setups will be revoked when you save.
+                                </div>
+                            </div>
+                        </div>
+                        {% if agreement_detail.agreementstatus != 'CLOSED' %}
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    {#  TODO: PAF Changes - Start#}
+                                    <label class="control-label">Payment Method</label>
+                                    <select class="form-control" name="go_payment_method" data-validate="true" id="id-go_payment_method" >
+    {#                                    <option value="">Please Select</option>#}
+                                        {% for t in go_payment_method %}
+                                            <option {% if values.payment_method == t.id %}selected{% endif %} value="{{ t.id }}" id="payment_method" data-batches="{{ batches }}">{{ t }}</option>
+                                        {% endfor %}
+    {#                                    <input type="hidden" name="manual_payments" id="id-manual-payments" value="{{ manual_payments_display }}">#}
+    {#                                    <input type="hidden" id="PaymentToggle" {% if manual_payments_display == 1 or manual_payment_display == 1 %}checked{% else %}unchecked{% endif %} >#}
+                                    </select>
+                                    {% if errors.go_payment_method %}
+                                        <div class="invalid-feedback display-block">
+                                            {{ errors.go_payment_method }}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            </div>
+                            {#  TODO: PAF Changes - End#}
+                            <div class="form-row" id="id-bank-details">
+                                <div class="form-group col-md-6">
+                                    <label class="control-label">Direct Debit Instruction Reference</label>
+                                    <input class="form-control{% if errors.agreementbankreference %} error{% endif %}" name="agreementbankreference"  value="{{ values.agreementbankreference }}" autocomplete="off" maxlength="15" {% if manual_payments_display %}readonly{% endif %}>
+                                    {% if errors.agreementbankreference %}
+                                        <div class="invalid-feedback display-block">
+                                            {{ errors.agreementbankreference }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label class="control-label">Account Name</label>
+                                    <input class="form-control{% if errors.agreementbankaccountname %} error{% endif %}" name="agreementbankaccountname"  value="{{ values.agreementbankaccountname }}" autocomplete="off" maxlength="15" {% if manual_payments_display %}readonly{% endif %}>
+                                   {% if errors.agreementbankaccountname %}
+                                        <div class="invalid-feedback display-block">
+                                            {{ errors.agreementbankaccountname }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label class="control-label">Sort Code</label>
+                                    <input class="form-control{% if errors.agreementbanksortcode %} error{% endif %}" id="agreementbanksortcode" name="agreementbanksortcode"  value="{{ values.agreementbanksortcode }}" autocomplete="off" onkeypress="return isNumber(event)" {% if manual_payments_display %}readonly{% endif %}>
+{#                                    {% if errors.agreementbanksortcode %}#}
+                                        <div class="invalid-feedback display-block" id="agreementbanksortcode_error">
+                                            {{ errors.agreementbanksortcode }}
+                                        </div>
+{#                                    {% endif %}#}
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label class="control-label">Account Number</label>
+                                    <input class="form-control{% if errors.agreementbankaccountnumber %} error{% endif %}" id="agreementbankaccountnumber" name="agreementbankaccountnumber"  value="{{ values.agreementbankaccountnumber }}" autocomplete="off" onkeypress="return isNumber(event)" {% if manual_payments_display %}readonly{% endif %}>
+{#                                    {% if errors.agreementbankaccountnumber %}#}
+                                        <div class="invalid-feedback display-block" id="agreementbankaccountnumber_error">
+                                            {{ errors.agreementbankaccountnumber }}
+                                        </div>
+{#                                    {% endif %}#}
+                                </div>
+                            </div>
+                        {% else %}
+                             {#  TODO: PAF Changes - Start#}
+{#                            <div class="form-row">#}
+{#                                <div class="form-group col-md-12">#}
+{#                                    <label class="control-label">Manual Payments</label> <p></p>#}
+    {#                                {% if transaction_summary_extract_count > 0 or transition_count > 0 %}#}
+{#                                    <div class="switch vertical-center">#}
+{#                                        <input type="hidden" name="manual_payments" id="id-manual-payments" value="{{ manual_payments_display }}">#}
+{#                                        <input type="checkbox" id="ManualToggle" {% if manual_payments_display == 1 or manual_payment_display == 1 %}checked{% else %}unchecked{% endif %} disabled>#}
+{#                                        <label for="ManualToggle"></label>#}
+{#                                    </div>#}
+{#                                     {% if errors.agreementcollectiontype %}#}
+{#                                        <div class="invalid-feedback display-block">#}
+{#                                            {{ errors.agreementcollectiontype }}#}
+{#                                        </div>#}
+{#                                    {% endif %}#}
+{#                                </div>#}
+{#                            </div>#}
+                             {#  TODO: PAF Changes - End#}
+                            <div class="form-row" id="id-bank-details">
+                                <div class="form-group col-md-6">
+                                    <label class="control-label">Direct Debit Instruction Reference</label>
+                                    <input class="form-control{% if errors.agreementbankreference %} error{% endif %}" name="agreementbankreference"  value="{{ values.agreementbankreference }}" autocomplete="off" maxlength="15" readonly>
+                                    {% if errors.agreementbankreference %}
+                                        <div class="invalid-feedback display-block">
+                                            {{ errors.agreementbankreference }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label class="control-label">Account Name</label>
+                                    <input class="form-control{% if errors.agreementbankaccountname %} error{% endif %}" name="agreementbankaccountname"  value="{{ values.agreementbankaccountname }}" autocomplete="off" maxlength="15" readonly>
+                                   {% if errors.agreementbankaccountname %}
+                                        <div class="invalid-feedback display-block">
+                                            {{ errors.agreementbankaccountname }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label class="control-label">Sort Code</label>
+                                    <input class="form-control{% if errors.agreementbanksortcode %} error{% endif %}" id="agreementbanksortcode" name="agreementbanksortcode"  value="{{ values.agreementbanksortcode }}" autocomplete="off" onkeypress="return isNumber(event)" readonly>
+{#                                    {% if errors.agreementbanksortcode %}#}
+{#                                         <div class="invalid-feedback" id="batch-due-date_error">#}
+                                        <div class="invalid-feedback display-block" id="agreementbanksortcode_error">
+                                            {{ errors.agreementbanksortcode }}
+                                        </div>
+{#                                    {% endif %}#}
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label class="control-label">Account Number</label>
+                                    <input class="form-control{% if errors.agreementbankaccountnumber %} error{% endif %}" id="agreementbankaccountnumber" name="agreementbankaccountnumber"  value="{{ values.agreementbankaccountnumber }}" autocomplete="off" onkeypress="return isNumber(event)" readonly>
+{#                                    {% if errors.agreementbankaccountnumber %}#}
+                                        <div class="invalid-feedback display-block" id="agreementbankaccountnumber_error">
+                                            {{ errors.agreementbankaccountnumber }}
+                                        </div>
+{#                                    {% endif %}#}
+                                </div>
+                            </div>
+                        {% endif %}
+                        <div class="form-group">
+                            <div class="text-sm-right">
+                                <a class="btn btn-warning btn-rounded" href="{% url 'core_agreement_crud:agreement_management_tab1_1' agreement_id %}" {% if manual_payments_display %}disabled{% endif %}>
+                                    <span class="title">Back</span>
+                                </a>
+                                <button type="submit" class="btn btn-gradient-success btn-rounded">
+                                    <span class="title">Save/Next</span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    <div class="modal fade in" id="failed-ddi-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Failed to create Direct Debit Instruction</h2>
+                </div>
+                <div class="modal-body">
+                    <p>The request to create the direct debit instruction failed.</p>
+                    <p>Please change the details and try again or simply continue without creating a Direct Debit Instruction.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" onclick="javascript:location.href = '{% url 'core_agreement_crud:agreement_management_tab3' agreement_id %}';">
+                        Continue
+                    </button>
+                    <button class="btn btn-danger" data-dismiss="modal">
+                        Update
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade in" id="fatal-ddi-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Failed to created Direct Debit Instruction</h2>
+                </div>
+                <div class="modal-body">
+                    <p>The request to create the direct debit instruction failed.</p>
+                    <p>There appears to be an issue with the DataCash service. Please contact your systems administrator for more information.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" onclick="javascript:location.href = '{% url 'core_agreement_crud:agreement_management_tab3' agreement_id %}';">
+                        Continue
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade in" id="id-terms-changed-warning">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Please confirm your changes</h2>
+                </div>
+                <div class="modal-body">
+                    <p>Please be aware that changes to the term will have financial implications on the agreement.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" data-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade in" id="id-in-batch-warning">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2><i class="fa fa-warning"></i> Warning!</h2>
+                    <button class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <b>Important:</b> This agreement has transactions that are in an open batch. Please remove these
+                        transactions before changing the payment status to manual.
+                    </div>
+                    <table class="table table-striped table-bordered" id="id-batches-table">
+                        <thead>
+                        <tr>
+                            <th>Batch Reference</th>
+                            <th>Scheduled Due Date</th>
+                            <th>Created by</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block page-js %}
+
+    <script src="{% static 'moment-with-locales.js' %}"></script>
+    <script src="{% static 'moment-business-days.js' %}"></script>
+
+    <script src="{% static 'easyautocomplete/jquery.easy-autocomplete.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'easyautocomplete/easy-autocomplete.css' %}">
+    <script src="{% static 'core_agreement_crud.js' %}"></script>
+
+    <script type="text/javascript">
+
+        $(function() {
+
+            var holidays = [
+                {% for day in holidays %}
+                    '{{ day }}',
+                {% endfor %}
+            ];
+
+            moment.updateLocale('en', {
+                'holidays': holidays,
+                'holidayFormat': 'YYYY-MM-DD'
+            });
+
+            {% if datacash_failed %}
+                {% if datacash_failed_fatal %}
+                    $("#fatal-ddi-modal").modal({"backdrop": "static"});
+                {% else %}
+                    $("#failed-ddi-modal").modal({"backdrop": "static"});
+                {% endif %}
+            {% endif %}
+
+            var manualPayments = "{{ manual_payments }}";
+            var AgreementDateObj = $("#agreement-date") ;
+            var termLengthObj = $("#term-length") ;
+            {# TODO: PAF Changes - Start#}
+            var collectionscheduleObj = $("#collection_schedule") ;
+            {# TODO: PAF Changes - End#}
+            var residualDateObj = $("#residual-date") ;
+            var firstPaymentDateObj = $("#first-payment-date") ;
+            var sortcode = $("#agreementbanksortcode") ;
+            var accountnumber = $("#agreementbankaccountnumber") ;
+
+            var nextPaymentDate = '{{ next_due_date|date:"Y-m-d" }}';
+            if(nextPaymentDate) {
+                calculateDDmessage();
+            }
+
+            sortcode.on("change", function() {sortcodevalid()});
+            accountnumber.on("change", function() {accountnumbervalid()});
+
+            termLengthObj.on("change", calculateResidualDate);
+            {# TODO: PAF Changes - Start#}
+             $("#id-go_collection_schedule").on("change", function() {
+                    calculateResidualDate();
+             });
+            {# TODO: PAF Changes - End#}
+            AgreementDateObj.on("change", calculateResidualDate);
+            firstPaymentDateObj.on("change", function() {
+                calculateResidualDate();
+
+                nextPaymentDate = firstPaymentDateObj.val();
+
+                calculateDDmessage();
+
+            });
+
+            function calculateDDmessage() {
+
+                var mLatestCallDate = false ;
+
+                if(nextPaymentDate) {
+
+                    var mFirstPayDate = moment(nextPaymentDate);
+                    var mNextCallDate = moment('{{ call_active_date }}');
+
+
+                    if(mFirstPayDate < mNextCallDate) {
+
+                        $("#dd-date-valid").hide();
+                        $("#dd-date-invalid").show();
+
+                        mLatestCallDate = mNextCallDate.businessSubtract({{ days_before_dd_call }});
+                        $("#id-span-latest-due-date-invalid").html(mLatestCallDate.format("DD/MM/YYYY"));
+                    } else {
+                        $("#dd-date-invalid").hide();
+                        $("#dd-date-valid").show();
+
+                        mLatestCallDate = mFirstPayDate.businessSubtract({{ days_before_dd_call }});
+
+                        $("#id-span-latest-due-date-valid").html(mLatestCallDate.format("DD/MM/YYYY"));
+                    }
+
+                    if (manualPayments !== "1") {
+                        $("#invalid-dd-date-message").show();
+                    }
+
+                } else {
+                    $("#invalid-dd-date-message").hide();
+                }
+            }
+            {# TODO: PAF Changes - Start#}
+            firstPaymentDateObj.on('change', soft_validation_first_due_date);
+            function soft_validation_first_due_date() {
+                var a = new Date(firstPaymentDateObj.val());
+                var r = a.getDate();
+                if (r > 28) {
+                    $("#first-payment-date-error").removeClass("display-block").addClass("display-block").html("Some dates will be scheduled for the last day of the month")
+                } else {
+                    $("#first-payment-date-error").removeClass("display-block").html("");
+                }
+            }
+            {# TODO: PAF Changes - End#}
+            function calculateResidualDate() {
+
+                var termLength = parseInt(termLengthObj.val());
+                var firstPaymentDate = firstPaymentDateObj.val();
+                {# TODO: PAF Changes - Start#}
+                var collectionscheduleObj = $("#collection_schedule");
+                var maxedit_agreement_range = document.getElementById("Agreement_Range");
+                maxedit_agreement_range.setAttribute("max", termLength);
+                var maxedit_vat_range = document.getElementById("VAT_Range");
+                maxedit_vat_range.setAttribute("max", termLength);
+
+                var slider = document.getElementById("Agreement_Range");
+                var output = document.getElementById("upfront_payments");
+                var rental_number = document.getElementById("rental_payments");
+                output.innerHTML = slider.value; // Display the default slider value
+                if (isNaN(termLength)) {
+                    rental_number.val('');
+                }else{
+                    rental_number.innerHTML = termLength - slider.value;
+                }
+
+                slider.oninput = function () {
+                    output.innerHTML = this.value;
+                    rental_number.innerHTML = termLength - output.innerHTML;
+                    {#populate_values()#}
+                    calculateResidualDate()
+                };
+
+                var slidervat = document.getElementById("VAT_Range");
+                var outputvat = document.getElementById("VAT_Payment");
+                outputvat.innerHTML = slidervat.value; // Display the default slider value
+
+                slidervat.oninput = function () {
+                    outputvat.innerHTML = this.value;
+                    {#populate_values()#}
+                    calculateResidualDate()
+                };
+                function populate_values() {
+                    {#console.log('populate')#}
+                    var upfrontpaymentsinput = $("#upfront_payments_input");
+                    var rentalpaymentsinput = $("#rental_payments_input");
+                    var VATPaymentinput = $("#VAT_Payment_input");
+                    upfrontpaymentsinput.val(output.innerHTML);
+                    rentalpaymentsinput.val(rental_number.innerHTML);
+                    VATPaymentinput.val(outputvat.innerHTML);
+                    {#console.log(rentalpaymentsinput.val())#}
+                }
+                var upfrontpaymentsinput = $("#upfront_payments_input");
+                var rentalpaymentsinput = $("#rental_payments_input");
+                var VATPaymentinput = $("#VAT_Payment_input");
+                upfrontpaymentsinput.val(output.innerHTML);
+                rentalpaymentsinput.val(rental_number.innerHTML);
+                VATPaymentinput.val(outputvat.innerHTML);
+
+                if (termLength && firstPaymentDate && collectionscheduleObj) {
+                    if (document.getElementById('id-go_collection_schedule').value == 3) {
+                        var residualDate = moment(firstPaymentDate).add(Math.floor(rentalpaymentsinput.val() - 1), "M");
+                        if (isNaN(residualDate)) {
+                            residualDateObj.val('');
+                        } else {
+                            residualDateObj.val(moment(firstPaymentDate).add(Math.floor(rentalpaymentsinput.val() - 1), "M").format("DD/MM/YYYY"));
+                        }
+                    } else {
+                        var residualDate = moment(firstPaymentDate).add(Math.floor((3 * rentalpaymentsinput.val()) - 1), "M");
+                        if (isNaN(residualDate)) {
+                            residualDateObj.val('');
+                        } else {
+                            residualDateObj.val(moment(firstPaymentDate).add(Math.floor((3 * rentalpaymentsinput.val()) - 1), "M").format("DD/MM/YYYY"));
+                        }
+                    }
+                } else {
+                    residualDateObj.val('');
+                }
+
+            };
+            $( document ).ready(function() {
+                calculateResidualDate()
+            });
+
+            var $paymentToggle = $("#id-go_payment_method");
+            {#console.log(paymentToggle)#}
+            $paymentToggle.change(function(e) {
+                var payment_number = document.getElementById("id-go_payment_method").value;
+                console.log(payment_number)
+                var $this = $(this);
+
+                if (payment_number != 1){
+                    {#var batches = JSON.parse($this.attr("data-batches"));#}
+                    {#if(batches.length > 0) {#}
+                    {#    createBatchesTable(batches);#}
+                    {#    $("#id-in-batch-warning").modal();#}
+                    {#    e.preventDefault();#}
+                    {# } else {#}
+                        $("#invalid-dd-date-message").hide();
+                        $("#dd-message-area").show();
+                        $("#id-bank-details input").attr("readonly", true).removeClass('error');
+                        $("#id-bank-details .invalid-feedback").removeClass('display-block').hide();
+                        $("#id-manual-payments").val("1");
+                        manualPayments = "1";
+                    {# }#}
+                } else {
+                    calculateDDmessage();
+                    $("#invalid-dd-date-message").show();
+                    $("#dd-message-area").hide();
+                    $("#id-bank-details input").attr("readonly", false);
+                    $("#id-manual-payments").val("0");
+                    manualPayments = "0" ;
+                }
+
+            });
+
+            var $manualToggle = $("#ManualToggle");
+
+            $manualToggle.click(function(e) {
+
+                var $this = $(this);
+
+                if ($manualToggle.is(":checked")) {
+                    var batches = JSON.parse($this.attr("data-batches"));
+                    if(batches.length > 0) {
+                        createBatchesTable(batches);
+                        $("#id-in-batch-warning").modal();
+                        e.preventDefault();
+                    } else {
+                        $("#invalid-dd-date-message").hide();
+                        $("#dd-message-area").show();
+                        $("#id-bank-details input").attr("readonly", true).removeClass('error');
+                        $("#id-bank-details .invalid-feedback").removeClass('display-block').hide();
+                        $("#id-manual-payments").val("1");
+                        manualPayments = "1";
+                    }
+                } else {
+                    calculateDDmessage();
+                    $("#invalid-dd-date-message").show();
+                    $("#dd-message-area").hide();
+                    $("#id-bank-details input").attr("readonly", false);
+                    $("#id-manual-payments").val("0");
+                    manualPayments = 0 ;
+                }
+            });
+
+            {# TODO: PAF Changes - End#}
+
+            {% if values.term %}
+            termLengthObj.change(function() {
+                if($(this).val() !== "{{ values.term }}") {
+                    $("#id-terms-changed-warning").modal({"backdrop":"static"});
+                }
+            });
+            {% endif %}
+        });
+
+        var created = false ;
+        var batchesTable = $("#id-batches-table");
+
+        function createBatchesTable(batches) {
+
+            if (created) return ;
+
+            created = true ;
+
+            for (var i = 0; i < batches.length; i++) {
+                var b = JSON.parse(batches[i]);
+                var row = '<tr><td>' + b.batch_header + '</td><td>' + b.created + '</td><td>' + b.user + '</td></tr>';
+                batchesTable.append(row);
+            }
+
+        }
+
+        function agreementupfrontdateChange(f) {
+            f.agreementupfrontdate.value = f.agreementfirstpaymentdate.value;
+        }
+
+{#      TODO : PAF Changes - Start#}
+        function agreementfirstpaymentdateChange(f) {
+            var firstPaymentDateObj = $("#first-payment-date") ;
+            var upFrontDateObj = $("#up-front-date") ;
+            var firstDate = new Date(f.agreementagreementdate.value);
+            {#var upFrontDate = new Date(f.agreementagreementdate.value);#}
+                if(firstDate !== 'Invalid Date'){
+                var firstPaymentDate = moment(firstDate).add(Math.floor(1), "M");
+                {#var upFrontDate = moment(firstDate).add(Math.floor(1), "M");#}
+                if (isNaN(firstPaymentDate)) {
+                    firstPaymentDateObj.val('');
+                } else {
+                    firstPaymentDateObj.val(moment(firstDate).add(Math.floor(1), "M").format("YYYY-MM-DD"));
+                    upFrontDateObj.val(moment(firstDate).add(Math.floor(1), "M").format("YYYY-MM-DD"));
+                }
+
+            }
+        else
+            {
+                firstPaymentDateObj.val('');
+            }
+        }
+{#       TODO : PAF Changes - End#}
+         function sortcodevalid(val) {
+            var sortcode = $("#agreementbanksortcode") ;
+            if ((sortcode.val()).length < 6) {
+                $("#agreementbanksortcode_error").removeClass("display-block").addClass("display-block").html("Account Sort Code is less than 6 characters");
+            } else {
+                $("#agreementbanksortcode_error").removeClass("display-block").html("");
+            }
+        }
+        function accountnumbervalid(val) {
+            var accountnumber = $("#agreementbankaccountnumber") ;
+            if (accountnumber.val().length < 8) {
+                $("#agreementbankaccountnumber_error").removeClass("display-block").addClass("display-block").html("Account Number is less than 8 characters");
+            } else {
+                $("#agreementbankaccountnumber_error").removeClass("display-block").html("");
+            }
+         }
+
+        function soft_validation(val) {
+            if (new Date(val) < today) {
+                $("#batch-due-date_error").removeClass("display-block").addClass("display-block").html("Due Date is in the past, are you sure?")
+            } else {
+                $("#batch-due-date_error").removeClass("display-block").html("");
+            }
+        }
+
+        function addMonths(date, months) {
+            var d = date.getDate();
+            date.setMonth(date.getMonth() + +months);
+            if (date.getDate() != d) {
+                date.setDate(0);
+            }
+            return date;
+        }
+
+        var availableDates = ["7-5-2019","14-5-2019","21-5-2019"];
+        function available(date) {
+            dmy = date.getDate() + "-" + (date.getMonth()+1) + "-" + date.getFullYear();
+            if ($.inArray(dmy, availableDates) !== -1) {
+                return [true, "","Available"];
+            } else {
+                return [false,"","unAvailable"];
+            }
+        }
+
+        //$('#first-payment-date').datepicker({ beforeShowDay: available });
+
+    </script>
+    <script type="text/javascript" >
+
+        function preventBack(){
+            window.history.forward();
+        }
+
+        setTimeout("preventBack()", 0);
+        {#alert("Just Stop It Alex");#}
+        window.onunload=function(){null};
+
+        var uri = window.location.toString();
+        if (uri.indexOf("?") > 0) {
+            var clean_uri = uri.substring(0, uri.indexOf("?"));
+            window.history.replaceState({}, document.title, clean_uri);
+        }
+
+
+    </script>
+{% endblock %}
+

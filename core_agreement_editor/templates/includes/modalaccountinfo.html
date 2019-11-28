@@ -1,0 +1,97 @@
+{% load crispy_forms_tags %}
+{% load humanize %}
+
+<style type="text/css">
+    #id-agreements-to-consolidate input {
+        text-transform: uppercase;
+    }
+    ::-webkit-input-placeholder { /* WebKit browsers */
+        text-transform: none;
+    }
+    :-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+        text-transform: none;
+    }
+    ::-moz-placeholder { /* Mozilla Firefox 19+ */
+        text-transform: none;
+    }
+    :-ms-input-placeholder { /* Internet Explorer 10+ */
+        text-transform: none;
+    }
+    ::placeholder { /* Recent browsers */
+        text-transform: none;
+    }
+</style>
+
+<form method="post" action="{% url 'core_agreement_editor:modalaccountinfo' agreement_id %}" id="consolidate-form">
+    {% csrf_token %}
+    <div class="modal-header">
+        <h5 class="modal-title" id="edit_dates_agreement_modalLabel"><b>Account Info</b></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    <div class="modal-body">
+        <div class="alert alert-danger" id="id-error-message" style="display: none;">
+            Hello, world!
+        </div>
+        <div>
+            <table class="table table-hover" id="id-agreements-to-consolidate">
+                <tr>
+                    <th style="width: 30%"></th>
+                    <th style="width: 35%">NET</th>
+                    <th style="width: 35%">GROSS</th>
+{#                    <th style="width: 25%">Ouanding Principal</th>#}
+{#                    <th style="width: 20%">Status</th>#}
+
+                </tr>
+                <tr data-isinitial="true">
+                    <th style="width: 20%">Principal</th>
+{#                     <tr data-row-no="{{ forloop.counter }}">#}
+{#                         <td><input type="text" placeholder="Agreement No." class="form-control" id="id-agreement-{{ forloop.counter }}" name="agreement-{{ forloop.counter }}" value="{{ row.agreement_id }}" data-member-no="{{ forloop.counter }}" readonly></td>#}
+{#                         <td><p id="id-agreement-{{ forloop.counter }}-text1">{{ row.customercompany }}</p></td>#}
+{#                         <td><p id="id-agreement-{{ forloop.counter }}-text2">{% if row.paymentsum %}&pound;{% endif %}{{ row.paymentsum|floatformat:2|intcomma }}</p></td>#}
+{#                         <td>#}
+{#                             <span id="id-agreement-{{ forloop.counter }}-text3">{{ row.status }}</span>#}
+{#                                 <i class="pull-right text-danger fa fa-remove remove-consol" data-member-no="{{ forloop.counter }}" style="cursor: pointer;"></i>#}
+{#                             </span>#}
+{#                         </td>#}
+{#                     </tr>#}
+                </tr>
+                <tr data-isinitial="true">
+                   <th style="width: 20%">Installments</th>
+                   <th readonly value="{{ term }}"></th></th>
+                   <th>1</th>
+                </tr>
+                <tr data-isinitial="true">
+                    <th style="width: 20%">Finance Charges</th>
+                </tr>
+                <tr data-isinitial="true">
+                    <th style="width: 20%">Doc Fee</th>
+                </tr>
+                <tr data-isinitial="true">
+                    <th style="width: 20%">Risk Fee</th>
+                </tr>
+                <tr data-isinitial="true">
+                    <th style="width: 20%">BAMF Fee</th>
+                </tr>
+                <tr data-isinitial="true">
+                    <th style="width: 20%">Total Fees</th>
+                </tr>
+                <tr data-isinitial="true">
+                    <th style="width: 20%">Total Payable</th>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div class="modal-footer">
+{#        <button class="btn btn-success" type="button" id="submit-consol" data-dismiss="modal">#}
+{#            <i class="fa fa-thumbs-up"></i>#}
+{#            Consolidate Selected Agreements#}
+{#        </button>#}
+        <button class="btn btn-danger" data-dismiss="modal">
+            <i class="fa fa-thumbs-down"></i>
+            Cancel
+        </button>
+    </div>
+</form>
+

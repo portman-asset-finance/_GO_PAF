@@ -1,0 +1,142 @@
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+<script src="{% static 'static_core_agreement_alm/js/partial_arrear_form.js' %}"></script>
+<form method="post" action="{% url 'core_agreement_editor:modalglobal_termination' agreement_id %}" id="global_termination-form">
+{% csrf_token %}
+<div class="card">
+    <div class="card-body" style="border: 1px solid rgba(141, 171, 196, 0.3);">
+{#    SUMMARY ARREARS #}
+        <div class="row">
+{#            <div class="col-sm-0">#}
+{#                <div class="form-group text-right form-group-summary-bottom">#}
+{#                    <label class="control-label">&nbsp;</label>#}
+{#                    <div class="input-group">#}
+{#                        <p class="form-control-plaintext"><b>DRAWDOWN TOTAL</b></p>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+            <div class="col-sm-3">
+                <div class="form-group text-right form-group-summary-bottom">
+                    <label class="control-label">Balance</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text arrears-active-border-color arrears-active-font-color">£</span>
+                        </div>
+                        <input id="arrears_total_arrears" type="text" name="arrears_total_arrears"
+                               class="form-control arrears_money arrears-active-border-color
+                               arrears-active-font-color arrears-money-style" value = "{{ settlement_figure|floatformat:2 }}" readonly>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="form-group text-right hide-inputbtns form-group-summary-bottom">
+                    <label class="control-label">Collected</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text collected-active-border-color collected-active-font-color">£</span>
+                        </div>
+                        <input id="arrears_total_collected" name="arrears_total_collected" type="text"
+                               class="form-control arrears_money arrears-money-style
+                               collected-active-border-color collected-active-font-color"
+                               value="0.00" onchange="formatCurrency(this)" readonly>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="form-group text-right form-group-summary-bottom">
+                    <label class="control-label">Adjustment</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text adjustment-active-border-color adjustment-active-font-color">£</span>
+                        </div>
+                        <input id="arrears_total_adjustment" name="arrears_total_adjustment" type="text" readonly
+                               class="form-control arrears_money arrears-money-style
+                               adjustment-active-border-color adjustment-active-font-color" onchange="formatCurrency(this)">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="form-group text-right form-group-summary-bottom">
+                    <label class="control-label">Reason</label>
+                    <div class="input-group">
+                        <select id="arrears_total_adjustment" name="arrears_total_adjustment" type="text"
+                           class="form-control arrears_money arrears-money-style adjustment-active-border-color adjustment-active-font-color"
+                           placeholder="For Adjustment">
+                            {% for t in reason_codes %}
+                                <option {% if values.reason_text == t.reason_code %}selected{% endif %}>{{ t }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if errors.reason_code %}
+                            <div class="invalid-feedback display-block">
+                                {{ errors.reason_code }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class = "modal-footer">
+                <div style="text-align: right !important; padding-top:10px;">
+                    <button id="btn-confirm-payment" type="submit" class="btn btn-outline btn-success"
+{#                            disabled#}
+                    >Globally Terminate</button>
+                    <button id="btn-dismiss-card-modal" type="button" class="btn btn-outline btn-info" data-dismiss="modal">Cancel and Close</button>
+                </div>
+            </div>
+     </div>
+
+</form>
+<script>
+
+$(document).ready(function() {
+    //this calculates values automatically
+    sum();
+    $("#arrears_total_arrears, #arrears_total_collected, #adjustment1, #adjustment2, #adjustment3, #adjustment4, #adjustment5").on("keydown keyup", function() {
+        sum();
+    });
+});
+
+function sum() {
+    var arrears_total_arrears = document.getElementById('arrears_total_arrears').value;
+    var arrears_total_collected = document.getElementById('arrears_total_collected').value;
+    {#var adjustment1 = parseFloat(document.getElementById('adjustment1').value||0);#}
+    {#var adjustment2 = parseFloat(document.getElementById('adjustment2').value||0);#}
+    {#var adjustment3 = parseFloat(document.getElementById('adjustment3').value||0);#}
+    {#var adjustment4 = parseFloat(document.getElementById('adjustment4').value||0);#}
+    {#var adjustment5 = parseFloat(document.getElementById('adjustment5').value||0);#}
+
+    var result = parseFloat(arrears_total_arrears) - parseFloat(arrears_total_collected)
+        {#- adjustment1 - adjustment2 - adjustment3 - adjustment4 - adjustment5;#}
+    if (!isNaN(result)) {
+        document.getElementById('arrears_total_adjustment').value = result.toFixed(2);
+    }
+    {#if (result === 0.00 ){#}
+    {#    document.getElementById('btn-confirm-payment').disabled = false#}
+    {# }#}
+    {#else{#}
+    {#    document.getElementById('btn-confirm-payment').disabled = true#}
+    {# }#}
+}
+ function formatCurrency(t) {
+    // Input type MUST be text
+     // t = this
+     t.value = parseFloat(t.value ||0).toFixed(2);
+}
+
+function addCommas(nStr) {
+    nStr += '';
+    let x = nStr.split('.');
+    let x1 = x[0];
+    let x2 = x.length > 1 ? '.' + x[1] : '';
+    let rgx = /(\d+)(\d{3})/;
+    while (rgx.test(x1)) {
+        x1 = x1.replace(rgx, '$1' + ',' + '$2');
+    }
+    return x1 + x2;
+}
+
+
+
+</script>

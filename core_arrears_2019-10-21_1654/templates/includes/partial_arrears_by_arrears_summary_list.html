@@ -1,0 +1,102 @@
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+{% load dashboard_extras %}
+{% for arrears_summary in arrears_summary_list %}
+<tr class="table-light SP">
+{% if arrears_summary.ara_transactionsourceid == 'SP1' or arrears_summary.ara_transactionsourceid == 'SP2'  or arrears_summary.ara_transactionsourceid == 'SP3' or arrears_summary.ara_transactionsourceid == 'GO1'  or arrears_summary.ara_transactionsourceid == 'GO3' %}
+    <td  class="text-right"><small class="text-muted"><i>{{ arrears_summary.row_index }}</i></small></td>
+{% else %}
+    <td  class="text-right"></td>
+{% endif %}
+    <td class="text-center">
+       <span>{{ arrears_summary.ara_due_date|date:"d/m/Y"  }}</span>
+    </td>
+    <td {% if arrears_summary.ara_transactionsourceid != 'SP1' and arrears_summary.ara_transactionsourceid != 'SP2' and arrears_summary.ara_transactionsourceid != 'SP3' and arrears_summary.ara_transactionsourceid != 'GO1' and arrears_summary.ara_transactionsourceid != 'GO3' %} class="text-right"{% endif %}>
+        {% if arrears_summary.ara_transactionsourceid == 'SP1' or arrears_summary.ara_transactionsourceid == 'SP2' or arrears_summary.ara_transactionsourceid == 'SP3' or arrears_summary.ara_transactionsourceid == 'GO1' or arrears_summary.ara_transactionsourceid == 'GO3' %}
+            {% if arrears_summary.ara_transactionsourceid == 'SP1' or arrears_summary.ara_transactionsourceid == 'GO1'%}
+                <span class="m-b-0">Primary</span>
+            {% else %}
+                 <span class="m-b-0">Secondary</span>
+            {% endif %}
+        {% else %}
+            <span class="m-b-0"><i>{{ transaction.transtypedesc }}</i></span>
+        {% endif %}
+    </td>
+    <td style="border-right:1px solid gainsboro"></td>
+    <td class="text-right"> {# Arrears Value #}
+        <span class="text-danger">£{{ arrears_summary.ara_arrears_value_grossofvat|floatformat:2|intcomma }}</span>
+    </td>
+    <td><span class="font-size-11"><i>{{ arrears_summary.ara_return_description }}</i></span></td>
+    <td style="border-right:1px solid gainsboro"></td>
+    <td class="text-right "> {# Collected Value #}
+        <span style="color: forestgreen;">£{{ arrears_summary.ara_collected_value_grossofvat|floatformat:2|intcomma }} - </span>
+    </td>
+    <td class="text-right text-info"> {# Written-off Value #}
+        <span class="">£{{ arrears_summary.ara_writtenoff_value_grossofvat|floatformat:2|intcomma }}</span>
+    </td>
+    <td style="border-right:1px solid gainsboro"></td>
+    <td class="text-right"> {# Balance Value #}
+        <span   {% if arrears_summary.ara_balance_value_grossofvat > 0 %}
+                    style="color: #fd3259;"
+                {% else %}
+                    style="color: forestgreen;"
+                {% endif %}>£{{ arrears_summary.ara_balance_value_grossofvat|floatformat:2|intcomma }}</span>
+    </td>
+    <td style="border-right:1px solid gainsboro"></td>
+    <td class="text-center"> {# Status #}
+        {% if arrears_summary.ara_agent_id == None %}
+            <span class="">unallocated</span>
+        {% else %}
+            <span class="">{{ arrears_summary.ara_agent_id }}</span>
+        {% endif %}
+    </td>
+    <td class="text-center"> {# Status Date #}
+        <span class="">{{ arrears_summary.ara_status_date|date:"d/m/Y"}}</span>
+    </td>
+    <td class="text-center font-size-18">
+        {% if  arrears_summary.ara_balance_value_grossofvat != 0 %}
+            <a href="javascript:void(0)"
+               data-url="{% url 'core_arrears:arrear_update' arrears_summary.ara_agreement_id arrears_summary.ara_arrears_id %}"
+               class="text-success m-r-15 js-update-arrear"><i class="ti-pencil-alt"></i></a>
+        {% endif %}
+    </td>
+</tr>
+{% for receipt_allocation in receipt_allocations %}
+    <tr class="SPH" hidden style="background-color: #f7fbff">
+        {% if arrears_summary.ara_arrears_id == receipt_allocation.ras_arrears_id %}
+            <td colspan="5" class="text-right"><span style="color: #8dabc4"><i>&nbsp;</i></span></td>
+        <td colspan="1"  class="text-right font-size-12">
+            {% if receipt_allocation.ras_status.arr_status_code == 'X' %}
+                <span><i>Cancelled Receipt:</i></span>
+            {% else %}
+                <span style="color: #40719b"><i>Allocated Receipt:</i></span>
+            {% endif %}
+        </td>
+        <td style="border-right:1px solid gainsboro"></td>
+        <td class="text-right "> {# Collected Value #}
+            <span {% if receipt_allocation.ras_status.arr_status_code != 'X' %}style="color: #40719b"{% endif %}><i>£{{ receipt_allocation.ras_collected_value_grossofvat|floatformat:2|intcomma }} - </i></span>
+        </td>
+        <td class="text-right"> {# Adjustment Value #}
+            <span {% if receipt_allocation.ras_status.arr_status_code != 'X' %}style="color: #40719b"{% endif %}><i>£{{ receipt_allocation.ras_adjustment_value_grossofvat|floatformat:2|intcomma }}</i></span>
+        </td>
+        <td style="border-right:1px solid gainsboro"></td>
+        <td class="text-right"> {# Balance Value #}
+            <span {% if receipt_allocation.ras_status.arr_status_code != 'X' %}style="color: #40719b"{% endif %}><i>£{{ receipt_allocation.ras_balance_value_grossofvat|floatformat:2|intcomma }}</i></span>
+        </td>
+        <td style="border-right:1px solid gainsboro"></td>
+        <td class="text-center font-size-12"> {# Status #}
+            <span {% if receipt_allocation.ras_status.arr_status_code != 'X' %}style="color: #40719b"{% endif %}><i>{{ receipt_allocation.ras_agent_id }}</i></span>
+        </td>
+        <td class="text-center font-size-12"> {# Status Date #}
+            <span {% if receipt_allocation.ras_status.arr_status_code != 'X' %}style="color: #40719b"{% endif %}><i>{{ receipt_allocation.ras_status_date|date:"d/m/Y"}}</i></span>
+        </td>
+        <td class="text-center font-size-16">
+            <a href="javascript:void(0)"
+               data-url="{% url 'core_arrears:arrear_receipt_view' receipt_allocation.ras_agreement_id receipt_allocation.ras_arrears_id receipt_allocation.ras_allocation_id %}"
+               class="text-success m-r-15 js-view-collection"><i class="ti-eye"></i></a>
+        </td>
+        {% endif %}
+    </tr>
+{% endfor %}
+{% endfor %}

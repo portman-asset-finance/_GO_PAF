@@ -1,0 +1,820 @@
+{% extends "dashboard_base.html" %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+{% load dashboard_extras %}
+{% block metadescription %}
+   GO Dashboard
+{% endblock %}
+{% block title %}
+   GO Dashboard
+{% endblock %}
+{% block page-css %}
+{% endblock %}
+{% block content %}
+    <link href="{% static 'static_core_agreement_editor_template/css/static_core_agreement_editor.css'%}" rel="stylesheet">
+<div class="page-header">
+    <h2 class="header-title"> {{ agreement_detail.agreementnumber }}</h2>&nbsp;
+    <h2 class="header-title">{{ agreement_customer.customercompany }}</h2>&nbsp;
+    <h2 class="header-title" data-toggle="tooltip" data-placement="bottom"
+        title="Sales Representative">{{ agreement_detail.agreementauthority }}&nbsp; &nbsp;</h2>&nbsp;
+    {% if agreement_regulated_flag %}
+        <button type="button" class="btn btn-success btn-w-sm" data-toggle="popover" data-trigger="hover"   title="" data-content="This is a regulated agreement,                         please deal with accordingly." data-original-title="Regulated Agreement" aria-describedby="popover676999">
+            <i class="mdi mdi-help-circle-outline"></i>&nbsp;Regulated
+        </button>
+    {% endif %}
+    <div class="header-sub-title">
+        {% if  agreement_detail.agreementdefname != 'Hire Purchase' and agreement_detail.agreementdefname != 'Management Fee' %}
+            <span class="badge badge-info badge-lg">{{ agreement_detail.agreementdefname }}</span>
+        {% else %}
+            <span class="badge badge-primary badge-lg">{{ agreement_detail.agreementdefname }}</span>
+        {% endif %}
+        {% if agreement_detail.agreementclosedflag_id == 902 %}
+            <span class="badge badge-danger badge-lg">Closed</span>
+        {% endif %}
+        {% if agreement_detail.agreementddstatus_id == 'I' %}
+            <span class="badge badge-danger badge-lg">DD Inactive</span>
+        {% endif %}
+        {% if agreement_detail.agreement_stage == '4'%}
+            <nav class="breadcrumb breadcrumb-dash">&nbsp;
+                <a class="breadcrumb-item text-success agreement-list" href="{%  url 'core_agreement_crud:AgreementEnquiryList' %}"><i class="ti-list p-r-5"></i>Agreement List</a>
+                <span class="breadcrumb-item active">Agreement Detail</span>
+            </nav>
+             <a href='javascript:void(window.open("{% url 'notes:main' %}?customer_id={{ agreement_detail.agreementcustomernumber }}&agreement_id={{ agreement_detail.agreementnumber }}", "core_notes", "scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no, width=2000,height=1000,left=0,top=0"));' class="text-white m-r-15 font-size-16"><span class="btn btn-success btn-float  btn-rounded m-l-10 p-r-10 p-l-10 m-b-0"><i class="ti-write m-r-5"  data-customer-id="{{ agreement_detail.agreementcustomernumber }}" data-agreement-id="{{ agreement_detail.agreementnumber }}"></i>NOTES</span></a>
+        {% else %}
+            <nav class="breadcrumb breadcrumb-dash">&nbsp;
+                <a class="breadcrumb-item text-success" href="{%  url 'core_agreement_crud:AgreementEnquiryList' %}"><i class="ti-list p-r-5"></i>Agreement List</a>
+                <span class="breadcrumb-item active">Agreement Detail</span>
+            </nav>
+        {% endif %}
+    </div>
+    {% if agreement_detail.agreement_stage == '4'%}
+        {% if go_id.consolidation_info %}
+            <p><i class="fa fa-clock-o"></i> {{ go_id.consolidation_info}}
+            </p>
+        {% endif %}
+    {% endif %}
+</div>
+<div class="card">
+    <div class="card-header border bottom">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-sm-10 offset-sm-1">
+                    <ul class="nav wizard wizard-success">
+                        {% if agreement_detail.agreement_stage == '4' %}
+                            <li  class="nav-item">
+                                <a class="nav-link completed" href="{%  url 'core_agreement_crud:agreement_management_tab1_1' agreement_detail.agreementnumber %}"></a>
+                                <div class="nav-title">Customer Detail</div>
+                            </li>
+                        {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link completed"></a>
+                            <div class="nav-title">Customer Detail</div>
+                        </li>
+                        {% endif %}
+                        {% if agreement_detail.agreement_stage == '4' %}
+                            <li  class="nav-item">
+                                <a class="nav-link completed" href="{%  url 'core_agreement_crud:agreement_management_tab2' agreement_detail.agreementnumber %}"></a>
+                                <div class="nav-title">Payment Detail</div>
+                            </li>
+                        {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link completed"></a>
+                            <div class="nav-title">Payment Detail</div>
+                        </li>{% endif %}
+                        {% if agreement_detail.agreement_stage == '4' %}
+                            <li  class="nav-item">
+                                <a class="nav-link completed" href="{%  url 'core_agreement_crud:agreement_management_tab3' agreement_detail.agreementnumber %}"></a>
+                                <div class="nav-title">Agreement Detail</div>
+                            </li>
+                        {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link completed"></a>
+                            <div class="nav-title">Agreement Detail</div>
+                        </li>
+                        {% endif %}
+                        {% if agreement_detail.agreement_stage == '4' %}
+                            <li  class="nav-item">
+                                <a class="nav-link active"></a>
+                                <div class="nav-title">Account Statement</div>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link active"></a>
+                                <div class="nav-title">Account Statement</div>
+                            </li>{% endif %}
+                       {% comment %}<li class="nav-item">
+                            <a class="nav-link" href=""></a>
+                            <div class="nav-title">Guarantors</div>
+                        </li>{% endcomment %}
+{#                    </ul>#}
+{#                    <ul class="nav wizard wizard-danger">#}
+                        {% if agreement_detail.agreement_stage == '4' %}
+                            <li class="nav-item danger" hidden>
+                                <a class="nav-link completed danger" data-toggle="modal" data-target="#close_agreement_modal"></a>
+                                <div class="nav-title">End Agreement</div>
+                            </li>{% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+     {% if change_profile %}
+         <div class="col-sm-12">
+                <div class="alert alert-success m-t-25">
+                    <b>Success:</b> Account Statement has been updated.
+                </div>
+         </div>
+     {% endif %}
+     {% if error %}
+         <div class="col-sm-12">
+            <div class="alert alert-danger m-t-25">
+                <b>Error:</b> {{ error }}
+            </div>
+         </div>
+     {% endif %}
+
+    {% if is_in_batch %}
+    <div class="col-sm-12">
+        <div class="alert alert-info m-t-25">
+            <b><i class="fa fa-warning"></i></b> This agreement has a transaction(s) that are currently in an open batch.
+        </div>
+    </div>
+    {% endif %}
+
+    {% if batch_error %}
+        <div class="col-sm-12">
+            <div class="alert alert-danger m-t-25">
+                <b>This Transaction is in batch {{ batch_error }}</b>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="card m-t-20 col-md-10">
+
+        <div class="card-body">
+
+            <div class="card-title">
+                <div class="row">
+                    <div class="col-md-12">
+                        {% if agreement_detail.agreement_stage == '4' %}
+                        <button class="btn btn-success" id="show_sp_only" hidden>Show Profile Only</button>
+                        <button class="btn btn-success" id="show_all">Include Payment History</button>
+                        {% endif %}
+                        {# TODO: GO#110 - Start #}
+                            <div class="radio d-inline m-l-15">
+                                <input id="select-gross-of-vat" name="noLabel" type="radio" checked="">
+                                <label for="select-gross-of-vat">Gross of V.A.T.</label>
+                            </div>
+                            <div class="radio d-inline m-l-15">
+                                <input id="select-net-of-vat" name="noLabel" type="radio">
+                                <label for="select-net-of-vat">Net of V.A.T.</label>
+                            </div>
+                            <div class="dropdown dropdown-animated  text-right">
+                            </div>
+{#                    # TODO: GO#110 - End #}
+                        {% if agreement_detail.agreement_stage == '4' %}
+                            {% if agreement_detail.agreementstatus != 'CLOSED' %}
+                                <div class="dropdown dropdown-animated text-right m-l-15">
+                                    <button {% if is_in_batch %}
+                                            data-toggle="tooltip"
+                                            data-title="This agreement is in an open batch."
+                                            class="btn btn-default m-r-0"
+                                            {% elif in_arrears %}
+                                            data-toggle="tooltip"
+                                            data-title="This agreement is in arrears."
+                                            class="btn btn-default m-r-0"
+                                            {% else %}
+                                            data-url="{% url 'core_agreement_editor:modalsettlement' agreement_id %}"
+                                            class="btn btn-success m-r-0 js-create-editor" data-modal-target="#modal-editor-1"
+                                            {% endif %}
+                                            >
+                                        <span>Settle Agreement</span>
+                                    </button>
+                                </div>
+                                <div class="dropdown dropdown-animated text-right m-l-15">
+                                    <button
+                                            {% if is_in_batch %}
+                                            data-toggle="tooltip"
+                                            data-title="This agreement is in an open batch."
+                                            class="btn btn-default m-r-0"
+                                            {% else %}
+                                            data-url="{% url 'core_agreement_editor:modalglobal_termination' agreement_id %}"
+                                            class="btn btn-success m-r-0 js-create-editor"
+                                            {% endif %}
+                                            >
+                                        <span>Global Agreement</span>
+                                    </button>
+                                </div>
+                                <div class="dropdown dropdown-animated text-right" hidden>
+                                    <button class="btn btn-success m-r-0" data-toggle="dropdown" aria-expanded="false">
+                                        <span>Close Agreement</span>
+                                    </button>
+                                </div>
+                                <div class="dropdown dropdown-animated text-right m-l-15">
+                                    <button data-toggle="modal" data-placement="bottom" class="btn btn-success m-r-0"
+                                            data-backdrop="static" data-target="#id-refund-modal">
+                                        <span>Refund </span>
+                                    </button>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                        {% if agreement_detail.go_id.agreement_origin_flag == 'TR' and show_sentinel_button %}
+                            <div class="dropdown dropdown-animated pull-right">
+                                <form method="POST" action="{% url 'dashboard:convert_to_sentinel' agreement_id %}">
+                                    {% csrf_token %}
+                                    <button class="btn btn-primary" type="submit">
+                                        Convert To Sentinal
+                                    </button>
+                                </form>
+                            </div>
+                        {% endif %}
+                        {% if agreement_detail.agreementstatus == 'CLOSED' %}
+                            <div class="dropdown dropdown-animated text-right m-l-15">
+                                <button type="button" id="id-reopen-agreement" class="btn btn-success m-r-0">
+                                    <span>Reopen Agreement</span>
+                                </button>
+                            </div>
+                        {% endif %}
+{#                            <div class="dropdown dropdown-animated col-md-5 text-right ">#}
+{#                                <button class="btn btn-success dropdown-toggle  m-r-0  " data-toggle="dropdown" aria-expanded="false">#}
+{#                                    <span>Print Documents</span>#}
+{#                                </button>#}
+{#                            </div>#}
+{#                            <div class="">#}
+{#                                <a href="javascript:void(0)"#}
+{#                                   data-url="{% url 'core_arrears:arrear_update' arrears_summary.ara_agreement_id arrears_summary.agreement_id %}"#}
+{#                                   class="text-success m-r-15"#}
+{#                                js-update-arrear">#}
+{#                                <i class="ti-pencil-alt"></i>#}
+{#                                </a>#}
+{#                            </div>#}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="table-overflow">
+            <table class="table table-hover table-sm border">
+                <thead class="thead-light">
+                <tr>
+                    <th></th>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th class="text-right">Value</th>
+                    <th class="text-right"></th>
+                    <th class="text-right">Balance</th>
+                    <th class="text-right"></th>
+
+                     {% if agreement_detail.agreement_stage == '4' %}
+                         {% if agreement_detail.agreementstatus == 'CLOSED' or transaction_summary_extract_count == 0 and not go_id.agreement_origin_flag == 'TR' %}
+                             <th class="text-right">
+                                 <badge data-toggle="tooltip" data-placement="bottom" title=""
+                                        class="badge badge-pill badge-xs badge-default" readonly>
+                                     Reschedule Agreement
+                                 </badge>
+                             </th>
+                             {% else %}
+                                 <th class="text-right">
+                                     <badge
+                                             {% if is_in_batch %}
+                                                 data-toggle="tooltip"
+                                                 data-title="This agreement is in an open batch."
+                                                 class="badge badge-pill badge-default m-r-0 badge-xs"
+                                             {% else %}
+                                                 data-toggle="tooltip" data-placement="bottom" title data-original-title="Reschedule Agreement"
+                                                 data-url="{% url 'core_agreement_editor:editor_create' agreement_id %}"
+                                                 class="badge badge-pill badge-success badge-xs js-create-editor" style = "cursor: pointer"
+                                             {% endif %}>
+                                         Reschedule Agreement
+                                     </badge>
+                                 </th>
+                             {% endif %}
+{#                         {% if agreement_detail.agreementstatus != 'CLOSED'%}#}
+{#                             {% transaction_summary_extract_count > 0 or transition_count > 0  %}#}
+{#                                 <th class="text-right">#}
+{#                                     <badge href="javascript:void(0)" data-toggle="tooltip" data-placement="bottom" title data-original-title="Reschedule Agreement"#}
+{#                                            data-url="{% url 'core_agreement_editor:editor_create' agreement_id %}"#}
+{#                                            class="badge badge-pill badge-success badge-xs js-create-editor" style = "cursor: pointer">#}
+{#                                         Reschedule Agreement#}
+{#                                     </badge>#}
+{#                                 </th>#}
+{#                             {% else %}#}
+{#                             #}
+{#                                 <th class="text-right">#}
+{#                                     <badge href="javascript:void(0)" data-toggle="tooltip" data-placement="bottom" title="Agreement Not Batched"#}
+{#                                            class="badge badge-pill badge-xs badge-default" readonly>#}
+{#                                         Reschedule Agreement#}
+{#                                     </badge>#}
+{#                                 </th>#}
+{#                             {% endif %}#}
+                     {% endif %}
+                </tr>
+                </thead>
+                <tbody >
+                <tr class="table-info SP">
+                    <td class="text-right"></td>
+                    <td></td>
+                    <td><span class="text-dark">EARLY TERMINATION FIGURE</span></td>
+                    <td class="text-right"></td>
+                    <td class="text-right"></td>
+                    <td class="text-right text-dark">
+                        <span class = 'net-of-vat' hidden>
+                            {{ settlement_figure_net|floatformat:2|intcomma }}
+                        </span>
+                        <span class = 'gross-of-vat'>
+                            {{ settlement_figure_vat|floatformat:2|intcomma }}
+                        </span>
+                        GBP
+                    </td>
+                    <td class="text-left">
+                        <span class = 'net-of-vat' hidden>
+                            {% if agreement_type == 'Lease' %}
+                                +VAT
+                            {% endif %}
+                        </span>
+                        <span class = 'gross-of-vat'>
+                            {% if agreement_type == 'Lease' %}
+                                Incl. VAT
+                            {% endif %}
+                        </span>
+                    </td>
+                 {% if agreement_detail.agreement_stage == '4' %}
+                        <th class="text-right">
+
+                        </th>
+                {% else %}
+                {% endif %}
+                </tr>
+                {% for transaction in account_summary %}
+                    <tr {% if transaction.transactionsourceid == 'GO1'%}
+                        class="table-light SP"
+                    {% elif transaction.transactionsourceid == 'GO2'  or transaction.transactionsourceid == 'GO3'%}
+                        class="table-light SP"
+                    {% else %}
+                        class="SPH" hidden
+                    {% endif %}>
+                        {% if transaction.transactionsourceid == 'GO1' or transaction.transactionsourceid == 'GO2'  or transaction.transactionsourceid == 'GO3' %}
+                            <td  class="text-right"><small class="text-muted"><i>{{ transaction.row_index }}</i></small></td>
+                        {% else %}
+                            <td  class="text-right"></td>
+                        {% endif %}
+                        <td>
+                            <span>{{ transaction.transactiondate|date:"d/m/Y"  }}</span>
+                        </td>
+                        <td {% if transaction.transactionsourceid != 'GO1' and transaction.transactionsourceid != 'GO2'  and transaction.transactionsourceid != 'GO3' %}class="text-right"{% endif %}>
+                            {% if transaction.transactionsourceid == 'GO1' or transaction.transactionsourceid == 'GO2'  or transaction.transactionsourceid == 'GO3' %}
+                                {% if transaction.transactiondate < agreement_detail.agreementfirstpaymentdate %}
+                                    <span class="m-b-0">Manual Payment Due</span>
+                                {% else %}
+                                {% if transaction.transactionsourceid == 'GO1' %}
+                                    <span class="m-b-0">Primary Payment Due</span>
+                                {% else %}
+                                    <span class="m-b-0">Secondary Payment Due</span>
+                                {% endif %}
+                                {% endif %}
+                            {% else %}
+                                <span class="m-b-0"><i>{{ transaction.transtypedesc }}</i></span>
+                            {% endif %}
+                        </td>
+                        <td class="text-right">
+                            {% if transaction.transactionsourceid == 'GO1' or transaction.transactionsourceid == 'GO2'  or transaction.transactionsourceid == 'GO3'  %}
+                                <div class="dropdown dropdown-animated scale-left show">
+                                    <a href="#" class="text-success dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                        <span class="m-b-0 text-success net-of-vat" hidden>{{ transaction.transnetpayment|floatformat:2|intcomma }} GBP</span>
+                                        <span class="m-b-0 text-success gross-of-vat">{{ transaction.transgrosspayment|floatformat:2|intcomma }} GBP</span></a>
+                                    <div class="dropdown-menu dropdown-lg" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 37px, 0px); top: 0px; left: 0px; will-change: transform;">
+                                        {% for detail in account_detail %}
+                                            {% if detail.transactiondate == transaction.transactiondate and detail.transactionsourceid in 'GO1GO2GO3' %}
+                                                <div class="dropdown-item d-flex justify-content-between align-items-center p-b-0 m-b-0">
+                                                    {% if detail.transtypedesc == 'Deferred VAT' %}
+                                                        <span>{{ detail.transtypedesc }}</span>
+                                                        <span>{{ detail.transgrosspayment|floatformat:2|intcomma }} GBP</span>
+                                                    {% else %}
+                                                        {% if detail.transtypedesc is None %}
+                                                            <span>Rental</span>
+                                                        {% else %}
+                                                            <span>{{ detail.transtypedesc }}</span>
+                                                        {% endif %}
+                                                        <span>{{ detail.transnetpayment|floatformat:2|intcomma }} GBP</span>
+                                                    {% endif %}
+                                                </div>
+{#                                              # TODO: GO#110 - Start #}
+                                                {% if agreement_type != 'HP' %}
+                                                    <div class="gross-of-vat p-t-0 m-t-0 border-bottom">
+                                                        <div class="dropdown-item d-flex justify-content-between align-items-center p-t-0 m-t-0">
+                                                            {% if detail.transtypedesc is None %}
+                                                                <span>VAT on Rental</span>
+                                                            {% else %}
+                                                                <span>VAT on {{ detail.transtypedesc }}</span>
+                                                            {% endif %}
+                                                            <span>{{ detail.transvatpayment|floatformat:2|intcomma }} GBP</span>
+                                                        </div>
+                                                    </div>
+                                                {% else %}
+                                                    <div class="gross-of-vat p-t-0 m-t-0 border-bottom">
+                                                        <div class="dropdown-item d-flex justify-content-between align-items-center p-t-0 m-t-0">
+                                                            {% if detail.transtypedesc is None or 'Deferred VAT' %}
+{#                                                                <span>VAT on Rental</span>#}
+                                                            {% else %}
+                                                                <span>VAT on {{ detail.transtypedesc }}</span>
+                                                                <span>{{ detail.transvatpayment|floatformat:2|intcomma }} GBP</span>
+                                                            {% endif %}
+
+                                                        </div>
+                                                    </div>
+                                                {% endif %}
+{#                                              # TODO: GO#110 - End#}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% else %}
+                                <span class="m-b-0 net-of-vat" hidden>{{ transaction.transnetpayment|floatformat:2|intcomma }} GBP</span>
+                                <span class="m-b-0 gross-of-vat">{{ transaction.transgrosspayment|floatformat:2|intcomma }} GBP</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-left">
+                            <span class = 'net-of-vat' hidden>
+                                {% if agreement_type == 'Lease' %}
+                                    +VAT
+                                {% endif %}
+                            </span>
+                            <span class = 'gross-of-vat'>
+                                {% if agreement_type == 'Lease' %}
+                                    Incl. VAT
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td class="text-right">
+                            <span class="net-of-vat" hidden>{{ account_summary|running_total_net:forloop.counter|floatformat:2|intcomma }} GBP</span>
+                            <span class="gross-of-vat">{{ account_summary|running_total_gross:forloop.counter|floatformat:2|intcomma }} GBP</span>
+                        </td>
+                        <td class="text-left">
+                            <span class = 'net-of-vat' hidden>
+                                {% if agreement_type == 'Lease' %}
+                                    +VAT
+                                {% endif %}
+                            </span>
+                            <span class = 'gross-of-vat'>
+                                {% if agreement_type == 'Lease' %}
+                                    Incl. VAT
+                                {% endif %}
+                            </span>
+                        </td>
+                        {% if agreement_detail.agreement_stage == '4' %}
+                            {% if transaction.transactionsourceid == 'GO9'  or transaction.transactionsourceid == 'GO8' or transaction.transactionsourceid == 'GO7' %}
+                                <th class="text-right"></th>
+                            {% else %}
+                                {% if agreement_detail.agreementstatus != 'CLOSED' %}
+                                    {% if transaction.transactionbatch_id  %}
+                                        <th class="text-right">
+                                            <badge href="javascript:void(0)" data-toggle="tooltip" data-placement="bottom" title="Agreement in Batch {{transaction.transactionbatch_id }}"
+                                                    data-batch-url="{% url 'core_dd_drawdowns:view_batch_by_ref' transaction.transactionbatch_id %}"
+                                                    class="badge badge-pill badge-xs badge-default" readonly style = "cursor: pointer">
+                                                {{ transaction.transactionbatch_id}}
+                                            </badge>
+                                            {% if transaction.transactionbatch_id  %}
+                                                <badge href="javascript:void(0)" data-toggle="tooltip" data-placement="bottom"
+                                                   data-url="{% url 'core_agreement_editor:update_or_create' agreement_id %}?transaction_id={{ transaction.id }}"
+                                                   class="badge badge-pill badge-success badge-xs js-create-editor" style = "cursor: pointer" >
+                                                    <i class="ti-pencil"></i>
+                                                </badge>
+                                            {% endif %}
+                                        </th>
+                                    {% elif transaction.transactiondate|is_in_past %}
+                                        <th class="text-right">
+                                            <badge href="javascript:void(0)" data-toggle="tooltip" data-placement="bottom"
+                                                   data-url="{% url 'core_agreement_editor:update_or_create' agreement_id %}?transaction_id={{ transaction.id }}"
+                                                   class="badge badge-pill badge-success badge-xs js-create-editor" style = "cursor: pointer" >
+                                                {% if transaction.transactionbatch_id  %}
+                                                    {{ transaction.transactionbatch_id}}
+                                                {% else %}
+                                                <i class="ti-pencil"></i>
+                                                {% endif %}
+                                            </badge>
+                                            {% if transaction.transactionbatch_id  %}
+                                                <badge href="javascript:void(0)" data-toggle="tooltip" data-placement="bottom"
+                                                   data-url="{% url 'core_agreement_editor:update_or_create' agreement_id %}?transaction_id={{ transaction.id }}"
+                                                   class="badge badge-pill badge-success badge-xs js-create-editor" style = "cursor: pointer" >
+                                                    <i class="ti-pencil"></i>
+                                                </badge>
+                                            {% endif %}
+                                        </th>
+                                    {% else %}
+                                        <th class="text-right">
+                                            <badge href="javascript:void(0)" data-toggle="tooltip" data-placement="bottom"
+                                                   data-url="{% url 'core_agreement_editor:update_or_create' agreement_id %}?transaction_id={{ transaction.id }}"
+                                                   class="badge badge-pill badge-success badge-xs js-create-editor" style = "cursor: pointer" >
+                                                <i class="ti-pencil"></i>
+                                            </badge>
+                                        </th>
+                                    {% endif %}
+                                {% else %}
+                                    <th class="text-right">
+                                        <badge href="javascript:void(0)" data-toggle="tooltip" data-placement="bottom" title="Agreement Closed"
+                                               class="badge badge-pill badge-xs badge-default" readonly>
+                                            {% if transaction.transactionbatch_id  %}
+                                                {{ transaction.transactionbatch_id}}
+                                            {% else %}
+                                                <i class="ti-pencil"></i>
+                                            {% endif %}
+                                        </badge>
+                                    </th>
+                                {% endif %}
+                            {% endif %}
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    <div class="row">
+        <div class="col-sm-8 offset-sm-4">
+            <form class="" method="post" action="{% url 'core_agreement_crud:agreement_management_tab4' agreement_id %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <div class="text-sm-right">
+                        <a class="btn btn-warning btn-rounded" href="{%  url 'core_agreement_crud:agreement_management_tab3' agreement_id %}">
+                            <span class="title">Back</span>
+                        </a>
+                        {% if agreement_detail.agreement_stage == '4' %}
+                           <button class="btn btn-gradient-success btn-rounded" href="{%  url 'core_agreement_crud:AgreementEnquiryList' %}">
+                               <span class="title">Complete</span>
+                           </button>
+                        {% else %}
+                           {% if request.user|has_group:"Accounts" %}
+                               <button type="submit" class="btn btn-gradient-success btn-rounded">
+                                    <span class="title">Complete</span>
+                                </button>
+                           {% else %}
+                               <a class="btn btn-gradient-success btn-rounded" href="{% url 'core_agreement_crud:AgreementEnquiryList' %}">
+                                   <span class="title">Forward to Accounts</span>
+                               </a>
+                           {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="modal fade" id="close_agreement_modal" tabindex="-1" role="dialog" aria-labelledby="close_agreement_modalLabel" aria-hidden="true" data-keyboard=false >
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="close_agreement_modalLabel">Close Agreement</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>You are shutting down an agreement.</p>
+                    <p>Do you really want to do this?</p>
+                </div>
+                <div class="modal-footer">
+{#                    <a class="btn btn-success ">#}
+                    <a class="btn btn-success "
+{#                       href="{%  url 'core_agreement_alm:agreement_end_agreement_tab' agreement_id %}"#}
+                    >
+                            <span class="title">Yes</span>
+                        </a>
+{#                     <button type="button" class="btn btn-success" action="{%  url 'core_agreement_alm:agreement_end_agreement_tab' agreement_id %}">Yes</button>#}
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" data-keyboard=false id="modal-editor">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Dates -->
+    <div class="modal fade" data-keyboard=false id="modal-editor-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+            </div>
+        </div>
+    </div>
+ </div>
+
+    <div class="modal fade" id="confirm-reopen-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Please Confirm</h2>
+                    <button class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    Please be sure that you want to reopen the agreement. This will restart the Direct Debit.
+                </div>
+
+                <div class="modal-footer">
+                    <form method="post" action="{% url 'core_agreement_crud:agreement_management_tab4' agreement_id %}">
+                        {% csrf_token %}
+                        <input type="hidden" value="true" name="reopen">
+                        <button type="submit" class="btn btn-success">Reopen</button>
+                    </form>
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" role="dialog" id="change_dates_error">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Error</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger" id="change_dates_error_message"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" role="dialog" id="id-console_batch_conflicts">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title"><i class="fa fa-warning"></i> Warning!</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <b>Important:</b> You are trying to consolidate agreements that are already in an open batch. You must remove these transactions from the batch(s) before setting up this agreement.
+                    </div>
+                    <table class="table table-striped table-bordered">
+                        <thead>
+                        <tr>
+                            <th>Agreement ID</th>
+                            <th>Batch Reference</th>
+                            <th>Scheduled Due Date</th>
+                            <th>Created by</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for row in console_batch_conflicts %}
+                            <tr>
+                                <td>{{ row.agreement_id }}</td>
+                                <td>{{ row.batch_header }}</td>
+                                <td>{{ row.due_date }}</td>
+                                <td>{{ row.user }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-danger" data-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <form method="POST" action="{% url 'core_agreement_crud:refund' agreement_id %}">
+        {% csrf_token %}
+        <div class="modal fade" role="dialog" id="id-refund-modal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Refund</h3>
+                        <button class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="control-label" for="id-refund-date">Date:</label>
+                            <input type="date" name="refund_date" id="id-refund-date" class="form-control" value="{{ today }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label" for="id-refund-amount">Amount (GROSS):</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">&pound;</span>
+                                </div>
+{#                                Card 66 ~ Refund: Change to Number input. 20191023 #}
+                                <input type="number" class="form-control" id="id-refund-amount" name="refund_amount"
+{#                                       onkeypress="return isCurrency(event)" #}
+                                       max="10000000" maxlength="10">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success">Refund</button>
+                        <button class="btn btn-danger" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+{% endblock %}
+{% block page-js %}
+{#    <script src="{% static 'static_core_agreement_alm_template/js/edit_transactions.js' %}"></script>#}
+    <script src="{% static 'static_core_agreement_editor_template/js/editors.js' %}"></script>
+
+    <script src="{% static 'core_agreement_crud.js' %}"></script>
+
+        <script>
+
+        $(function(){
+
+            {% if console_batch_conflicts %}
+                $("#id-console_batch_conflicts").modal();
+            {% endif %}
+
+            $("#id-reopen-agreement").click(function() {
+                $("#confirm-reopen-modal").modal({"backdrop": "static", "keyboard": false});
+            });
+
+            $("#show_sp_only").click(function(){
+                $(".SPH").prop('hidden', true);
+                $('#show_sp_only').prop('hidden', true);
+                $('#show_all').prop('hidden', false);
+            });
+            $("#show_all").click(function(){
+                $(".SPH").prop('hidden', false);
+                $('#show_all').prop('hidden', true);
+                $('#show_sp_only').prop('hidden', false);
+            });
+            $("#select-net-of-vat").click(function(){
+                $(".net-of-vat").prop('hidden', false);
+                $(".gross-of-vat").prop('hidden', true);
+            });
+            $("#select-gross-of-vat").click(function(){
+                $(".net-of-vat").prop('hidden', true);
+                $(".gross-of-vat").prop('hidden', false);
+            });
+
+        });
+
+        function preventBack() {
+            window.history.forward();
+        }
+
+        setTimeout("preventBack()", 0);
+
+        window.onunload = function() {
+            null
+        };
+
+        var uri = window.location.toString();
+            if (uri.indexOf("?") > 0) {
+                var clean_uri = uri.substring(0, uri.indexOf("?"));
+                window.history.replaceState({}, document.title, clean_uri);
+            }
+    </script>
+    <script type="text/javascript">
+
+$(function() {
+
+    var amount;
+    var agreement_id;
+    var floatvalue;
+
+    {# Variables to control multiple submission error - handles user double clicking/hitting enter multiple times #}
+    var proceed = true;
+    var difference = 0;
+    var today = new Date();
+    var hours_in_seconds_01 = (today.getHours())*3600;
+    var minutes_in_seconds_01 = (today.getMinutes()*60);
+    var seconds_in_seconds_01 = today.getSeconds();
+    var seconds_01 = hours_in_seconds_01 + minutes_in_seconds_01 + seconds_in_seconds_01;
+    var hours_in_seconds_02 = (today.getHours())*3600;
+    var minutes_in_seconds_02 = (today.getMinutes()*60);
+    var seconds_in_seconds_02 = today.getSeconds();
+    var seconds_02 = hours_in_seconds_01 + minutes_in_seconds_02 + seconds_in_seconds_02;
+
+    $("[data-batch-url]").click(function() {
+        location.href = $(this).attr("data-batch-url");
+    });
+
+    {#  Handle click event on button requesting card payment modal #}
+    $("#enter-card-details").click(function() {
+
+        agreement_id = $(this).attr("data-agreement-id");
+        $("#card_receipt_val_1").val($("#widget_agreement_arrears_total").html());
+        $('#card-error').html('');
+
+        {# protect modal nehind #}
+        paymentSectionActive();
+
+        {# display card payment modal on top #}
+        $("#card-payment-modal").modal({backdrop:'static'});
+    });
+
+    {# Dismiss/Cancel Card Payment modal and reinstate underlying modal#}
+    $("#btn-dismiss-card-modal").click(function() {
+        paymentSectionInactive();
+    });
+
+});
+
+</script>
+{% endblock %}

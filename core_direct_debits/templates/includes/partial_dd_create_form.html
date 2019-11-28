@@ -1,0 +1,121 @@
+{% load widget_tweaks %}
+
+<div id="dd-entry">
+{% if state == 'red' %}
+    <div class="alert alert-danger" id="dd-date-invalid">
+        {% if next_due_date %}
+            <p>Next due date for Agreement {{ agreement_no }} is on {{ next_due_date|date:"d/m/Y" }}</p>
+        {% endif %}
+        <p>Setup will be active on {{ setup_active_date|date:"d/m/Y" }}</p>
+        <p>The earliest due date possible will be on {{ call_active_date|date:"d/m/Y" }}</p>
+        <p>In order to hit this date, the latest call must be made on {{ earliest_call_date|date:"d/m/Y" }}</p>
+    </div>
+{% endif %}
+{% if state == 'blue' %}
+    <div class="alert alert-info" id="dd-date-valid">
+        {% if next_due_date %}
+            <p>Next due date for Agreement {{ agreement_no }} is on {{ next_due_date|date:"d/m/Y" }}</p>
+        {% endif %}
+        <p>Setup will be active on {{ setup_active_date|date:"d/m/Y" }}</p>
+        <p>In order to hit this due date, the latest call must be made on {{ earliest_call_date|date:"d/m/Y" }}</p>
+    </div>
+{% endif %}
+
+
+<form method="post" id="id-create-dd-form">
+    {% if error %}
+        <div class="alert alert-danger">
+            <b>Error:</b> {{ error }}
+        </div>
+    {% endif %}
+    {% csrf_token %}
+    <div class="form-group">
+        <label class="control-label">Manual Payments</label><br>
+        <div class="switch d-inline">
+            <input type="hidden" name="manual_payments" value="{% if manual_payments_display %}1{% else %}0{% endif %}" id="id-manual-payments">
+            <input type="checkbox" id="ManualPaymentsToggle" {% if manual_payments_display %}checked{% else %}unchecked{% endif %}>
+            <label for="ManualPaymentsToggle"></label>
+        </div>
+    </div>
+    <div id="id-dd-payment-details">
+        {% for field in form %}
+            <div class="form-group{% if field.errors %} has-errors{% endif %}">
+                <label for="{{ field.id_for_label }}" class="control-label">{{ field.label }}</label>
+                {% render_field field class="form-control" %}
+                {% for error in field.errors %}
+                    <p class="help-block" style="color:red">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+    <div class="form-group">
+        <button class="btn btn-success" type="submit">Create</button>
+        <button type="button" class="btn btn-danger" data-url="{% url 'core_direct_debits:get_dd_history' agreement_no %}"
+                data-manage-ddi="{{ agreement_no}}" data-dismiss="modal"
+                data-create-url="{% url 'core_direct_debits:create_new_dd_instruction' agreement_no %}">Cancel</button>
+    </div>
+</form>
+</div>
+
+<div id="id-manual-payments-batches" style="display:none;">
+    <div class="alert alert-danger">
+        <b>Important:</b> This agreement has transactions that are in an open batch. Please remove these transactions before changing the payment status to manual.
+    </div>
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th>Batch Reference</th>
+            <th>Scheduled Due Date</th>
+            <th>Created by</th>
+        </tr>
+        </thead>
+        {% for batch in batches %}
+            <tr>
+                <td>{{ batch.batch_header.reference }}</td>
+                <td>{{ batch.due_date }}</td>
+                <td>{{ batch.user }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    <button class="pull-right btn btn-danger" id="id-dd-entry-return">
+        &larr; Back
+    </button>
+</div>
+
+<script type="text/javascript">
+
+    $(function() {
+
+        {% if manual_payments_display %}
+        $("#id-dd-payment-details input").attr("readonly", "readonly");
+        {% endif %}
+
+
+        $("#ManualPaymentsToggle").click(function(e) {
+
+            var $this = $(this);
+
+            if($this.is(":checked")) {
+                {% if batches|length > 0 %}
+                    e.preventDefault();
+                    $("#dd-entry").hide();
+                    $("#id-manual-payments-batches").show();
+                {% else %}
+                $("#id-dd-payment-details input").attr("readonly", "readonly");
+                $("#id-manual-payments").val("1");
+                {% endif %}
+            } else {
+                $("#id-dd-payment-details input").removeAttr("readonly");
+                $("#id-manual-payments").val("0");
+            }
+
+        });
+
+        $("#id-dd-entry-return").click(function() {
+            $("#dd-entry").show();
+            $("#id-manual-payments-batches").hide();
+        });
+
+    });
+
+</script>

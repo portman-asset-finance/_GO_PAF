@@ -1,0 +1,302 @@
+{% extends "dashboard_base.html" %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+{% load widget_tweaks %}
+{% block metadescription %}
+
+{% endblock %}
+{% block title %}
+
+{% endblock %}
+{% block page-css %}
+{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2 class="header-title" style="color: #8dabc4">WORLDPAY RECEIPTS</h2>
+</div>
+{#% comment %#}
+<div class="card">
+    <div class="card-header border bottom">
+        <form method="get" class="form-inline">
+          <span class="m-b-20 m-r-15"><h4 class="text-thin">Filter by: </h4></span>
+          {% render_field agreement_list.form.agreementnumber class="form-control m-b-20 m-r-15" placeholder="APEL Number"%}
+          <span class="m-b-20 m-r-15"><h5 class="text-thin"> and </h5></span>
+          {% render_field agreement_list.form.customercompany class="form-control m-b-20 m-r-15" placeholder="Customer Name"%}
+          <span class="m-b-20 m-r-15"><h5 class="text-thin"> and </h5></span>
+          {% render_field agreement_list.form.agreementclosedflag class="form-control m-b-20 m-r-15" placeholder="Agreement Status"%}
+          <span class="m-b-20 m-r-15"><h5 class="text-thin"> and </h5></span>
+          {% render_field agreement_list.form.agreementddstatus class="form-control m-b-20 m-r-15" placeholder="DD Status"%}
+          <button type="submit" class="btn btn-icon btn-success m-b-20">
+            <i class="mdi mdi-magnify"></i>
+          </button>
+            {% if has_filter %}
+                <a class="btn btn-icon btn-warning m-b-20" href="{%  url 'dashboard:AgreementEnquiryList' %}">
+                    <i class="mdi mdi-refresh"></i>
+                </a>
+            {% endif %}
+        </form>
+    </div>
+    <div class="card-body">
+        <div class="table-overflow">
+            <table class="table table-hover table-sm border">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Agreement</th>
+                        <th>Customer</th>
+                        <th></th>
+                        <th>Type</th>
+                        <th class="text-center">DD Status</th>
+                        <th>Payout Date</th>
+                        <th>Sales Person</th>
+                        <th>First Primary Date</th>
+                        <th>Last Primary Date</th>
+                        <th class="text-right">Net Rental Amount</th>
+                        <th></th>
+                        <th></th>
+                        <th class="text-right">Collection</th>
+                        <th class="text-right"></th>
+
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for agreement in agreement_list_qs %}
+                        <tr>
+                            <td> {# Agreement #}
+                                <span class="title" id = 'agree'>{{ agreement.agreementnumber }}</span>
+                            </td>
+                            <td> {# Customer #}
+                                <span class="">{{ agreement.customercompany }}</span>
+                            </td>
+                            <td> {# Customer #}
+                                {% if agreement.agreementclosedflag_id == 902 %}
+                                    <span class="badge badge-danger">Closed</span>
+                                {% endif %}
+                            </td>
+                            <td> {# Type #}
+                                <span class="">{{ agreement.agreementdefname }}</span>
+                            </td>
+                            <td class="text-center"> {# DD Status #}
+                                {% if agreement.agreementddstatus_id == 'I' %}
+                                    <i class="ti-close font-size-12 text-danger"></i>
+                                {% else %}
+                                    <i class="ti-check font-size-12 text-success"></i>
+                                {% endif %}
+                            </td>
+                            <td> {# Payout Date #}
+                                <span class="">{{ agreement.agreementagreementdate|date:"d/m/Y"}}</span>
+                            </td>
+                            <td> {# Sales Person #}
+                                <span class="">{{ agreement.agreementauthority}}</span>
+                            </td>
+                            <td> {# First Primary Date #}
+                                <span class="">{{ agreement.agreementfirstpaymentdate|date:"d/m/Y"}}</span>
+                            </td>
+                            <td> {# Last Primary Date #}
+                                <span class="">{{ agreement.agreementresidualdate|date:"d/m/Y"}}</span>
+                            </td>
+                            <td class="text-right"> {# Net Rental Amount #}
+                                <span class="">{{ agreement.agreementinstalmentnet|floatformat:2|intcomma }} GBP</span>
+                            </td>
+                            <td class="text-right"> {# Net Rental Amount #}
+                                <span class="">{% if agreement.agreementdefname != 'Hire Purchase' %}+VAT{% endif %}</span>
+                            </td>
+                            <td class="text-right font-size-18">
+                                <a href="{% url 'dashboard:AgreementEnquiryDetail' agreement.agreementnumber %}" class="text-success m-r-15"><i class="ti-layers"></i></a>
+                            </td>
+                            <td>
+                                 <input name="amount" class="Input-element Input-element--nowrap TextInput-element" id="amount_{{ agreement.agreementnumber }}" type="text" placeholder="" value="0.00" autocomplete="off"></button>
+                            </td>
+                            <td class="text-right font-size-18">
+
+                                <button class="btn btn-icon btn-success m-b-0 enter-card-details" data-agreement-id="{{ agreement.agreementnumber }}" >Enter card details </button>
+
+                            </td>
+
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer border bottom text-center">
+        <div >
+            <div class="dataTables_paginate paging_simple_numbers">
+                <ul class="pagination">
+                    {% if agreement_list_qs.has_previous %}
+                    <li class="paginate_button page-item previous">
+                        {% if 'agreementnumber' in request.get_full_path %}
+                            <a href="{{ request.get_full_path }}&page={{ agreement_list_qs.previous_page_number }}" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                        {% else %}
+                            <a href="?page={{ agreement_list_qs.previous_page_number }}" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                        {% endif %}
+                        </li>
+                    {% else %}
+                    <li class="paginate_button page-item previous disabled">
+                        <a href="#" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                    </li>
+                    {% endif %}
+                    {% for i in agreement_list_qs.paginator.page_range %}
+                        {% if agreement_list_qs.number == i %}
+                            <li class="paginate_button page-item active">
+                                {% if 'agreementnumber' in request.get_full_path %}
+                                    <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                {% else %}
+                                    <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                {% endif %}
+                            </li>
+                        {% else %}
+                            {% if agreement_list_qs.number < i %}
+                                {% if agreement_list_qs.number|add:"1" >= i %}
+                                    <li class="paginate_button page-item">
+                                        {% if 'agreementnumber' in request.get_full_path %}
+                                            <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% else %}
+                                            <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% endif %}
+                                    </li>
+                                {% else %}
+                                    {% if agreement_list_qs.paginator.num_pages == i %}
+                                        <li class="paginate_button page-item disabled">
+                                            <a href="#" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">
+                                                <i class="mdi mdi-dots-horizontal"></i>
+                                            </a>
+                                        </li>
+                                        <li class="paginate_button page-item">
+                                            {% if 'agreementnumber' in request.get_full_path %}
+                                                <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% endif %}
+                                        </li>
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                            {% if agreement_list_qs.number > i %}
+                                {% if agreement_list_qs.number|add:"-2" < i  %}
+                                    <li class="paginate_button page-item">
+                                        {% if 'agreementnumber' in request.get_full_path %}
+                                            <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% endif %}
+                                    </li>
+                                {% else %}
+                                    {% if 1 == i %}
+                                        <li class="paginate_button page-item">
+                                            {% if 'agreementnumber' in request.get_full_path %}
+                                                <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% endif %}
+                                        </li>
+                                        <li class="paginate_button page-item disabled">
+                                            <a href="#" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">
+                                                <i class="mdi mdi-dots-horizontal"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                            {% endif %}
+                        {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                    {% if agreement_list_qs.has_next %}
+                        <li class="paginate_button page-item next" id="dt-opt_next">
+                            {% if 'agreementnumber' in request.get_full_path %}
+                                <a href="{{ request.get_full_path }}&page={{ agreement_list_qs.next_page_number }}" aria-controls="dt-opt" data-dt-idx="3" tabindex="0" class="page-link">Next</a>
+                            {% else %}
+                                <a href="?page={{ agreement_list_qs.next_page_number }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">Next</a>
+                            {% endif %}
+                        </li>
+                    {% else %}
+                        <li class="paginate_button page-item next disabled" id="dt-opt_next">
+                            <a href="#" aria-controls="dt-opt" data-dt-idx="3" tabindex="0" class="page-link">Next</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+    <div class="modal fade in" id="card-payment-modal" >
+        <div class="modal-dialog"  >
+            <div class="modal-content text-center" style="max-width:381px;background-color:#f0f2f5; color: #CE272D">
+                <div id="paymentSection"></div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block page-js %}
+
+    <script src="https://cdn.worldpay.com/v1/worldpay.js"></script>
+        <script type="text/javascript">
+
+        var amount;
+        var agreement_id ;
+
+        $(function() {
+
+            var appendHtml = null;
+
+            $(".enter-card-details").click(function() {
+                agreement_id = $(this).attr("data-agreement-id");
+                amount = $("#amount_" + agreement_id).val()*100;
+                if (amount > 0){
+                    $("#card-payment-modal").modal();
+                    appendHtml = $("#paymentSection");
+                }
+            });
+
+            Worldpay.useTemplateForm({
+                'clientKey':'T_C_1eda086d-d536-4828-b1a2-48eae58249d9',
+                'form':'paymentForm',
+                'paymentSection':'paymentSection',
+                'display':'inline',
+                'reusable':true,
+                'callback': function(obj) {
+                    if (obj && obj.token) {
+                    }
+                    var data = {
+                        amount: amount,
+                        agreement_id: agreement_id,
+                        token: obj.token,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    };
+                    $.ajax({
+                        method: 'POST',
+                        url: '{% url 'core_app_worldpay:worldpay_charge' %}',
+                        data: data,
+                        dataType: 'json',
+                        success: function(data) {
+                            if(data.success) {
+                                $("#card-payment-modal").modal('hide');
+                            } else {
+                                var msg = data.message;
+                                appendHtml.append("<div>" + msg + "</div>");
+                            }
+                        },
+                        error: function(data) {
+                            appendHtml.append(JSON.stringify(data));
+                        }
+                    })
+                    {#alert($(agreement_id).object);#}
+                }
+                    {#method=post#}
+                    {#($("#amount_" + agreement_id).val());#}
+
+                  {% comment %} if (obj && obj.token) {
+                        var _el = document.createElement('input');
+                        _el.value = obj.token;
+                        //_el.type = 'hidden';
+                         _el.name = 'token';
+                         document.getElementById('paymentForm').appendChild(_el);
+                                                    document.getElementById('paymentForm').submit();
+                                                }
+                                            }{% endcomment %}
+            })
+
+        });
+        </script>
+{% endblock %}

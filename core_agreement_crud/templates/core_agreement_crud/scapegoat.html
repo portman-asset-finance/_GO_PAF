@@ -1,0 +1,390 @@
+{% extends "dashboard_base.html" %}
+{% load dashboard_extras %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+{% load widget_tweaks %}
+{% block metadescription %}
+	GO FINTECH
+{% endblock %}
+{% block title %}
+	GO Agreement Enquiry
+{% endblock %}
+{% block page-css %}
+{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2 class="header-title" style="color: #8dabc4">TRANSACTION AUDIT </h2>
+</div>
+<div class="card">
+    <div class="card-header border bottom">
+        <form method="get" class="form-inline">
+            <span class="m-b-20 m-r-15"><h4 class="text-thin">Filter by: </h4></span>
+            {% render_field scapegoat_list.form.agreement_id class="form-control m-b-20 m-r-15" placeholder="APEL Number"%}
+            <span class="m-b-20 m-r-15"><h5 class="text-thin"> and </h5></span>
+            {% render_field scapegoat_list.form.customercompany class="form-control m-b-20 m-r-15" placeholder="Customer Name"%}
+            <span class="m-b-20 m-r-15"><h5 class="text-thin"> and </h5></span>
+            {% render_field scapegoat_list.form.user_id class="form-control m-b-20 m-r-15" placeholder="User"%}
+
+
+{#            <span class="m-b-20 m-r-15"><h5 class="text-thin"> and </h5></span>#}
+{#            {% render_field agreement_list.form.agreementddstatus_id class="form-control m-b-20 m-r-15" placeholder="DD Status"%}#}
+{#          {% comment %}{% endcomment %}  <span class="m-b-20 m-r-15"><h5 class="text-thin"> and </h5></span>#}
+{#            {% render_field agreement_list.form.agreement_stage class="form-control m-b-20 m-r-15" placeholder="Stage"%}#}
+            <button type="submit" class="btn btn-icon btn-success m-b-20">
+                <i class="mdi mdi-magnify"></i>
+            </button>
+            {% if has_filter %}
+                <a class="btn btn-icon btn-warning m-b-20" href="{%  url 'core_agreement_crud:AgreementEnquiryList' %}">
+                    <i class="mdi mdi-refresh"></i>
+                </a>
+            {% endif %}
+
+        </form>
+    </div>
+    <div class="card-body">
+        <div class="table-overflow">
+            <table class="table table-hover table-sm border">
+                <thead class="thead-light">
+                    <tr>
+                        <th class="text-center">Agreement</th>
+                        <th class="text-center">Customer</th>
+{#                        <th></th>#}
+                        <th class="text-center">User</th>
+                        <th class="text-center">Updated</th>
+                        <th class="text-center">Action</th>
+                        <th class="text-center"> Transaction</th>
+
+{#                        <th></th>#}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for agreement in scapegoat_list_qs %}
+                        <tr>
+                            <td class="text-center"> {# Agreement #}
+                                <span class="title" id = 'agreement'>{{ agreement.agreement_id }}</span>
+                            </td>
+                            <td class="text-center"> {# Agreement #}
+                                <span class="title" id = 'company'>{{ agreement.customercompany }}</span>
+                            </td>
+                            <td class="text-center"> {# Agreement #}
+                                <span class="title" id = 'user'>{{ agreement.user }}</span>
+                            </td>
+                            <td class="text-center"> {# Agreement #}
+                                <span class="title" id = 'updated'>{{ agreement.updated|date:"d/m/Y H:i" }}</span>
+                            </td>
+                            <td class="text-center"> {# Agreement #}
+                                <span class="title" id = 'action'>{{ agreement.action }}</span>
+                            </td>
+                            <td class="text-center"> {# Agreement #}
+                                <span class="title" id = 'transaction'>{{ agreement.transaction }}</span>
+                            </td>
+{#                            <td class="text-center"> {# Source #}
+{#                                {% if agreement.go_id.agreement_origin_flag %}#}
+{#                                    <span class="badge badge-primary" data-toggle="tooltip" data-placement="right" title data-original-title="GO Application">GO</span>#}
+{#                                {% else %}#}
+{#                                    <span class="badge bg-instagram text-white" data-toggle="tooltip" data-placement="right" title data-original-title="External Application">EX</span>#}
+{#                                {% endif %}#}
+{#                            </td>#}
+{#                            <td> {# Customer #}
+{#                                <span class="">{{ agreement.customercompany|view_truncate:50 }}</span>#}
+{#                            </td>#}
+{#                            <td> {# Customer #}
+{#                                {% if agreement.agreementclosedflag_id == 902 %}#}
+{#                                    <span class="badge badge-danger">Closed</span>#}
+{#                                {% endif %}#}
+{#                            </td>#}
+{#                            <td> {# Type #}
+{#                                {% if agreement.agreementdefname == 'Hire Purchase' %}#}
+{#                                    <span class="">HP</span>#}
+{#                                {% else %}#}
+{#                                    <span class="">Lease</span>#}
+{#                                {% endif %}#}
+{#                            </td>#}
+{#                            <td class="text-center"> {# DD Status #}
+{#                                {% if agreement.agreementddstatus_id == 'I' %}#}
+{#                                    <i class="ti-close font-size-12 text-danger"></i>#}
+{#                                {% else %}#}
+{#                                    <i class="ti-check font-size-12 text-success"></i>#}
+{#                                {% endif %}#}
+{#                            </td>#}
+{#                            <td class="text-center"> {# Payout Date #}
+{#                                <span class="">{{ agreement.agreementagreementdate|date:"d/m/Y"}}</span>#}
+{#                            </td>#}
+{#                            <td> {# Sales Person #}
+{#                                <span class="">{{ agreement.agreementauthority}}</span>#}
+{#                            </td>#}
+{#                            <td class="text-center"> {# First Primary Date #}
+{#                                <span class="">{{ agreement.agreementfirstpaymentdate|date:"d/m/Y"}}</span>#}
+{#                            </td>#}
+{#                            <td class="text-center"> {# Last Primary Date #}
+{#                                <span class="">{{ agreement.agreementresidualdate|date:"d/m/Y"}}</span>#}
+{#                            </td>#}
+{#                            <td class="text-right"> {# Net Rental Amount #}
+{#                                <span class="">&pound;{{ agreement.agreementinstalmentnet|floatformat:2|intcomma }} GBP</span>#}
+{#                            </td>#}
+{#                            <td class="text-center ">#}
+{#                                {% if agreement.agreement_stage == requiredtabs %}#}
+{#                                    <button class="btn btn-success btn-outline btn-w-md">#}
+{#                                     <span style="display: block; width: 30px !important;">#}
+{#                                         Live#}
+{#                                     </span>#}
+{#                                    </button>#}
+{#                                {% endif %}#}
+{#                                {% if agreement.agreement_stage == None %}#}
+{#                                    <button class="btn btn-success btn-outline btn-w-md">#}
+{#                                     <span style="display: block; width: 30px !important;">#}
+{#                                         Live#}
+{#                                     </span>#}
+{#                                    </button>#}
+{#                                {% else %}#}
+{#                                {% if agreement.agreement_stage != requiredtabs %}#}
+{#                                    <button class="btn btn-danger btn-outline btn-w-md">#}
+{#                                     <span style="display: block; width: 30px !important;">#}
+{#                                         Open#}
+{#                                     </span>#}
+{#                                    </button>#}
+{#                                {% endif %}#}
+{#                                {% endif %}#}
+{#                            </td>#}
+{#                            <td class="text-right font-size-18">#}
+{#                                <span data-keep-referer="true" data-toggle="tooltip" data-placement="bottom" title data-original-title="Edit Agreement">{% if agreement.agreement_stage == '1' %}#}
+{#                                <a href="{% url 'core_agreement_crud:agreement_management_tab1_1' agreement.agreementnumber %}" class="text-success m-r-15"><i class="ti-pencil"></i></a>{% endif %}#}
+{#                                </span>#}
+{#                                <span data-keep-reference="true" data-toggle="tooltip" data-placement="bottom" title data-original-title="Edit Agreement">{% if agreement.agreement_stage == '2' %}#}
+{#                                <a href="{% url 'core_agreement_crud:agreement_management_tab2' agreement.agreementnumber %}" class="text-success m-r-15"><i class="ti-pencil"></i></a>{% endif %}#}
+{#                                </span>#}
+{#                                <span data-keep-referer="true" data-toggle="tooltip" data-placement="bottom" title data-original-title="Edit Agreement">{% if agreement.agreement_stage == '3' %}#}
+{#                                <a href="{% url 'core_agreement_crud:agreement_management_tab3' agreement.agreementnumber %}" class="text-success m-r-15"><i class="ti-pencil"></i></a>{% endif %}#}
+{#                                </span>#}
+{#                                <span data-keep-referer="true" data-toggle="tooltip" data-placement="bottom" title data-original-title="Edit Agreement">{% if agreement.agreement_stage == '4' %}#}
+{#                                <a href="{% url 'core_agreement_crud:agreement_management_tab4' agreement.agreementnumber %}" class="text-success m-r-15"><i class="ti-pencil"></i></a>{% endif %}#}
+{#                                </span>#}
+{##}
+{#                                {% if agreement.agreement_stage == '4' or agreement.agreement_stage == None%}#}
+{#                                    <a href="javascript:void(0)" class="text-success m-r-15 js-list-dd" data-toggle="tooltip" data-placement="bottom" title data-original-title="DDI Management"#}
+{#                                        data-url="{% url 'core_direct_debits:get_dd_history' agreement.agreementnumber %}"#}
+{#                                        data-create-url="{% url 'core_direct_debits:create_new_dd_instruction' agreement.agreementnumber %}"><i class="fa fa-university"></i></a>#}
+{#                                    <a href="javascript:void(0)" data-toggle="tooltip" data-placement="bottom" title data-original-title="Notice Management" data-url="{% url 'core_agreement_notice:update_or_create' agreement.agreementnumber %}" class="text-success m-r-15 js-create-notice"><i class="fa fa-chain-broken"></i></a>#}
+{#                                    <a href='javascript:void(window.open("{% url 'notes:main' %}?customer_id={{ agreement.agreementcustomernumber }}&agreement_id={{ agreement.agreementnumber }}", "core_notes"));' data-toggle="tooltip" data-placement="bottom" title data-original-title="Notes" class="text-success m-r-15"><i class="ti-write" data-customer-id="{{ agreement.agreementcustomernumber }}" data-agreement-id="{{ agreement.agreementnumber }}"></i></a>#}
+{#                                    <a href="{% url 'dashboard:AgreementEnquiryDetail' agreement.agreementnumber %}" data-toggle="tooltip" data-placement="bottom" title data-original-title="Agreement Enquiry" class="text-success m-r-15"><i class="ti-layers"></i></a>#}
+{#                                {% endif %}#}
+{#                            </td>#}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer border bottom text-center">
+        <div >
+            <div class="dataTables_paginate paging_simple_numbers">
+                <ul class="pagination">
+                    {% if scapegoat_list_qs.has_previous %}
+                    <li class="paginate_button page-item previous">
+                        {% if 'agreementnumber' in request.get_full_path %}
+                            <a href="{{ request.get_full_path }}&page={{ scapegoat_list_qs.previous_page_number }}" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                        {% else %}
+                            <a href="?page={{ scapegoat_list_qs.previous_page_number }}" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                        {% endif %}
+                        </li>
+                    {% else %}
+                    <li class="paginate_button page-item previous disabled">
+                        <a href="#" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                    </li>
+                    {% endif %}
+                    {% for i in scapegoat_list_qs.paginator.page_range %}
+                        {% if scapegoat_list_qs.number == i %}
+                            <li class="paginate_button page-item active">
+                                {% if 'agreementnumber' in request.get_full_path %}
+                                    <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                {% else %}
+                                    <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                {% endif %}
+                            </li>
+                        {% else %}
+                            {% if scapegoat_list_qs.number < i %}
+                                {% if scapegoat_list_qs.number|add:"1" >= i %}
+                                    <li class="paginate_button page-item">
+                                        {% if 'agreementnumber' in request.get_full_path %}
+                                            <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% else %}
+                                            <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% endif %}
+                                    </li>
+                                {% else %}
+                                    {% if scapegoat_list_qs.paginator.num_pages == i %}
+                                        <li class="paginate_button page-item disabled">
+                                            <a href="#" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">
+                                                <i class="mdi mdi-dots-horizontal"></i>
+                                            </a>
+                                        </li>
+                                        <li class="paginate_button page-item">
+                                            {% if 'agreementnumber' in request.get_full_path %}
+                                                <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% endif %}
+                                        </li>
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                            {% if scapegoat_list_qs.number > i %}
+                                {% if scapegoat_list_qs.number|add:"-2" < i  %}
+                                    <li class="paginate_button page-item">
+                                        {% if 'agreementnumber' in request.get_full_path %}
+                                            <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% endif %}
+                                    </li>
+                                {% else %}
+                                    {% if 1 == i %}
+                                        <li class="paginate_button page-item">
+                                            {% if 'agreementnumber' in request.get_full_path %}
+                                                <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% endif %}
+                                        </li>
+                                        <li class="paginate_button page-item disabled">
+                                            <a href="#" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">
+                                                <i class="mdi mdi-dots-horizontal"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                            {% endif %}
+                        {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                    {% if scapegoat_list_qs.has_next %}
+                        <li class="paginate_button page-item next" id="dt-opt_next">
+                            {% if 'agreementnumber' in request.get_full_path %}
+                                <a href="{{ request.get_full_path }}&page={{ scapegoat_list_qs.next_page_number }}" aria-controls="dt-opt" data-dt-idx="3" tabindex="0" class="page-link">Next</a>
+                            {% else %}
+                                <a href="?page={{ scapegoat_list_qs.next_page_number }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">Next</a>
+                            {% endif %}
+                        </li>
+                    {% else %}
+                        <li class="paginate_button page-item next disabled" id="dt-opt_next">
+                            <a href="#" aria-controls="dt-opt" data-dt-idx="3" tabindex="0" class="page-link">Next</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-payment" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="card">
+                    <div class="cell example example5" id="example-5">
+                        <form>
+                            <div id="example5-paymentRequest">
+                                <button class="btn btn-icon btn-success m-b-20">Pay</button> {# "btn btn-icon btn-success m-b-20" #}
+                                            Stripe paymentRequestButton Element inserted here
+                            </div>
+                            <fieldset>
+                                <legend class="card-only" data-tid="elements_examples.form.pay_with_card"></legend>
+                                <legend class="payment-request-available" data-tid="elements_examples.form.enter_card_manually">Or enter card details</legend>
+                                <div class="row">
+                                </div>
+                                <div class="row">
+                                    <div class="field">
+                                        <label for="example5-email" data-tid="elements_examples.form.email_label">Email</label>
+                                        <input id="example5-email" data-tid="elements_examples.form.email_placeholder" class="input" type="text" placeholder="janedoe@gmail.com" required="" autocomplete="email">
+                                    </div>
+                                    <div class="field">
+                                        <label for="example5-phone" data-tid="elements_examples.form.phone_label">Phone</label>
+                                        <input id="example5-phone" data-tid="elements_examples.form.phone_placeholder" class="input" type="text" placeholder="(01234) 240 223 " required="" autocomplete="tel">
+                                    </div>
+                                </div>
+                                <div data-locale-reversible="">
+                                    <div class="row">
+                                        <div class="field">
+                                            <label for="example5-address" data-tid="elements_examples.form.address_label">Address 1</label>
+                                            <input id="example5-address" data-tid="elements_examples.form.address_placeholder" class="input" type="text" placeholder="9 Osier Way " required="" autocomplete="address-line1">
+                                        </div>
+                                    </div>
+                                    <div class="row" data-locale-reversible="">
+                                        <div class="field">
+                                            <label for="example5-city" data-tid="elements_examples.form.city_label">Address 2</label>
+                                            <input id="example5-city" data-tid="elements_examples.form.city_placeholder" class="input" type="text" placeholder="Olney" required="" autocomplete="address-level2">
+                                        </div>
+                                        <div class="field">
+                                            <label for="example5-state" data-tid="elements_examples.form.state_label">County</label>
+                                            <input id="example5-state" data-tid="elements_examples.form.state_placeholder" class="input empty" type="text" placeholder="Bucks" required="" autocomplete="address-level1">
+                                        </div>
+                                        <div class="field">
+                                            <label for="example5-zip" data-tid="elements_examples.form.postal_code_label">Post Code</label>
+                                            <input id="example5-zip" data-tid="elements_examples.form.postal_code_placeholder" class="input empty" type="text" placeholder="MK46 5FP" required="" autocomplete="postal-code">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="field">
+                                        <label for="example5-card" data-tid="elements_examples.form.card_label">Card</label>
+                                        <div id="example5-card" class="input StripeElement StripeElement--empty"><div class="__PrivateStripeElement" style="margin: 0px !important; padding: 0px !important; border: none !important; display: block !important; background: transparent !important; position: relative !important; opacity: 1 !important;"><iframe frameborder="0" allowtransparency="true" scrolling="no" name="__privateStripeFrame27" allowpaymentrequest="true" src="https://js.stripe.com/v3/elements-inner-card-23049fadc4b9b0bd3da0a55261e76747.html#style[base][iconColor]=%23fff&amp;style[base][color]=%23fff&amp;style[base][fontWeight]=400&amp;style[base][fontFamily]=Helvetica+Neue%2C+Helvetica%2C+Arial%2C+sans-serif&amp;style[base][fontSize]=16px&amp;style[base][fontSmoothing]=antialiased&amp;style[base][::placeholder][color]=%23BFAEF6&amp;style[base][:-webkit-autofill][color]=%23fce883&amp;style[invalid][iconColor]=%23FFC7EE&amp;style[invalid][color]=%23FFC7EE&amp;iconStyle=solid&amp;locale=elements-examples&amp;componentName=card&amp;wait=false&amp;rtl=false&amp;keyMode=test&amp;origin=https%3A%2F%2Fstripe.dev&amp;referrer=https%3A%2F%2Fstripe.dev%2Felements-examples%2F&amp;controllerId=__privateStripeController1" title="Secure payment input frame" style="border: none !important; margin: 0px !important; padding: 0px !important; width: 1px !important; min-width: 100% !important; overflow: hidden !important; display: block !important; height: 19.2px;"></iframe><input class="__PrivateStripeElement-input" aria-hidden="true" aria-label=" " autocomplete="false" maxlength="1" style="border: none !important; display: block !important; position: absolute !important; height: 1px !important; top: 0px !important; left: 0px !important; padding: 0px !important; margin: 0px !important; width: 100% !important; opacity: 0 !important; background: transparent !important; pointer-events: none !important; font-size: 16px !important;"></div></div>
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <label for="example5-amount" data-tid="elements_examples.form.amount_label">Amount</label>
+                                    <input id="example5-amount" data-tid="elements_examples.form.amount_placeholder" class="input empty" type="number" placeholder="££££££" required="" autocomplete="££££££">
+                                </div>
+                                <button type="submit" data-tid="elements_examples.form.pay_button">GO</button>
+                            </fieldset>
+                            <div class="error" role="alert"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 17 17">
+                                <path class="base" fill="#000" d="M8.5,17 C3.80557963,17 0,13.1944204 0,8.5 C0,3.80557963 3.80557963,0 8.5,0 C13.1944204,0 17,3.80557963 17,8.5 C17,13.1944204 13.1944204,17 8.5,17 Z"></path>
+                                <path class="glyph" fill="#FFF" d="M8.5,7.29791847 L6.12604076,4.92395924 C5.79409512,4.59201359 5.25590488,4.59201359 4.92395924,4.92395924 C4.59201359,5.25590488 4.59201359,5.79409512 4.92395924,6.12604076 L7.29791847,8.5 L4.92395924,10.8739592 C4.59201359,11.2059049 4.59201359,11.7440951 4.92395924,12.0760408 C5.25590488,12.4079864 5.79409512,12.4079864 6.12604076,12.0760408 L8.5,9.70208153 L10.8739592,12.0760408 C11.2059049,12.4079864 11.7440951,12.4079864 12.0760408,12.0760408 C12.4079864,11.7440951 12.4079864,11.2059049 12.0760408,10.8739592 L9.70208153,8.5 L12.0760408,6.12604076 C12.4079864,5.79409512 12.4079864,5.25590488 12.0760408,4.92395924 C11.7440951,4.59201359 11.2059049,4.59201359 10.8739592,4.92395924 L8.5,7.29791847 L8.5,7.29791847 Z"></path>
+                            </svg>
+                                <span class="message"></span></div>
+                        </form>
+                        <div class="success">
+                            <div class="icon">
+                                <svg width="84px" height="84px" viewBox="0 0 84 84" version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+                                    <circle class="border" cx="42" cy="42" r="40" stroke-linecap="round" stroke-width="4" stroke="#000" fill="none"></circle>
+                                    <path class="checkmark" stroke-linecap="round" stroke-linejoin="round" d="M23.375 42.5488281 36.8840688 56.0578969 64.891932 28.0500338" stroke-width="4" stroke="#000" fill="none"></path>
+                                </svg>
+                            </div>
+                            <h3 class="title" data-tid="elements_examples.success.title">Payment successful</h3>
+                            <p class="message"><span data-tid="elements_examples.success.message">Thanks for trying Stripe Elements. No money was charged, but we generated a token:</span><span class="token">tok_189gMN2eZvKYlo2CwTBv9KKh</span></p>
+                            <a class="reset" href="#">
+                                <svg width="32px" height="32px" viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+                                    <path fill="#000000" d="M15,7.05492878 C10.5000495,7.55237307 7,11.3674463 7,16 C7,20.9705627 11.0294373,25 16,25 C20.9705627,25 25,20.9705627 25,16 C25,15.3627484 24.4834055,14.8461538 23.8461538,14.8461538 C23.2089022,14.8461538 22.6923077,15.3627484 22.6923077,16 C22.6923077,19.6960595 19.6960595,22.6923077 16,22.6923077 C12.3039405,22.6923077 9.30769231,19.6960595 9.30769231,16 C9.30769231,12.3039405 12.3039405,9.30769231 16,9.30769231 L16,12.0841673 C16,12.1800431 16.0275652,12.2738974 16.0794108,12.354546 C16.2287368,12.5868311 16.5380938,12.6540826 16.7703788,12.5047565 L22.3457501,8.92058924 L22.3457501,8.92058924 C22.4060014,8.88185624 22.4572275,8.83063012 22.4959605,8.7703788 C22.6452866,8.53809377 22.5780351,8.22873685 22.3457501,8.07941076 L22.3457501,8.07941076 L16.7703788,4.49524351 C16.6897301,4.44339794 16.5958758,4.41583275 16.5,4.41583275 C16.2238576,4.41583275 16,4.63969037 16,4.91583275 L16,7 L15,7 L15,7.05492878 Z M16,32 C7.163444,32 0,24.836556 0,16 C0,7.163444 7.163444,0 16,0 C24.836556,0 32,7.163444 32,16 C32,24.836556 24.836556,32 16,32 Z"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modal-notice">
+    <div class="modal-dialog">
+        <div class="modal-content">
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block page-js %}
+    <script src="{% static 'static_core_agreement_notice_template/js/notices.js' %}"></script>
+    {% include 'dd_core.html' %}
+    {% include 'notes_core.html' %}
+    <script type="text/javascript">
+        $(function() {
+            if(typeof(Storage) !== "undefined") {
+                sessionStorage.agreementListReferer = false;
+            }
+            $("[data-keep-referer='true']").click(function() {
+                if(typeof(Storage) !== "undefined") {
+                    sessionStorage.agreementListReferer = location.href;
+                }
+            });
+        });
+    </script>
+{% endblock %}

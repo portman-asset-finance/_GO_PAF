@@ -1,0 +1,637 @@
+{% extends "dashboard_base.html" %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+{% load dashboard_extras %}
+{% block metadescription %}
+	Apellio Arrears Summary
+{% endblock %}
+{% block title %}
+	Apellio Arrears Summary
+{% endblock %}
+{% block page-css %}
+    <link href="{% static 'static_core_arrears/css/static_core_arrears.css'%}" rel="stylesheet">
+    <style>
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+             margin: 0;}
+        input[type=number] {-moz-appearance:textfield;}
+        .cr-payment-type {border-color: #2acfd2 !important; color: #2acfd2 !important;}
+        .dr-payment-type {border-color: red !important; color: red !important;}
+    </style>
+{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2 class="header-title" style="color: #8dabc4">ARREARS</h2>
+    <h2 class="header-title">{{ agreement_detail.agreementnumber }}</h2>
+    <h2 class="header-title">{{ agreement_customer.customercompany|view_truncate:40 }}</h2>
+    <h4 class="header-title" data-toggle="tooltip" data-placement="bottom"
+    title="Sales Representative">{{ agreement_detail.agreementauthority }}</h4>
+    {% if agreement_regulated_flag %}
+        <button type="button" class="btn btn-success btn-w-sm" data-toggle="popover" data-trigger="hover"   title="" data-content="This is a regulated agreement, please deal with accordingly." data-original-title="Regulated Agreement" aria-describedby="popover676999">
+            <i class="mdi mdi-help-circle-outline"></i>&nbsp;Regulated
+        </button>
+    {% endif %}
+    <div class="header-sub-title">
+        {% if  agreement_detail.agreementdefname != 'Hire Purchase' and agreement_detail.agreementdefname != 'Management Fee' %}
+            <span class="badge badge-info badge-lg">{{ agreement_detail.agreementdefname }}</span>
+        {% else %}
+            <span class="badge badge-primary badge-lg">{{ agreement_detail.agreementdefname }}</span>
+        {% endif %}
+        {% if agreement_detail.agreementclosedflag_id == 902 %}
+            <span class="badge badge-danger badge-lg">Closed</span>
+        {% endif %}
+        {% if agreement_detail.agreementddstatus_id == 'I' %}
+            <span class="badge badge-danger badge-lg">DD Inactive</span>
+        {% endif %}
+        <nav class="breadcrumb breadcrumb-dash">            &nbsp;&nbsp;
+{#            <a class="breadcrumb-item text-success" href="{% url 'core_arrears:arrears_by_agreement_view' %}{% if arrears_by_agreement_querystring %}{{ arrears_by_agreement_querystring }}{% endif %}"><i class="ti-list p-r-5"></i>Arrears by Agreement List</a>#}
+            <a class="breadcrumb-item text-success" href="{{ arrears_by_arrears_return_querystring }}"><i class="ti-list p-r-5"></i>Return to List</a>
+            <span class="breadcrumb-item active">Arrears Detail</span>
+        </nav>
+               <a href='javascript:void(window.open("{% url 'notes:main' %}?customer_id={{ agreement_customer.customernumber }}&agreement_id={{ agreement_detail.agreementnumber }}", "core_notes", "scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no, width=2000,height=1000,left=0,top=0"));' class="text-white m-r-15 font-size-16"><span class="btn btn-success btn-float  btn-rounded m-l-10 p-r-10 p-l-10 m-b-0"><i class="ti-write m-r-5"  data-customer-id="{{ agreement_customer.customernumber }}" data-agreement-id="{{ agreement_detail.agreementnumber }}"></i>NOTES</span></a>
+
+    </div>
+</div>
+<div class="card" id="arrears_by_arrears_summary_content">
+    {% include 'includes/partial_arrears_by_arrears_summary_content.html' %}
+    <!-- MODAL TEMPLATE -->
+          <div class="modal fade" data-keyboard="false" id="arrear-modal">
+            <div class="modal-dialog modal-xl">
+              <div class="modal-content">
+              </div>
+            </div>
+          </div>
+        <!-- Record Non-card payment receipt -->
+          <div class="modal fade" data-keyboard=false id="modal-record-payment" style="margin-top: 155px !important; margin-left: 70px;">
+            <div class="modal-dialog" style="border: 1px solid #2acfd2 !important;">
+                <div class="modal-content text-center" style="color: #CE272D; text-align: center !important;">
+                    <div class="card" style="margin-bottom: 8px !important;">
+                        <div class="card-body" style="border-bottom: 1px solid #2acfd2; padding: 5px !important;">
+                            <div style="width:380px; margin: 0 auto !important; margin-top: 15px !important; padding-bottom:10px;">
+                                <div class="row">
+                                    <div class="col-sm-5">
+                                        <div class="form-group text-right arrears-detail-margin-bottom ">
+                                            <div class="input-group" style="margin-left: 8px !important;">
+                                                <p class="form-control-plaintext form-control-sm" >
+                                                    <h5>Receipt Value</h5>
+                                                </p>
+                                            </div>
+                                        </div>
+                                     </div>
+                                    <div class="col-sm-7">
+                                        <div class="form-group text-right arrears-detail-margin-bottom">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span id="card_receipt_cur_1" class="input-group-text cr-payment-type payment-detail-group"
+{#                                                        style="border-color: #2acfd2 !important; color: #2acfd2 !important;"#}
+                                                    >£</span>
+                                                </div>
+                                                <input id="record-payment-val" type="text" name="arrear_val_1"
+                                                       class="form-control form-control-sm arrears-money-style cr-payment-type payment-detail-group"
+                                                       onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+{#                                                       style="border-color: #2acfd2 !important; color: #2acfd2 !important;"#}
+                                                       placeholder="0.00">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-5">
+                                        <div class="form-group text-right arrears-detail-margin-bottom ">
+                                            <div class="input-group" style="margin-left: 8px !important;">
+                                                <p class="form-control-plaintext form-control-sm" >
+                                                    <h5>Payment Account</h5>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-7">
+                                        <div class="input-group">
+                                            <select id="payment_target_account" name="arrears_total_adjustment"
+{#                                                    style="border-color: #2acfd2 !important; color: #2acfd2 !important;"#}
+                                                    class="form-control cr-payment-type payment-detail-group" type="text">
+                                                    <option value="Manual" selected style="color: #2acfd2">Manual</option>
+                                                    <option value="FP9981" style="color: #2acfd2">FP (9981)</option>
+                                                    <option value="FPNCF" style="color: #2acfd2">FP (NCF)</option>
+                                                    <option value="DC" style="color: #2acfd2">DC</option>
+                                                    <option value="DCNCF" style="color: #2acfd2">DC (NCF)</option>
+                                                    <option value="DRManual" style="color: red">Manual - Cancellation</option>
+                                                    <option value="DRFP9981" style="color: red">FP (9981) - Cancellation</option>
+                                                    <option value="DRFPNCF" style="color: red">FP (NCF) - Cancellation</option>
+                                                    <option value="DRDC" style="color: red">DC  - Cancellation</option>
+                                                    <option value="DRDCNCF" style="color: red">DC (NCF) - Cancellation</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="payment-error"></div>
+                        </div>
+                    </div>
+                    <div style="text-align: right !important;">
+                            <button id="btn-confirm-payment" type="button" class="btn btn-outline btn-success">Record Payment</button>
+                            <button id="btn-dismiss-payment-modal" type="button" class="btn btn-outline btn-info" data-dismiss="modal">Cancel and Close</button>
+                    </div>
+                </div>
+            </div>
+          </div>
+          <div class="modal fade" data-keyboard=false id="modal-record-payment2" style="margin-top: 155px !important; margin-left: 70px;">
+            <div class="modal-dialog" style="border: 1px solid #2acfd2 !important;">
+                <div class="modal-content text-center" style="color: #CE272D; text-align: center !important;">
+                    <div class="card" style="margin-bottom: 8px !important;">
+                        <div class="card-body" style="border-bottom: 1px solid #2acfd2; padding: 5px !important;">
+                            <div style="width:380px; margin: 0 auto !important; margin-top: 15px !important; padding-bottom:10px;">
+                                <div class="row">
+                                    <div class="col-sm-5">
+                                        <div class="form-group text-right arrears-detail-margin-bottom ">
+                                            <div class="input-group" style="margin-left: 8px !important;">
+                                                <p class="form-control-plaintext form-control-sm" >
+                                                    <h5>Receipt Value</h5>
+                                                </p>
+                                            </div>
+                                        </div>
+                                     </div>
+                                    <div class="col-sm-7">
+                                        <div class="form-group text-right arrears-detail-margin-bottom">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span id="card_receipt_cur_2" class="input-group-text cr-payment-type payment-detail-group2">£</span>
+                                                </div>
+                                                <input id="record-payment-val2" type="text" name="arrear_val_1"
+                                                       class="form-control form-control-sm arrears-money-style cr-payment-type payment-detail-group2"
+                                                       onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                                                       placeholder="0.00">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-5">
+                                        <div class="form-group text-right arrears-detail-margin-bottom ">
+                                            <div class="input-group" style="margin-left: 8px !important;">
+                                                <p class="form-control-plaintext form-control-sm" >
+                                                    <h5>Payment Account</h5>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-7">
+                                        <div class="input-group">
+                                            <select id="payment_target_account2" name="arrears_total_adjustment"
+                                                    class="form-control cr-payment-type payment-detail-group2" type="text">
+                                                    <option value="Manual" selected style="color: #2acfd2">Manual</option>
+                                                    <option value="FP9981" style="color: #2acfd2">FP (9981)</option>
+                                                    <option value="FPNCF" style="color: #2acfd2">FP (NCF)</option>
+                                                    <option value="DC" style="color: #2acfd2">DC</option>
+                                                    <option value="DCNCF" style="color: #2acfd2">DC (NCF)</option>
+                                                    <option value="DRManual" style="color: red">Manual - Cancellation</option>
+                                                    <option value="DRFP9981" style="color: red">FP (9981) - Cancellation</option>
+                                                    <option value="DRFPNCF" style="color: red">FP (NCF) - Cancellation</option>
+                                                    <option value="DRDC" style="color: red">DC  - Cancellation</option>
+                                                    <option value="DRDCNCF" style="color: red">DC (NCF) - Cancellation</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="payment-error2"></div>
+                        </div>
+                    </div>
+                    <div style="text-align: right !important;">
+                            <button id="btn-confirm-payment2" type="button" class="btn btn-outline btn-success">Record Payment</button>
+                            <button id="btn-dismiss-payment-modal2" type="button" class="btn btn-outline btn-info" data-dismiss="modal">Cancel and Close</button>
+                    </div>
+                </div>
+            </div>
+          </div>
+        <!-- Card Payments -->
+          <div class="modal fade" id="card-payment-modal" data-keyboard="false" style="margin-top: 155px !important; margin-left: 80px;">
+            <div class="modal-dialog" style="border: 1px solid #2acfd2 !important;">
+                <div class="modal-content text-center" style="color: #CE272D; text-align: center !important;">
+                    <form action="javascript:" onsubmit="Worldpay.submitTemplateForm()" id="paymentForm" method="post">
+                        <div style="width:380px; margin: 0 auto !important; margin-top: 15px !important; padding-bottom:10px;">
+                            <div class="row">
+                                <div class="col-sm-4">
+                                    <div class="form-group text-right arrears-detail-margin-bottom ">
+                                        <div class="input-group" style="margin-left: 8px !important;">
+                                            <p class="form-control-plaintext form-control-sm" >
+                                                <h5>Receipt Value</h5>
+                                            </p>
+                                        </div>
+                                    </div>
+                                 </div>
+                                <div class="col-sm-7">
+                                    <div class="form-group text-right arrears-detail-margin-bottom">
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span id="card_receipt_cur_1" class="input-group-text"
+                                                    style="border-color: #2acfd2 !important; color: #2acfd2 !important;">£</span>
+                                            </div>
+                                            <input id="card_receipt_val_1" type="text" name="arrear_val_1"
+                                                   class="form-control form-control-sm arrears-money-style"
+                                                   onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                                                   style="border-color: #2acfd2 !important; color: #2acfd2 !important;"
+                                                   placeholder="0.00">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card" style="margin-bottom: 0 !important;">
+                            <div class="card-body" style="border-top: 1px solid #2acfd2; border-bottom: 1px solid #2acfd2;padding: 5px !important;">
+                                    <div id="paymentSection"></div>
+                                    <div id="card-error"></div>
+                            </div>
+                        </div>
+                        <div style="text-align: right !important; padding-top:10px;">
+                            <button id="btn-confirm-payment" type="button" class="btn btn-outline btn-success" onclick="Worldpay.submitTemplateForm()">Take Payment</button>
+                            <button id="btn-dismiss-card-modal" type="button" class="btn btn-outline btn-info" data-dismiss="modal">Cancel and Close</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+          </div>
+          <div class="modal fade" id="card-payment-modal2" data-keyboard="false" style="margin-top: 155px !important; margin-left: 80px;">
+            <div class="modal-dialog" style="border: 1px solid #2acfd2 !important;">
+                <div class="modal-content text-center" style="color: #CE272D; text-align: center !important;">
+                    <form action="javascript:" onsubmit="Worldpay.submitTemplateForm()" id="paymentForm2" method="post">
+                        <div style="width:380px; margin: 0 auto !important; margin-top: 15px !important; padding-bottom:10px;">
+                            <div class="row">
+                                <div class="col-sm-4">
+                                    <div class="form-group text-right arrears-detail-margin-bottom ">
+                                        <div class="input-group" style="margin-left: 8px !important;">
+                                            <p class="form-control-plaintext form-control-sm" >
+                                                <h5>Receipt Value</h5>
+                                            </p>
+                                        </div>
+                                    </div>
+                                 </div>
+                                <div class="col-sm-7">
+                                    <div class="form-group text-right arrears-detail-margin-bottom">
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span id="card_receipt_cur_2" class="input-group-text"
+                                                    style="border-color: #2acfd2 !important; color: #2acfd2 !important;">£</span>
+                                            </div>
+                                            <input id="card_receipt_val_2" type="text" name="arrear_val_2"
+                                                   class="form-control form-control-sm arrears-money-style"
+                                                   onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                                                   style="border-color: #2acfd2 !important; color: #2acfd2 !important;"
+                                                   placeholder="0.00">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card" style="margin-bottom: 0 !important;">
+                            <div class="card-body" style="border-top: 1px solid #2acfd2; border-bottom: 1px solid #2acfd2;padding: 5px !important;">
+                                    <div id="paymentSection2"></div>
+                                    <div id="card-error2"></div>
+                            </div>
+                        </div>
+                        <div style="text-align: right !important; padding-top:10px;">
+                            <button id="btn-confirm-payment2" type="button" class="btn btn-outline btn-success" onclick="Worldpay.submitTemplateForm()">Take Payment</button>
+                            <button id="btn-dismiss-card-modal2" type="button" class="btn btn-outline btn-info" data-dismiss="modal">Cancel and Close</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+          </div>
+          <div class="modal fade" id="receipt-detail-modal" data-keyboard="false" style="margin-top: 155px !important; margin-left: 80px;">
+            <div class="modal-dialog" style="border: 1px solid #2acfd2 !important;">
+                <div class="modal-content text-center" style="color: #CE272D; text-align: center !important;">
+                    <form action="javascript:" onsubmit="Worldpay.submitTemplateForm()" id="paymentForm" method="post">
+                        <div style="width:380px; margin: 0 auto !important; margin-top: 15px !important; padding-bottom:10px;">
+                            <div class="row">
+                                <div class="col-sm-4">
+                                    <div class="form-group text-right arrears-detail-margin-bottom ">
+                                        <div class="input-group" style="margin-left: 8px !important;">
+                                            <p class="form-control-plaintext form-control-sm" >
+                                                <h5>Receipt Value</h5>
+                                            </p>
+                                        </div>
+                                    </div>
+                                 </div>
+                                <div class="col-sm-7">
+                                    <div class="form-group text-right arrears-detail-margin-bottom">
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span id="card_receipt_cur_1" class="input-group-text"
+                                                    style="border-color: #2acfd2 !important; color: #2acfd2 !important;">£</span>
+                                            </div>
+                                            <input id="card_receipt_val_1" type="text" name="arrear_val_1"
+                                                   class="form-control form-control-sm arrears-money-style"
+                                                   onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                                                   style="border-color: #2acfd2 !important; color: #2acfd2 !important;"
+                                                   placeholder="0.00">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align: right !important; padding-top:10px;">
+                            <button id="btn-confirm-payment" type="button" class="btn btn-outline btn-success" onclick="Worldpay.submitTemplateForm()">Take Payment</button>
+                            <button id="btn-dismiss-card-modal" type="button" class="btn btn-outline btn-info" data-dismiss="modal">Cancel and Close</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+          </div>
+</div>
+{% endblock %}
+{% block page-js %}
+    <script src="{% static 'static_core_arrears/js/arrears.js' %}"></script>
+    <script src="{% static 'assets/vendor/jquery-maskmoney/jquery.maskMoney.js' %}"></script>
+    <script src="https://cdn.worldpay.com/v1/worldpay.js"></script>
+    <script>
+
+        $(function(){
+
+            var amount;
+            var agreement_id;
+            var floatvalue;
+            var target_account;
+
+            {# Variables to control multiple submission error - handles user double clicking/hitting enter multiple times #}
+            var proceed = true;
+            var difference = 0;
+            var today = new Date();
+            var hours_in_seconds_01 = (today.getHours())*3600;
+            var minutes_in_seconds_01 = (today.getMinutes()*60);
+            var seconds_in_seconds_01 = today.getSeconds();
+            var seconds_01 = hours_in_seconds_01 + minutes_in_seconds_01 + seconds_in_seconds_01;
+            var hours_in_seconds_02 = (today.getHours())*3600;
+            var minutes_in_seconds_02 = (today.getMinutes()*60);
+            var seconds_in_seconds_02 = today.getSeconds();
+            var seconds_02 = hours_in_seconds_01 + minutes_in_seconds_02 + seconds_in_seconds_02;
+
+            $('#payment_target_account').change(function() {
+                if ($('#payment_target_account').val().substring(0,2) == 'DR') {
+                        $('.payment-detail-group').removeClass('cr-payment-type');
+                        $('.payment-detail-group').addClass('dr-payment-type');
+                } else {
+                        $('.payment-detail-group').addClass('cr-payment-type');
+                        $('.payment-detail-group').removeClass('dr-payment-type');
+                }
+            });
+
+            $('#payment_target_account2').change(function() {
+                if ($('#payment_target_account2').val().substring(0,2) == 'DR') {
+                        $('.payment-detail-group2').removeClass('cr-payment-type');
+                        $('.payment-detail-group2').addClass('dr-payment-type');
+                } else {
+                        $('.payment-detail-group2').addClass('cr-payment-type');
+                        $('.payment-detail-group2').removeClass('dr-payment-type');
+                }
+            });
+
+            {# Handle close and refresh underlying screen #}
+            $("#btn-dismiss-payment-modal2,#btn-dismiss-card-modal2").click(function() {
+                location.href = "{% url 'core_arrears:arrears_by_arrears_summary_view' agreement_detail.agreementnumber %}";
+            });
+
+            $("#show_sp_only").click(function(){
+                $(".SPH").prop('hidden', true);
+                $('#show_sp_only').prop('hidden', true);
+                $('#show_all').prop('hidden', false);
+            });
+            $("#show_all").click(function(){
+                $(".SPH").prop('hidden', false);
+                $('#show_all').prop('hidden', true);
+                $('#show_sp_only').prop('hidden', false);
+            });
+            $("#select-net-of-vat").click(function(){
+                $(".net-of-vat").prop('hidden', false);
+                $(".gross-of-vat").prop('hidden', true);
+            });
+            $("#select-gross-of-vat").click(function(){
+                $(".net-of-vat").prop('hidden', true);
+                $(".gross-of-vat").prop('hidden', false);
+            });
+
+            {#  Handle click event on button requesting record payment modal #}
+            $("#record-payment-receipt2").click(function() {
+                $("#record-payment-val2").val($("#widget_agreement_arrears_total2").html());
+                $('#record-payment-error2').html('');
+                $("#modal-record-payment2").modal({backdrop:'static'});
+            });
+
+            {# Dismiss/Cancel requesting record payment modal and reinstate underlying modal#}
+            $("#btn-dismiss-payment-modal2").click(function() {
+            });
+
+            $("#btn-confirm-payment2").click(function() {
+
+                if ($('#payment_target_account2').val().substring(0,2) == 'DR') {
+                    wip_payment_val = (initNaN(parseFloat($('#record-payment-val2').val().replace(',', '')))) * 100;
+                    wip_unallocated = (initNaN(parseFloat($('#widget_unallocated_arrears_total2').html().replace(',', '')))) * 100;
+
+                    if (wip_payment_val > wip_unallocated) {
+                        $('#payment-error2').html('Cancelled value cannot be greater than Unallocated value')
+                    } else {
+                        $('#payment-error2').html('');
+                        recordPaymentDetail2();
+                    }
+                }
+                else {
+                    recordPaymentDetail2();
+                }
+
+            });
+
+            function recordPaymentDetail2(obj) {
+
+                amount = (initNaN(parseFloat($('#record-payment-val2').val().replace(',',''))))*100;
+                target_account = $('#payment_target_account2').val();
+                agreement_id = '{{ agreement_detail.agreementnumber }}';
+
+                var data = {};
+                data = {
+                    amount: amount,
+                    agreement_id: agreement_id,
+                    target_account: target_account,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                };
+
+                if (amount > 0) {
+
+                    {# submit ajax request #}
+                    $.ajax({
+                        method: 'POST',
+                        url: '{% url 'core_payments:record_payment' %}',
+                        data: data,
+                        dataType: 'json',
+                        success: function(data) {
+                            if(data.success) {
+                                floatvalue = parseFloat(data.unallocated_value);
+                                $("#modal-record-payment2").modal('hide');
+                                $('#widget_unallocated_arrears_total2').data('value', floatvalue);
+                                location.href = "{% url 'core_arrears:arrears_by_arrears_summary_view' agreement_detail.agreementnumber %}";;
+                            } else {
+                                var msg = data.message;
+                                $('#payment-error2').html("<div>" + msg + "</div>");
+                            }
+                        },
+                        error: function(data) {
+                            $('#payment-error2').html(JSON.stringify(data));
+                        }
+                    })
+                }
+                else {
+                    $('#payment-error2').html('Payment Value must be greater than 0');
+                }
+            }
+
+            {#  Handle click event on button requesting card payment modal #}
+            $("#enter-card-details2").click(function() {
+
+                $("#card_receipt_val_2").val($("#widget_agreement_arrears_total2").html());
+                $('#card-error').html('');
+
+                {# display card payment modal on top #}
+                $("#card-payment-modal2").modal({backdrop:'static'});
+            });
+
+            {# Dismiss/Cancel Card Payment modal and reinstate underlying modal#}
+            $("#btn-dismiss-card-modal2").click(function() {
+            });
+
+            Worldpay.useTemplateForm({
+            'clientKey':'T_C_1eda086d-d536-4828-b1a2-48eae58249d9',
+            'form':'paymentForm2',
+            'saveButton':false,
+            'paymentSection':'paymentSection2',
+            'display':'inline',
+            'reusable':false,
+            'callback': function(obj) {processWorldPay2(obj)}
+            });
+
+            {# Callback from Worldpay Iframe - validate, send payment txn to WorldPay,  and update GO database #}
+            function processWorldPay2(obj) {
+
+                {# Initialise multiple submission check - handles user double clicking/hitting enter multiple times #}
+                proceed = true;
+                today = new Date();
+                hours_in_seconds_02 = (today.getHours())*3600;
+                minutes_in_seconds_02 = (today.getMinutes()*60);
+                seconds_in_seconds_02 = today.getSeconds();
+                seconds_02 = hours_in_seconds_01 + minutes_in_seconds_02 + seconds_in_seconds_02;
+
+                {# if elapsed time between last submission and this is < 2 seconds - stop submission #}
+                difference = (seconds_02 - seconds_01);
+                if (difference < 2) {
+                    proceed = false;
+                }
+
+                {# Save last submission time #}
+                seconds_01 = seconds_02;
+
+                {# if multiple submission captured then stop and send message #}
+                if (proceed === false) {
+                    $('#card-error').html('Card Processing in progress - please wait 5 seconds.');
+                } else {
+                {# Not multiple submission so process normally #}
+                if (obj && obj.token) {
+
+                    {# Get the requested value from the form #}
+                    amount = (initNaN(parseFloat($('#card_receipt_val_2').val().replace(',',''))))*100;
+                    agreement_id = '{{ agreement_detail.agreementnumber }}';
+
+                    {# Initialise error div #}
+                    $('#card-error').html('');
+
+                    {# Initialise data #}
+                    var data = {};
+                     data = {
+                        amount: amount,
+                        agreement_id: agreement_id,
+                        token: obj.token,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    };
+
+                    {# Only proceed if the value requested > 0 #}
+                    if (amount > 0) {
+
+                        {# submit ajax request #}
+                        $.ajax({
+                            method: 'POST',
+                            url: '{% url 'core_app_worldpay:worldpay_charge' %}',
+                            data: data,
+                            dataType: 'json',
+                            success: function(data) {
+                                if(data.success) {
+                                    floatvalue = parseFloat(data.unallocated_value);
+                                    $("#card-payment-modal2").modal('hide');
+                                    $("#card-payment-modal").modal('hide');
+                                    $('#widget_unallocated_arrears_total2').data('value', floatvalue);
+                                    location.href = "{% url 'core_arrears:arrears_by_arrears_summary_view' agreement_detail.agreementnumber %}";
+                                } else {
+                                    var msg = data.message;
+                                    $('#card-error2').html("<div>" + msg + "</div>");
+                                }
+                            },
+                            error: function(data) {
+                                $('#card-error2').html(JSON.stringify(data));
+                            }
+                        })
+                    }
+                    else {
+                        $('#card-error2').html('Receipt Value must be greater than 0');
+                    }
+                }}
+            }
+
+        });
+
+        function formatCurrency(t) {
+                // Input type MUST be text
+                // t = this
+                {#t.value = parseFloat(t.value).toFixed(2);#}
+                t.value = initNaN(parseFloat(t.value.replace(',',''))).toFixed(2);
+            }
+
+        function isCurrency(e) {
+
+                e = e ? e : window.event ;
+
+                var charCode = e.which ? e.which : e.keyCode ;
+
+                if(charCode > 31 && (charCode < 48 || charCode > 57)) {
+                    if(charCode !== 46) {
+                        return false ;
+                    }
+                }
+
+                return true ;
+
+            }
+
+        function isNumber(e) {
+
+                e = e ? e : window.event ;
+
+                var charCode = e.which ? e.which : e.keyCode ;
+
+                if(charCode > 31 && (charCode < 48 || charCode > 57)) {
+                    return false ;
+                }
+
+                return true ;
+
+            }
+
+        function initNaN(parm_value) {
+                wip_value = parm_value;
+                if (isNaN(wip_value)) {
+                    wip_value = parseFloat('0');
+                }
+                return wip_value;
+            }
+
+    </script>
+
+{% endblock %}
+

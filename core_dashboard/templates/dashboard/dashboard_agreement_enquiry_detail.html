@@ -1,0 +1,1013 @@
+{% extends "dashboard_base.html" %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+{% load dashboard_extras %}
+{% block metadescription %}
+	GO FINTECH
+{% endblock %}
+{% block title %}
+	GO FINTECH
+{% endblock %}
+{% block page-css %}
+{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2 class="header-title" style="color: #8dabc4">{{ agreement_detail.agreementnumber }} </h2>
+{#    &nbsp; <img src="/static/static_core_notes/icons/pdf.png" style="width:30px;height:30px;">#}
+    <h2 class="header-title">{{ agreement_customer.customercompany }}</h2>
+    <h4 class="header-title" data-toggle="tooltip" data-placement="bottom"
+    title="Sales Representative">{{ agreement_detail.agreementauthority }}</h4>
+    {% if agreement_regulated_flag %}
+        <button type="button" class="btn btn-success btn-w-sm" data-toggle="popover" data-trigger="hover"   title="" data-content="This is a regulated agreement, please deal with accordingly." data-original-title="Regulated Agreement" aria-describedby="popover676999">
+            <i class="mdi mdi-help-circle-outline"></i>&nbsp;Regulated
+        </button>
+    {% endif %}
+    <div class="header-sub-title">
+        {% if  agreement_detail.agreementdefname != 'Hire Purchase' and agreement_detail.agreementdefname != 'Management Fee' %}
+            <span class="badge badge-info badge-lg">{{ agreement_detail.agreementdefname }}</span>
+        {% else %}
+            <span class="badge badge-primary badge-lg">{{ agreement_detail.agreementdefname }}</span>
+        {% endif %}
+        {% if agreement_detail.agreementclosedflag_id == 902 %}
+            <span class="badge badge-danger badge-lg">Closed</span>
+        {% endif %}
+        {% if agreement_detail.agreementddstatus_id == 'I' %}
+            <span class="badge badge-danger badge-lg">DD Inactive</span>
+        {% endif %}
+        <nav class="breadcrumb breadcrumb-dash">            &nbsp;&nbsp;&nbsp;
+            <a class="breadcrumb-item text-success" href="javascript:" onclick='history.go(-1);'><i class="ti-list p-r-5"></i>Agreement List</a>
+            <span class="breadcrumb-item active">Agreement Detail</span>
+        </nav>
+        <a href='javascript:void(window.open("{% url 'notes:main' %}?customer_id={{ agreement_customer.customernumber }}&agreement_id={{ agreement_detail.agreementnumber }}", "core_notes", "scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no, width=2000,height=1000,left=0,top=0"));' class="text-white m-r-15 font-size-16"><span class="btn btn-success btn-float  btn-rounded m-l-10 p-r-10 p-l-10 m-b-0"><i class="ti-write m-r-5"  data-customer-id="{{ agreement_customer.customernumber }}" data-agreement-id="{{ agreement_detail.agreementnumber }}"></i>NOTES</span></a>
+    </div>
+    {% if agreement_detail.agreement_stage == '4'%}
+        {% if go_id.consolidation_info %}
+            <p><i class="fa fa-clock-o"></i> {{ go_id.consolidation_info}}
+            </p>
+        {% endif %}
+    {% endif %}
+</div>
+<div class="card">
+    <div class="card-body">
+
+        <div class="tab-info">
+            <ul class="nav nav-tabs" role="tablist">
+                <li class="nav-item">
+                    <a href="#default-tab-4" class="nav-link active" role="tab" data-toggle="tab">Account Statement</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#default-tab-3" class="nav-link" role="tab" data-toggle="tab">Payment Detail</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#default-tab-1" class="nav-link" role="tab" data-toggle="tab">Customer Detail</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#default-tab-2" class="nav-link" role="tab" data-toggle="tab">Agreement Detail</a>
+                </li>
+                <li class="nav-item">
+                    {% if agreement_detail.agreementddstatus_id == 'A' %}
+                    <a href="#default-tab-5" class="nav-link text-success" role="tab" data-toggle="tab">
+                        BACS Audit <i class="ti ti-check"></i></a>
+                    {% else %}
+                    <a href="#default-tab-5" class="nav-link text-danger" role="tab" data-toggle="tab">
+                        BACS Audit <i class="ti ti-close"></i></a>
+                    {% endif %}
+                </li>
+            </ul>
+            <div class="tab-content">
+                <div role="tabpanel" class="tab-pane fade in active" id="default-tab-4">
+                    <div class="card m-t-20 col-md-10">
+                        <div class="card-body">
+                            <div class="card-title">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <button class="btn btn-success" id="show_sp_only" hidden>Show Profile Only</button>
+                                        <button class="btn btn-success" id="show_all">Include Payment History</button>
+                                         {% if request.user|has_group:"Accounts" %}
+                                             {% if not agreement_detail.go_id.agreement_origin_flag %}
+                                                <button class="btn btn-primary" id="convert_to_go">Convert To Go</button>
+                                             {% elif agreement_detail.go_id.agreement_origin_flag == 'TR' and show_sentinel_button %}
+                                                 <button class="btn btn-danger" id="convert_to_sentinal">Convert To Sentinal</button>
+                                             {% endif %}
+                                         {% endif %}
+      {#                                                            # TODO: GO#110 - Start #}
+{#                                         {% if agreement_detail.agreementdefname != 'Hire Purchase' and agreement_detail.agreementdefname != 'Management Fee' %}#}
+                                         {% if agreement_detail.agreementdefname != 'Management Fee' %}
+                                             {#                     # TODO: GO#110 - End #}
+                                             <div class="radio d-inline m-l-15">
+                                                    <input id="select-gross-of-vat" name="noLabel" type="radio" checked="">
+                                                    <label for="select-gross-of-vat">Gross of V.A.T.</label>
+                                             </div>
+                                             <div class="radio d-inline m-l-15">
+                                                    <input id="select-net-of-vat" name="noLabel" type="radio">
+                                                    <label for="select-net-of-vat">Net of V.A.T.</label>
+                                             </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="dropdown dropdown-animated col-md-4 text-right ">
+                                        <button class="btn btn-success dropdown-toggle  m-r-0" data-toggle="dropdown" aria-expanded="false">
+                                            <span>Print Documents</span>
+                                        </button>
+                                        <div class="dropdown-menu " x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 37px, 0px); top: 0px; right: 20px; will-change: transform;">
+                                            <a class="dropdown-item net-of-vat" {% if agreement_type != 'HP' %}hidden{% endif %} href="{% url 'dashboard:paymentprofile_xlsx' agreement_detail.agreementnumber %}">
+                                                Download to Excel<i class="fa fa-file-excel-o text-success p-l-5 float-right"></i>
+                                            </a>
+{#                                            <a class="dropdown-item net-of-vat" {% if agreement_type != 'HP' %}hidden{% endif %} href="{% url 'dashboard:sage_xlsx' agreement_detail.agreementnumber %}">#}
+{#                                                Sage Output<i class="fa fa-file-excel-o text-success p-l-5 float-right"></i>#}
+{#                                            </a>#}
+                                            {% if agreement_type != 'HP' %}
+                                                <a class="dropdown-item gross-of-vat" href="{% url 'dashboard:paymentprofile_gross_xlsx' agreement_detail.agreementnumber %}">
+                                                    Transaction Download to Excel<i class="fa fa-file-excel-o text-success p-l-5 float-right"></i>
+                                                </a>
+                                            {% endif %}
+                                            <a class="dropdown-item statement-of-account" href="{% url 'dashboard:statement_of_account_xlsx' agreement_detail.agreementnumber %}">
+                                                Statement of Account<i class="fa fa-file-excel-o text-success p-l-5 float-right"></i>
+                                            </a>
+                                            <a class="dropdown-item statement-of-account" href="{% url 'dashboard:statement_of_account_allocated_xlsx' agreement_detail.agreementnumber %}">
+                                                Statement of Account - DD Allocated<i class="fa fa-file-excel-o text-success p-l-5 float-right"></i>
+                                            </a>
+                                            <a class="dropdown-item"  href="{% url 'dashboard:print_pdf_CURRENT_VAT_STATEMENT_view' agreement_detail.agreementnumber %}">
+                                                Current Year VAT Statement (Print Version)
+                                                <i class="ti-printer text-info p-l-5 float-right"></i>
+                                            </a>
+                                            <a class="dropdown-item"  href="{% url 'dashboard:print_pdf_NEXT_VAT_STATEMENT_view' agreement_detail.agreementnumber %}">
+                                                Next Year VAT Statement (Print Version)
+                                                <i class="ti-printer text-info p-l-5 float-right"></i>
+                                            </a>
+                                            <a class="dropdown-item"  href="{% url 'dashboard:pdf_CURRENT_VAT_STATEMENT_view' agreement_detail.agreementnumber %}">
+                                                Current Year VAT Statement (PDF Version)
+                                                <i class="fa fa-file-pdf-o text-danger p-l-20 float-right"></i>
+                                            </a>
+                                            <a class="dropdown-item"  href="{% url 'dashboard:pdf_NEXT_VAT_STATEMENT_view' agreement_detail.agreementnumber %}">
+                                                Next Year VAT Statement (PDF Version)
+                                                <i class="fa fa-file-pdf-o text-danger p-l-20 float-right"></i>
+                                            </a>
+                                            <a class="dropdown-item" href="{% url 'dashboard:print_pdf_TEMPLATE_TERMINATION' agreement_detail.agreementnumber %}">
+                                                Template Termination
+                                                <i class="fa fa-file-pdf-o text-danger p-l-20 float-right"></i>
+                                                <i class="ti-printer text-info p-l-5 float-right"></i>
+                                            </a>
+                                            <a class="dropdown-item" href="{% url 'dashboard:print_pdf_ARREARS_LETTER' agreement_detail.agreementnumber %}">
+                                                Arrears Letter
+                                                <i class="fa fa-file-pdf-o text-danger p-l-20 float-right"></i>
+                                                <i class="ti-printer text-info p-l-5 float-right"></i>
+                                            </a>
+                                            <a class="dropdown-item" href="{% url 'dashboard:print_pdf_ARREARS_RECEIVER_LETTER' agreement_detail.agreementnumber %}">
+                                                Arrears Receiver Letter
+                                                <i class="fa fa-file-pdf-o text-danger p-l-20 float-right"></i>
+                                                <i class="ti-printer text-info p-l-5 float-right"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-overflow">
+                                <table class="table table-hover table-sm border">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th></th>
+                                            <th>Date</th>
+                                            <th>Description</th>
+                                            <th class="text-right">Value</th>
+                                            <th class="text-right"></th>
+                                            <th class="text-right">Balance</th>
+                                            <th class="text-right"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody >
+                                        <tr class="table-info SP">
+                                            <td class="text-right"></td>
+                                            <td></td>
+                                            <td><span class="text-dark">EARLY TERMINATION FIGURE</span></td>
+                                            <td class="text-right"></td>
+                                            <td class="text-right"></td>
+                                            <td class="text-right text-dark">
+                                                <span class = 'net-of-vat' hidden>
+                                                    {{ settlement_figure_net|floatformat:2|intcomma }}
+                                                </span>
+                                                <span class = 'gross-of-vat'>
+                                                    {{ settlement_figure_gross|floatformat:2|intcomma }}
+                                                </span>
+                                                GBP
+                                            </td>
+                                            <td class="text-left">
+                                                <span class = 'net-of-vat' hidden>
+                                                    {% if agreement_type == 'Lease' %}
+                                                        +VAT
+                                                    {% endif %}
+                                                </span>
+                                                <span class = 'gross-of-vat'>
+                                                    {% if agreement_type == 'Lease' %}
+                                                        Incl. VAT
+                                                    {% endif %}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    {% for transaction in account_summary %}
+                                        <tr {% if transaction.transactionsourceid == 'SP1' or transaction.transactionsourceid == 'GO1' %}
+                                                class="table-light SP"
+                                            {% elif transaction.transactionsourceid == 'SP2'  or transaction.transactionsourceid == 'SP3' or transaction.transactionsourceid == 'GO3' %}
+                                                class="table-light SP"
+                                            {% else %}
+                                                class="SPH" hidden
+                                            {% endif %}>
+                                        {% if transaction.transactionsourceid == 'SP1' or transaction.transactionsourceid == 'GO1' or transaction.transactionsourceid == 'SP2' or transaction.transactionsourceid == 'SP3' or transaction.transactionsourceid == 'GO3' %}
+                                            <td  class="text-right"><small class="text-muted"><i>{{ transaction.row_index }}</i></small></td>
+                                        {% else %}
+                                            <td  class="text-right"></td>
+                                        {% endif %}
+                                        <td>
+                                           <span>{{ transaction.transactiondate|date:"d/m/Y"  }}</span>
+                                        </td>
+                                        <td {% if transaction.transactionsourceid != 'SP1' and transaction.transactionsourceid != 'GO1' and transaction.transactionsourceid != 'SP2'  and transaction.transactionsourceid != 'SP3'  and transaction.transactionsourceid != 'GO3' %}class="text-right"{% endif %}>
+                                            {% if transaction.transactionsourceid == 'SP1' or transaction.transactionsourceid == 'GO1'  or transaction.transactionsourceid == 'SP2'  or transaction.transactionsourceid == 'SP3'  or transaction.transactionsourceid == 'GO3' %}
+                                                {% if transaction.transactiondate < agreement_detail.agreementfirstpaymentdate %}
+                                                    <span class="m-b-0">Manual Payment Due</span>
+                                                {% else %}
+                                                    {% if transaction.transactionsourceid == 'SP1' or transaction.transactionsourceid == 'GO1'%}
+                                                        <span class="m-b-0">Primary Payment Due</span>
+                                                    {% else %}
+                                                         <span class="m-b-0">Secondary Payment Due</span>
+                                                    {% endif %}
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="m-b-0"><i>{{ transaction.transtypedesc }}</i></span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-right">
+                                        {% if transaction.transactionsourceid == 'SP1' or transaction.transactionsourceid == 'SP2'  or transaction.transactionsourceid == 'SP3'  or transaction.transactionsourceid == 'GO1'  or transaction.transactionsourceid == 'GO3' %}
+                                            <div class="dropdown dropdown-animated scale-left show">
+                                                <a href="#" class="text-success dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                                    <span class="m-b-0 text-success net-of-vat" hidden>{{ transaction.transnetpayment|floatformat:2|intcomma }} GBP</span>
+                                                    <span class="m-b-0 text-success gross-of-vat">{{ transaction.transgrosspayment|floatformat:2|intcomma }} GBP</span></a>
+                                                <div class="dropdown-menu dropdown-lg" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 37px, 0px); top: 0px; left: 0px; will-change: transform;">
+                                                    {% for detail in account_detail %}
+                                                        {% if detail.transactiondate == transaction.transactiondate and detail.transactionsourceid in 'SP1SP2SP3GO1GO3' %}
+                                                            <div class="dropdown-item d-flex justify-content-between align-items-center p-b-0 m-b-0">
+                                                                {% if detail.transtypedesc is None %}
+                                                                    <span>Rental</span>
+                                                                {% else %}
+                                                                    <span>{{ detail.transtypedesc }}</span>
+                                                                {% endif %}
+                                                                <span>{{ detail.transnetpayment|floatformat:2|intcomma }} GBP</span>
+                                                            </div>
+{#                                                            # TODO: GO#110 - Start #}
+                                                            {% if agreement_type != 'HP' %}
+                                                                <div class="gross-of-vat p-t-0 m-t-0 border-bottom">
+                                                                    <div class="dropdown-item d-flex justify-content-between align-items-center p-t-0 m-t-0">
+                                                                        {% if detail.transtypedesc is None %}
+                                                                            <span>VAT on Rental</span>
+                                                                        {% else %}
+                                                                            <span>VAT on {{ detail.transtypedesc }}</span>
+                                                                        {% endif %}
+                                                                        <span>{{ detail.transvatpayment|floatformat:2|intcomma }} GBP</span>
+                                                                    </div>
+                                                                </div>
+                                                            {% else %}
+                                                                <div class="gross-of-vat p-t-0 m-t-0 border-bottom">
+                                                                    <div class="dropdown-item d-flex justify-content-between align-items-center p-t-0 m-t-0">
+                                                                        {% if detail.transtypedesc is None %}
+            {#                                                                <span>VAT on Rental</span>#}
+                                                                        {% else %}
+                                                                            <span>VAT on {{ detail.transtypedesc }}</span>
+                                                                            <span>{{ detail.transvatpayment|floatformat:2|intcomma }} GBP</span>
+                                                                        {% endif %}
+
+                                                                    </div>
+                                                                </div>
+                                                            {% endif %}
+{#                                                # TODO: GO#110 - End#}
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            <span class="m-b-0 net-of-vat" hidden>{{ transaction.transnetpayment|floatformat:2|intcomma }} GBP</span>
+                                            <span class="m-b-0 gross-of-vat">{{ transaction.transgrosspayment|floatformat:2|intcomma }} GBP</span>
+                                        {% endif %}
+                                        </td>
+                                        <td class="text-left">
+                                            <span class = 'net-of-vat' hidden>
+                                                {% if agreement_type == 'Lease' %}
+                                                    +VAT
+                                                {% endif %}
+                                            </span>
+                                            <span class = 'gross-of-vat'>
+                                                {% if agreement_type == 'Lease' %}
+                                                    Incl. VAT
+                                                {% endif %}
+                                            </span>
+                                        </td>
+                                        <td class="text-right">
+                                           <span class="net-of-vat" hidden>{{ account_summary|running_total_net:forloop.counter|floatformat:2|intcomma }} GBP</span>
+                                           <span class="gross-of-vat">{{ account_summary|running_total_gross:forloop.counter|floatformat:2|intcomma }} GBP</span>
+                                        </td>
+                                        <td class="text-left">
+                                            <span class = 'net-of-vat' hidden>
+                                                {% if agreement_type == 'Lease' %}
+                                                    +VAT
+                                                {% endif %}
+                                            </span>
+                                            <span class = 'gross-of-vat'>
+                                                {% if agreement_type == 'Lease' %}
+                                                    Incl. VAT
+                                                {% endif %}
+                                            </span>
+                                        </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div role="tabpanel" class="tab-pane fade" id="default-tab-3">
+                    <div class="row p-v-20">
+                        <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-header border bottom">
+                                        <h5 class="card-title">Schedule</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group row ">
+                                            <label class="col-md-6 col-form-label control-label text-dark text-md-right">Agreement date:</label>
+                                            <div class="col-md-4">
+                                                <p class="form-control-plaintext ">
+                                                    {{ agreement_detail.agreementagreementdate|date:"d/m/Y" }}</p>
+                                            </div >
+                                            <span class="col-md-2"></span>
+                                            <label class="col-md-6 col-form-label control-label text-dark text-md-right">Upfront Date</label>
+                                            <div class="col-md-4">
+                                                <span class="form-control-plaintext">
+                                                    {{ agreement_detail.agreementupfrontdate|date:"d/m/Y" }}</span>
+                                            </div>
+                                            <span class="col-md-2"></span>
+                                            <label class="col-md-6 col-form-label control-label text-dark text-md-right">First Pay Date:</label>
+                                            <div class="col-md-4">
+                                                <span class="form-control-plaintext">
+                                                    {{ agreement_detail.agreementfirstpaymentdate|date:"d/m/Y" }}</span>
+                                            </div>
+                                            <span class="col-md-2"></span>
+                                            <label class="col-md-6 col-form-label control-label text-dark text-md-right">Residual Date:</label>
+                                            <div class="col-md-4">
+                                                <span class="form-control-plaintext">
+                                                    {{ agreement_detail.agreementresidualdate|date:"d/m/Y" }}</span>
+                                            </div>
+                                            <span class="col-md-2"></span>
+                                            <label class="col-md-6 col-form-label control-label text-dark text-md-right">Collection Type:</label>
+                                            <div class="col-md-4">
+                                            <span class="form-control-plaintext">
+                                                Monthly</span>
+                                            </div>
+                                            <span class="col-md-2"></span>
+                                            <label class="col-md-6 col-form-label control-label text-dark text-md-right">Manual Payments:</label>
+                                            <div class="col-md-4">
+                                            <span class="form-control-plaintext">
+                                                {{ doc_fee_count }}</span>
+                                            </div>
+                                            <span class="col-md-2"></span>
+                                            <label class="col-md-6 col-form-label control-label text-dark text-md-right">Primary Payments:</label>
+                                            <div class="col-md-4">
+                                            <span class="form-control-plaintext">
+                                                {{ primary_count }}</span>
+                                            </div>
+                                            <span class="col-md-2"></span>
+                                            <label class="col-md-6 col-form-label control-label text-dark text-md-right">Forecast Secondaries:</label>
+                                            <div class="col-md-4">
+                                            <span class="form-control-plaintext">
+                                                {{ secondary_count }}</span>
+                                            </div>
+                                            <span class="col-md-2"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header border bottom">
+                                    <h5 class="card-title">Current DD Mandate</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-group row ">
+                                        <label class="col-md-4 col-form-label control-label text-dark text-md-right">DDI Ref:</label>
+                                        <div class="col-md-8">
+                                            <p class="form-control-plaintext ">
+                                                {{ agreement_detail.agreementbankreference }}</p>
+                                        </div >
+                                        <label class="col-md-4 col-form-label control-label text-dark text-md-right">Sort Code:</label>
+                                        <div class="col-md-8">
+                                            <span class="form-control-plaintext">
+                                                {{ agreement_detail.agreementbanksortcode|slice:":2" }}-{{ agreement_detail.agreementbanksortcode|slice:"2:4" }}-{{ agreement_detail.agreementbanksortcode|slice:"4:" }}</span>
+                                        </div>
+                                        <label class="col-md-4 col-form-label control-label text-dark text-md-right">Account Number:</label>
+                                        <div class="col-md-8">
+                                            <span class="form-control-plaintext">
+                                                {{ agreement_detail.agreementbankaccountnumber }}</span>
+                                        </div>
+                                        <label class="col-md-4 col-form-label control-label text-dark text-md-right">Account Name:</label>
+                                        <div class="col-md-8">
+                                            <span class="form-control-plaintext">
+                                                {{ agreement_detail.agreementbankaccountname }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div role="tabpanel" class="tab-pane fade" id="default-tab-1">
+                    <div class="row p-v-20">
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="form-group row">
+                                            <label class="col-md-2 col-form-label control-label text-dark text-md-right">Customer Number:</label>
+                                            <div class="col-md-10">
+                                                <p class="form-control-plaintext">{{ agreement_customer.customernumber }}</p>
+                                            </div>
+                                            <label class="col-md-2 col-form-label control-label text-dark text-md-right">Customer Name:</label>
+                                            <div class="col-md-10">
+                                                <p class="form-control-plaintext">{{ agreement_customer.customercompany }}</p>
+                                            </div>
+                                            <label class="col-md-2 col-form-label control-label text-dark text-md-right">Customer Address:</label>
+                                            <div class="col-md-10">
+                                                <span class="form-control-plaintext">
+                                                    {% if agreement_customer.customeraddress1 %}{{ agreement_customer.customeraddress1 }}</br>{% endif %}
+                                                    {% if agreement_customer.customeraddress2 %}{{ agreement_customer.customeraddress2 }}</br>{% endif %}
+                                                    {% if agreement_customer.customeraddress3 %}{{ agreement_customer.customeraddress3 }}</br>{% endif %}
+                                                    {% if agreement_customer.customeraddress4 %}{{ agreement_customer.customeraddress4 }}</br>{% endif %}
+                                                    {% if agreement_customer.customeraddress5 %}{{ agreement_customer.customeraddress5 }}</br>{% endif %}
+                                                </span>
+                                            </div>
+                                            <label class="col-md-2 col-form-label control-label text-dark text-md-right">Post Code:</label>
+                                            <div class="col-md-10">
+                                                <p class="form-control-plaintext">{{ agreement_customer.customerpostcode }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                      <div class="form-group row">
+                                            <label class="col-md-4 col-form-label control-label text-dark text-md-right">Phone Number:</label>
+                                            <div class="col-md-8">
+                                                <p class="form-control-plaintext">{{ agreement_customer.customerphonenumber }}</p>
+                                            </div>
+                                            <label class="col-md-4 col-form-label control-label text-dark text-md-right">Fax Number:</label>
+                                            <div class="col-md-8">
+                                                <p class="form-control-plaintext">{{ agreement_customer.customerfaxnumber }}</p>
+                                            </div>
+                                            <label class="col-md-4 col-form-label control-label text-dark text-md-right">Mobile Number:</label>
+                                            <div class="col-md-8">
+                                                <p class="form-control-plaintext">{{ agreement_customer.customermobilenumber }}</p>
+                                            </div>
+                                            <label class="col-md-4 col-form-label control-label text-dark text-md-right">Main Contact:</label>
+                                            <div class="col-md-8">
+                                                <p class="form-control-plaintext">{{ agreement_customer.customercontact }}</p>
+                                            </div>
+                                            <label class="col-md-4 col-form-label control-label text-dark text-md-right">Position:</label>
+                                            <div class="col-md-8">
+                                                <p class="form-control-plaintext">{{ agreement_customer.customercontactpos }}</p>
+                                            </div>
+                                            <label class="col-md-4 col-form-label control-label text-dark text-md-right">Contact 2:</label>
+                                            <div class="col-md-8">
+                                                <p class="form-control-plaintext">{{ agreement_customer.customercontact2 }}</p>
+                                            </div>
+                                            <label class="col-md-4 col-form-label control-label text-dark text-md-right">Position:</label>
+                                            <div class="col-md-8">
+                                                <p class="form-control-plaintext">{{ agreement_customer.customercontactpos2 }}</p>
+                                            </div>
+                                      </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                </div>
+                <div role="tabpanel" class="tab-pane fade" id="default-tab-2">
+                    <div role="tabpanel" class="tab-pane fade in active" id="default-tab-1">
+                    <div class="row p-v-20">
+                        <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-header border bottom">
+                                        <h5 class="card-title">Original Deal</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group row ">
+                                            <label class="col-md-4 col-form-label control-label text-dark text-md-right">Principal:</label>
+                                            <div class="col-md-4 text-right">
+                                                <p class="form-control-plaintext ">
+                                                    {{ agreement_detail.agreementoriginalprincipal|floatformat:2|intcomma }} GBP</p>
+                                            </div >
+                                            <span class="col-md-2"></span>
+                                            <label class="col-md-4 col-form-label control-label text-dark text-md-right">Charges:</label>
+                                            <div class="col-md-4 text-right">
+                                                <span class="form-control-plaintext">
+                                                    {{ agreement_detail.agreementcharges|floatformat:2|intcomma }} GBP</span>
+                                            </div>
+                                            <span class="col-md-2"></span>
+                                            <label class="col-md-4 col-form-label control-label text-dark text-md-right">Total Fees:</label>
+                                            <div class="col-md-4 text-right">
+                                                <span class="form-control-plaintext">
+                                                    {{ agreement_fees_net.transnetpayment__sum|floatformat:2|intcomma }} GBP</span>
+                                            </div>
+                                            <span class="col-md-2"></span>
+                                            <label class="col-md-4 col-form-label control-label text-dark text-md-right">Payable (Net V.A.T):</label>
+                                            <div class="col-md-4 text-right">
+                                                <span class="form-control-plaintext">
+                                                    {{ agreement_payable_net|floatformat:2|intcomma }} GBP</span>
+                                            </div>
+                                            <span class="col-md-2"></span>
+                                            {% if agreement_detail.agreementdefname != 'Hire Purchase' and agreement_detail.agreementdefname != 'Management Fee' %}
+                                                <label class="col-md-4 col-form-label control-label text-dark text-md-right">Payable (Inc V.A.T):</label>
+                                                <div class="col-md-4 text-right">
+                                                <span class="form-control-plaintext">
+                                                    {{ agreement_payable_gross|floatformat:2|intcomma }} GBP</span>
+                                                </div>
+                                                <span class="col-md-2"></span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-header border bottom">
+                                        <h5 class="card-title">Instalments</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group row ">
+                                            <label class="col-md-4 col-form-label control-label text-dark text-md-right">Net:</label>
+                                            <div class="col-md-4 text-right">
+                                                <p class="form-control-plaintext ">
+                                                    {{ agreement_detail.agreementinstalmentnet|floatformat:2|intcomma }} GBP</p>
+                                            </div >
+                                            <span class="col-md-2"></span>
+                                            {% if agreement_detail.agreementdefname != 'Hire Purchase' and agreement_detail.agreementdefname != 'Management Fee' %}
+                                                <label class="col-md-4 col-form-label control-label text-dark text-md-right">Vat:</label>
+                                                <div class="col-md-4 text-right">
+                                                    <span class="form-control-plaintext">
+                                                        {{ agreement_detail.agreementinstalmentvat|floatformat:2|intcomma }} GBP</span>
+                                                </div>
+                                            {% endif %}
+                                            <div hidden>
+                                                <span class="col-md-2"></span>
+                                                <label class="col-md-4 col-form-label control-label text-dark text-md-right">Fees (inc Vat):</label>
+                                                <div class="col-md-4 text-right">
+                                                    <span class="form-control-plaintext">
+                                                        n/a</span>
+                                                </div>
+                                                <span class="col-md-2"></span>
+                                                <label class="col-md-4 col-form-label control-label text-dark text-md-right">Ins (inc Vat):</label>
+                                                <div class="col-md-4 text-right">
+                                                    <span class="form-control-plaintext">
+                                                        {% if agreement_detail.agreementinstalmentins > 0 %}
+                                                            {{ agreement_detail.agreementInstalmentins|floatformat:-2|intcomma }} GBP
+                                                        {% else %}
+                                                            0 GBP
+                                                        {% endif %}</span>
+                                                </div>
+                                            </div>
+                                            <span class="col-md-2"></span>
+                                            <label class="col-md-4 col-form-label control-label text-dark text-md-right">Gross:</label>
+                                            <div class="col-md-4 text-right">
+                                                <span class="form-control-plaintext">
+                                                    {{ agreement_instalment_gross|floatformat:2|intcomma }} GBP</span>
+                                                </div>
+                                            <span class="col-md-2"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                    </div>
+                </div>
+                </div>
+                <div role="tabpanel" class="tab-pane fade" id="default-tab-5">
+                    <div class="card m-t-20 col-md-10">
+                        <div class="card-body">
+                            <table class="table table-hover table-sm border">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>DD Reference</th>
+                                            <th>Txn Source</th>
+                                            <th class="text-center">Sort Code</th>
+                                            <th class="text-center">Account Number</th>
+                                            <th>Txn Description</th>
+                                            <th class="text-right">Effective Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody >
+                                    {% for bacs in bacs_audit %}
+                                        <tr>
+                                            <td>{{ bacs.da_reference }}</td>
+                                            <td>{{ bacs.da_sourcetype }}</td>
+                                            <td class="text-center">
+                                                {{ bacs.da_payer_sort_code|slice:":2" }}-{{ bacs.da_payer_sort_code|slice:"2:4" }}-{{ bacs.da_payer_sort_code|slice:"4:" }}</td>
+                                            <td class="text-center">{{ bacs.da_payer_account_number }}</td>
+                                            <td>{{ bacs.da_reason }}</td>
+                                            <td class="text-right">{{ bacs.da_reporting_date|date:'d-m-Y H:i' }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modal-vat-statement" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="card">
+                    <div class="p-v-5 p-h-10 border bottom print-invisible">
+                        <ul class="list-unstyle list-inline text-right">
+                            <li class="list-inline-item">
+                                <a href="" class="btn text-gray text-hover display-block p-10 m-b-0" onclick="">
+                                    <i class="ti-printer text-info p-r-5"></i>
+                                    <b>Print</b>
+                                </a>
+                            </li>
+                            <li class="list-inline-item">
+                                <a href="" class="text-gray text-hover display-block p-10 m-b-0">
+                                    <i class="fa fa-file-pdf-o text-danger p-r-5"></i>
+                                    <b>Export PDF</b>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <div class="p-h-30">
+                            <div class="m-t-15">
+                                <div class="inline-block">
+                                    <img class="img-fluid" src="assets/images/logo/logo.png" alt="">
+                                    <address class="p-l-10 m-t-20">
+                                        <b class="text-dark">{{ agreement_customer.customercompany }}</b><br>
+                                        {% if agreement_customer.customeraddress1 %}<span>{{ agreement_customer.customeraddress1 }}</span></br>{% endif %}
+                                        {% if agreement_customer.customeraddress2 %}<span>{{ agreement_customer.customeraddress2 }}</span></br>{% endif %}
+                                        {% if agreement_customer.customeraddress3 %}<span>{{ agreement_customer.customeraddress3 }}</span></br>{% endif %}
+                                        {% if agreement_customer.customeraddress4 %}<span>{{ agreement_customer.customeraddress4 }}</span></br>{% endif %}
+                                        {% if agreement_customer.customeraddress5 %}<span>{{ agreement_customer.customeraddress5 }}</span></br>{% endif %}
+                                    </address>
+                                </div>
+                                <div class="pull-right">
+                                    <h2>Statement of Account</h2>
+                                </div>
+                            </div>
+                            <div class="row m-t-20">
+                                <div class="col-sm-9">
+                                    <h3 class="p-l-10 m-t-10"></h3>
+                                    <address class="p-l-10 m-t-10">
+                                        <b class="text-dark"></b><br>
+                                        <span></span><br>
+                                        <span></span>
+                                    </address>
+                                </div>
+                                <div class="col-sm-3">
+                                    <div class="m-t-80">
+                                        <div class="text-dark text-uppercase d-inline-block"><b></b></div>
+                                        <div class="pull-right"></div>
+                                    </div>
+                                    <div class="text-dark text-uppercase d-inline-block"><b></b></div>
+                                    <div class="pull-right"></div>
+                                </div>
+                            </div>
+                            <div class="row m-t-20">
+                                <div class="col-sm-12">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th></th>
+                                                <th>IN DEVELOPMENT</th>
+                                                <th></th>
+                                                <th></th>
+                                                <th class="text-right"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                    <div class="row m-t-30">
+                                        <div class="col-sm-12">
+                                            <div class="pull-right text-right">
+                                                <p></p>
+                                                <p></p>
+                                                <hr>
+                                                <h3><b></b></h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row m-t-30">
+                                        <div class="col-sm-12">
+                                            <div class="border top bottom p-v-20">
+                                                <p class="text-opacity"><small></small></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row m-v-20">
+                                        <div class="col-sm-6">
+                                            <img class="img-fluid text-opacity m-t--5" width="100" src="assets/images/logo/logo.png" alt="">
+                                        </div>
+                                        <div class="col-sm-6 text-right">
+                                            <small><b>Phone:</b> (+44) 01234 240155</small>
+                                            <br>
+                                            <small>support@apell.io</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="account-statement" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="card">
+                    <div class="p-v-5 p-h-10 border bottom print-invisible">
+                        <ul class="list-unstyle list-inline text-right">
+                            <li class="list-inline-item">
+                                <a href="" class="btn text-gray text-hover display-block p-10 m-b-0" onclick="">
+                                    <i class="ti-printer text-info p-r-5"></i>
+                                    <b>Print</b>
+                                </a>
+                            </li>
+                            <li class="list-inline-item">
+                                <a href="" class="text-gray text-hover display-block p-10 m-b-0">
+                                    <i class="fa fa-file-pdf-o text-danger p-r-5"></i>
+                                    <b>Export PDF</b>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <div class="p-h-30">
+                            <div class="m-t-15">
+                                <div class="inline-block">
+                                    <img class="img-fluid" src="assets/images/logo/logo.png" alt="">
+                                    <address class="p-l-10 m-t-20">
+                                        <b class="text-dark">{{ agreement_customer.customercompany }}</b><br>
+                                        {% if agreement_customer.customeraddress1 %}<span>{{ agreement_customer.customeraddress1 }}</span></br>{% endif %}
+                                        {% if agreement_customer.customeraddress2 %}<span>{{ agreement_customer.customeraddress2 }}</span></br>{% endif %}
+                                        {% if agreement_customer.customeraddress3 %}<span>{{ agreement_customer.customeraddress3 }}</span></br>{% endif %}
+                                        {% if agreement_customer.customeraddress4 %}<span>{{ agreement_customer.customeraddress4 }}</span></br>{% endif %}
+                                        {% if agreement_customer.customeraddress5 %}<span>{{ agreement_customer.customeraddress5 }}</span></br>{% endif %}
+                                    </address>
+                                </div>
+                                <div class="pull-right">
+                                    <h2>Statement of Account</h2>
+                                </div>
+                            </div>
+                            <div class="row m-t-20">
+                                <div class="col-sm-9">
+                                    <h3 class="p-l-10 m-t-10"></h3>
+                                    <address class="p-l-10 m-t-10">
+                                        <b class="text-dark"></b><br>
+                                        <span></span><br>
+                                        <span></span>
+                                    </address>
+                                </div>
+                                <div class="col-sm-3">
+                                    <div class="m-t-80">
+                                        <div class="text-dark text-uppercase d-inline-block"><b></b></div>
+                                        <div class="pull-right"></div>
+                                    </div>
+                                    <div class="text-dark text-uppercase d-inline-block"><b></b></div>
+                                    <div class="pull-right"></div>
+                                </div>
+                            </div>
+                            <div class="row m-t-20">
+                                <div class="col-sm-12">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th></th>
+                                                <th>IN DEVELOPMENT</th>
+                                                <th></th>
+                                                <th></th>
+                                                <th class="text-right"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                    <div class="row m-t-30">
+                                        <div class="col-sm-12">
+                                            <div class="pull-right text-right">
+                                                <p></p>
+                                                <p></p>
+                                                <hr>
+                                                <h3><b></b></h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row m-t-30">
+                                        <div class="col-sm-12">
+                                            <div class="border top bottom p-v-20">
+                                                <p class="text-opacity"><small></small></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row m-v-20">
+                                        <div class="col-sm-6">
+                                            <img class="img-fluid text-opacity m-t--5" width="100" src="assets/images/logo/logo.png" alt="">
+                                        </div>
+                                        <div class="col-sm-6 text-right">
+                                            <small><b>Phone:</b> (+44) 01234 240155</small>
+                                            <br>
+                                            <small>support@apell.io</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade modal-fs" id="settlement">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="container text-center">
+                    <div class="row full-height align-items-center">
+                        <div class="col-md-5 m-h-auto">
+                            <div class="p-h-30 p-b-50">
+                                <div class="text-center font-size-70">
+                                    <i class="mdi mdi-checkbox-marked-circle-outline icon-gradient-success"></i>
+                                </div>
+                                <h1 class="text-thin m-v-15">Thanks For Your Subscription</h1>
+                                <p class="m-b-25 lead">We are lucky to live in a glorious age that gives us everything as a human race.</p>
+                                <div class="text-center">
+                                    <button class="btn btn-default btn-lg">Confirm</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <a class="modal-close" href="" data-dismiss="modal">
+                    <i class="ti-close"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="termination" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="card">
+                    <div class="p-v-5 p-h-10 border bottom print-invisible">
+                        <ul class="list-unstyle list-inline text-right">
+                            <li class="list-inline-item">
+                                <a href="" class="btn text-gray text-hover display-block p-10 m-b-0" onclick="">
+                                    <i class="ti-printer text-info p-r-5"></i>
+                                    <b>Print</b>
+                                </a>
+                            </li>
+                            <li class="list-inline-item">
+                                <a href="" class="text-gray text-hover display-block p-10 m-b-0">
+                                    <i class="fa fa-file-pdf-o text-danger p-r-5"></i>
+                                    <b>Export PDF</b>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <div class="p-h-30">
+                            <div class="m-t-15">
+                                <div class="inline-block">
+                                    <img class="img-fluid" src="assets/images/logo/logo.png" alt="">
+                                    <address class="p-l-10 m-t-20">
+                                        <b class="text-dark">{{ agreement_customer.customercompany }}</b><br>
+                                        {% if agreement_customer.customeraddress1 %}<span>{{ agreement_customer.customeraddress1 }}</span></br>{% endif %}
+                                        {% if agreement_customer.customeraddress2 %}<span>{{ agreement_customer.customeraddress2 }}</span></br>{% endif %}
+                                        {% if agreement_customer.customeraddress3 %}<span>{{ agreement_customer.customeraddress3 }}</span></br>{% endif %}
+                                        {% if agreement_customer.customeraddress4 %}<span>{{ agreement_customer.customeraddress4 }}</span></br>{% endif %}
+                                        {% if agreement_customer.customeraddress5 %}<span>{{ agreement_customer.customeraddress5 }}</span></br>{% endif %}
+                                    </address>
+                                </div>
+                                <div class="pull-right">
+                                    <h2>Template Termination</h2>
+                                </div>
+                            </div>
+                            <div class="row m-t-20">
+                                <div class="col-sm-9">
+                                    <h3 class="p-l-10 m-t-10"></h3>
+                                    <address class="p-l-10 m-t-10">
+                                        <b class="text-dark"></b><br>
+                                        <span></span><br>
+                                        <span></span>
+                                    </address>
+                                </div>
+                                <div class="col-sm-3">
+                                    <div class="m-t-80">
+                                        <div class="text-dark text-uppercase d-inline-block"><b></b></div>
+                                        <div class="pull-right"></div>
+                                    </div>
+                                    <div class="text-dark text-uppercase d-inline-block"><b></b></div>
+                                    <div class="pull-right"></div>
+                                </div>
+                            </div>
+                            <div class="row m-t-20">
+                                <div class="col-sm-12">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th></th>
+                                                <th>IN DEVELOPMENT</th>
+                                                <th></th>
+                                                <th></th>
+                                                <th class="text-right"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                    <div class="row m-t-30">
+                                        <div class="col-sm-12">
+                                            <div class="pull-right text-right">
+                                                <p></p>
+                                                <p></p>
+                                                <hr>
+                                                <h3><b></b></h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row m-t-30">
+                                        <div class="col-sm-12">
+                                            <div class="border top bottom p-v-20">
+                                                <p class="text-opacity"><small></small></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row m-v-20">
+                                        <div class="col-sm-6">
+                                            <img class="img-fluid text-opacity m-t--5" width="100" src="assets/images/logo/logo.png" alt="">
+                                        </div>
+                                        <div class="col-sm-6 text-right">
+                                            <small><b>Phone:</b> (+44) 01234 240155</small>
+                                            <br>
+                                            <small>support@apell.io</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<form method="POST" action="{% url 'dashboard:convert_to_go' agreement_detail.agreementnumber %}" id="convert-to-go-form">
+    {% csrf_token %}
+</form>
+<form method="POST" action="{% url 'dashboard:convert_to_sentinel' agreement_detail.agreementnumber %}" id="convert-to-sentinel-form">
+    {% csrf_token %}
+</form>
+{% endblock %}
+{% block page-js %}
+    <script>
+        $(function(){
+
+            $("#convert_to_go").click(function() {
+                $("#convert-to-go-form").submit();
+            });
+
+            $("#convert_to_sentinal").click(function() {
+                $("#convert-to-sentinel-form").submit();
+            });
+
+            $("#show_sp_only").click(function(){
+            $(".SPH").prop('hidden', true);
+            $('#show_sp_only').prop('hidden', true);
+            $('#show_all').prop('hidden', false);
+            });
+            $("#show_all").click(function(){
+            $(".SPH").prop('hidden', false);
+            $('#show_all').prop('hidden', true);
+            $('#show_sp_only').prop('hidden', false);
+            });
+            $("#select-net-of-vat").click(function(){
+            $(".net-of-vat").prop('hidden', false);
+            $(".gross-of-vat").prop('hidden', true);
+            });
+            $("#select-gross-of-vat").click(function(){
+            $(".net-of-vat").prop('hidden', true);
+            $(".gross-of-vat").prop('hidden', false);
+            });
+        });
+    </script>
+{% endblock %}

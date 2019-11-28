@@ -1,0 +1,1233 @@
+{% extends "dashboard_base.html" %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+{% load dashboard_extras %}
+{% block metadescription %}
+   GO Dashboard
+{% endblock %}
+{% block title %}
+   GO Dashboard
+{% endblock %}
+{% block page-css %}
+    <link rel="stylesheet" href="{% static 'core_agreement_crud.css' %}">
+{% endblock %}
+{% block content %}
+    <style type="text/css">
+        #profile_types_table td {
+            width: 120px;
+        }
+        #profile_types_table label {
+            display: inline-block;
+            font-size: 13px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        #profile_types_table table {
+            padding-bottom: 20px;
+        }
+        .active_input_border {
+            border: 1px solid #2acfd2 ;
+            border-left: 0px;
+            border-bottom-right-radius: 5px;
+            border-top-right-radius: 5px;
+            transition: all 0.2s ease-in;
+        }
+    </style>
+    <div class="page-header">
+        {% if update %}
+            <h2 class="header-title">
+                <h2 class="inline-block"> {{ agreement_detail.agreementnumber }}&nbsp; &nbsp;</h2>&nbsp;
+                <h2 class="inline-block">{{ agreement_customer_name }}&nbsp; &nbsp;</h2>&nbsp;
+                <h2 class="inline-block" data-toggle="tooltip" data-placement="bottom"
+                    title="Sales Representative">{{ agreement_detail.agreementauthority }}&nbsp; &nbsp;</h2>&nbsp;
+                {% if agreement_regulated_flag %}
+                    <button type="button" class="btn btn-success btn-w-sm" data-toggle="popover" data-trigger="hover"   title="" data-content="This is a regulated agreement,
+                                            please deal with accordingly." data-original-title="Regulated Agreement" aria-describedby="popover676999">
+                        <i class="mdi mdi-help-circle-outline"></i>&nbsp;Regulated
+                    </button>
+                {% endif %}
+                <div class="inline-block">
+                    {% if  agreement_detail.agreementdefname != 'Hire Purchase' and agreement_detail.agreementdefname != 'Management Fee' %}
+                        <span class="badge badge-info badge-lg">{{ agreement_detail.agreementdefname }}</span>
+                    {% else %}
+                        <span class="badge badge-primary badge-lg">{{ agreement_detail.agreementdefname }}</span>
+                    {% endif %}
+                    {% if agreement_detail.agreementclosedflag_id == 902 %}
+                        <span class="badge badge-danger badge-lg">Closed</span>
+                    {% endif %}
+                    {% if agreement_detail.agreementddstatus_id == 'I' %}
+                        <span class="badge badge-danger badge-lg">DD Inactive</span>
+                    {% endif %}
+                    {% if agreement_detail.agreement_stage == '4'%}
+                        <nav class="breadcrumb breadcrumb-dash">&nbsp;
+                            <a class="breadcrumb-item text-success agreement-list" href="{%  url 'core_agreement_crud:AgreementEnquiryList' %}"><i class="ti-list p-r-5"></i>Agreement List</a>
+                            <span class="breadcrumb-item active">Agreement Detail</span>
+                        </nav>
+                        <a href='javascript:void(window.open("{% url 'notes:main' %}?customer_id={{ agreement_customer.customernumber }}&agreement_id={{ agreement_detail.agreementnumber }}", "core_notes", "scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no, width=2000,height=1000,left=0,top=0"));' class="text-white m-r-15 font-size-16"><span class="btn btn-success btn-float  btn-rounded m-l-10 p-r-10 p-l-10 m-b-0"><i class="ti-write m-r-5"  data-customer-id="{{ agreement_customer.customernumber }}" data-agreement-id="{{ agreement_detail.agreementnumber }}"></i>NOTES</span></a>
+                    {% else %}
+                        <nav class="breadcrumb breadcrumb-dash">&nbsp;
+                            <a class="breadcrumb-item text-success" href="{%  url 'core_agreement_crud:AgreementEnquiryList' %}"><i class="ti-list p-r-5"></i>Agreement List</a>
+                            <span class="breadcrumb-item active">Agreement Detail</span>
+                        </nav>
+                    {% endif %}
+                </div>
+            </h2>
+        {% else %}
+            <h2 class="header-title" style="color: #8dabc4">
+                AGREEMENT CREATION
+            </h2>
+        {% endif %}
+{#    </div>#}
+        {% if agreement_detail.agreement_stage == '4'%}
+            {% if go_id.consolidation_info %}
+                <p><i class="fa fa-clock-o"></i> {{ go_id.consolidation_info}}
+                </p>
+            {% endif %}
+        {% endif %}
+    </div>
+    <div class="card">
+        <div class="card-header border bottom">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-sm-10 offset-sm-1">
+                        <ul class="nav wizard wizard-success">
+                            <li class="nav-item">
+                                <a class="nav-link active" {#href="%  url 'core_agreement_crud:agreement_management_tab1' %"#}></a>
+                                <div class="nav-title">Customer Detail</div>
+                            </li>
+                            {% if agreement_detail.agreement_stage == '4' %}
+                                <li  class="nav-item">
+                                    <a class="nav-link completed" href="{%  url 'core_agreement_crud:agreement_management_tab2' agreement_detail.agreementnumber %}"></a>
+                                    <div class="nav-title">Payment Detail</div>
+                                </li>
+                            {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link"></a>
+                                <div class="nav-title">Payment Detail</div>
+                            </li>
+                            {% endif %}
+                            {% if agreement_detail.agreement_stage == '4' %}
+                                <li  class="nav-item">
+                                    <a class="nav-link completed" href="{%  url 'core_agreement_crud:agreement_management_tab3' agreement_detail.agreementnumber %}"></a>
+                                    <div class="nav-title">Agreement Detail</div>
+                                </li>
+                            {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link"></a>
+                                <div class="nav-title">Agreement Detail</div>
+                            </li>
+                            {% endif %}
+                            {% if agreement_detail.agreement_stage == '4' %}
+                                <li  class="nav-item">
+                                    <a class="nav-link completed" href="{%  url 'core_agreement_crud:agreement_management_tab4' agreement_detail.agreementnumber %}"></a>
+                                    <div class="nav-title">Account Statement</div>
+                                </li>
+                            {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link"></a>
+                                <div class="nav-title">Account Statement</div>
+                            </li>
+                            {% endif %}
+                          {% comment %} <li class="nav-item">
+                                <a class="nav-link"></a>
+                                <div class="nav-title">Guarantors</div>
+                            </li> {% endcomment %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-8 offset-sm-2">
+                {% if error %}
+                    <div class="alert alert-danger m-t-25">
+                        <b>Error:</b> {{ error }}
+                    </div>
+                {% else %}
+                    {% if errors %}
+                        <div class="alert alert-danger m-t-25">
+                            <b>Validation failure:</b> Please fix the errors below and try again.
+                        </div>
+                    {% endif %}
+                {% endif %}
+                <form id="form_tab1" class="m-t-45" method="post" action="{% if update %}{% url 'core_agreement_crud:agreement_management_tab1_1' agreement_id %}{% else %}{% url 'core_agreement_crud:agreement_management_tab1' %}{% endif %}" {% if update and error %}style="display:none;"{% endif %}>
+                    {% csrf_token %}
+                    <div class="form-row">
+                        {% if agreement_detail.agreement_stage != '4' %}
+                            <div class="form-group col-md-4" {% if Agreement_Type_Select == 0 %} hidden {% endif %}>
+                                <label for="agreement_type" class="control-label">Type</label>
+                                <select class="form-control{% if errors.agreement_type %} error{% endif %}" name="agreement_type" data-validate="true" id="id-agreement-type">
+                                    <option value="">Please Select</option>
+                                    {% for t in types %}
+                                        <option {% if values.agreement_type == t.agreementdefname %}selected{% endif %}>{{ t }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% if errors.agreement_type %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.agreement_type }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        {% if agreement_detail.agreement_stage == '4' %}
+                        <div class="form-group col-md-4" {% if Agreement_Type_Select == 0 %} hidden {% endif %}>
+                            <label for="agreement_type" class="control-label">Type</label>
+                            <input class="form-control{% if errors.agreement_type %} error{% endif %}" name="agreement_type" data-validate="true" readonly value="{{ values.agreement_type }}">
+                            {% if errors.agreement_type %}
+                                <div class="invalid-feedback display-block">
+                                    {{ errors.agreement_type }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        {% if transaction_summary_extract_count > 0 or transition_count > 0 %}
+                            <div class="form-group col-md-4" {% if Funder_Select == 0 %} hidden {% endif %}>
+                                <label for="validationCustom01" class="control-label">Funder</label>
+                                <input  class="form-control" name="funder_code" data-validate="true" id="id-funder-type" value="{{  go_id_detail.funder.funder_description }}" disabled>
+                                {% if errors.funder_code %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.funder_code }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="form-group col-md-4" {% if Funder_Select == 0 %} hidden {% endif %}>
+                                <label for="validationCustom01" class="control-label">Funder</label>
+                                <select class="form-control" name="funder_code" data-validate="true" id="id-funder-type" >
+                                <option value="">Please Select</option>
+                                    {% for t in funders %}
+                                        <option {% if values.funder_code == t.id %}selected{% endif %} value="{{ t.id }}">{{ t }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% if errors.funder_code %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.funder_code }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        {% if transaction_summary_extract_count > 0 or transition_count > 0 %}
+                            {#                    # TODO: PAF Changes - Start#}
+                            <div class="form-group col-md-4" hidden {% if Broker_Select == 0 %} hidden {% endif %}>
+                            {#                    # TODO: PAF Changes - End#}
+                                <label for="validationCustom01" class="control-label">Broker</label>
+{#                                <select class="form-control" name="broker_type" data-validate="true" id="id-broker-type" readonly disabled>#}
+                                <input  class="form-control" name="broker_type" data-validate="true" id="id-broker-type" value="{{ values.broker_type }}" readonly>
+{#                                    {% for t in brokers %}#}
+{#                                        <option {% if values.broker_type == t.broker_description %}selected{% endif %}>{{ t }}</option>#}
+{#                                    {% endfor %}#}
+{#                                </select>#}
+                                {% if errors.broker_type %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.broker_type }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            {#   TODO:                 # PAF Changes - Start#}
+                             <div class="form-group col-md-4" {% if Broker_Select == 0 %} hidden {% endif %}>
+                                <label for="validationCustom01" class="control-label">Broker</label>
+                                <select class="form-control" name="broker_type" data-validate="true" id="id-broker-type" >
+                                {% if Broker_Select != 0 %} <option value="">Please Select</option> {% endif %}
+                                    {% for t in brokers %}
+                                        <option {% if values.broker_type == t.broker_description %}selected{% endif %} value="{{ t.id }}">{{ t }}</option>
+                                    {% endfor %}
+                                {#  TODO:                  # PAF Changes - End#}
+                                </select>
+                                {% if errors.broker_type %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.broker_type }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                    </div>
+                    <div class="form-row " id="profile_type_selectors">
+                        <div class="col-sm-12">
+                            <table id="profile_types_table">
+                                <tr>
+                                    {#  TODO:                  # PAF Changes - Start#}
+                                    <td id="doc_toggle_wrapper" {% if Doc_Fee_Visible == 0 %} hidden {% endif %}>
+                                        <label class="control-label">Doc Fee</label>
+                                        <p></p>
+                                        <div class="switch">
+                                        <input type="hidden" id="id_doc_flag" name="doc_flag" value="{% if doc_flag_on %}1{% endif %}">
+                                           <input type="checkbox" id="Doc_Fee_Toggle" data-hidden-input="id_doc_flag" class="profile_type_toggles" {% if doc_flag_on %}checked{% else %}unchecked{% endif %} {% if transaction_summary_extract_count > 0 or transition_count > 0 or values.broker_type == 'Broker' or go_id_detail.broker_type.broker_description == 'Broker' %}disabled{% endif %}>
+                                           <label for="Doc_Fee_Toggle"></label>
+                                        </div>
+                                    </td>
+                                    {#  TODO: # PAF Changes - End #}
+                                    <td id="risk_toggle_wrapper" {% if Risk_Fee_Visible == 0 %} hidden {% endif %}>
+
+                                        <label class="control-label">Risk Fee</label>
+                                        <p></p>
+                                        <div class="switch">
+                                            <input type="hidden" id="id_risk_flag" name="risk_flag" value="{% if risk_flag_on %}1{% endif %}">
+                                            <input type="checkbox" id="Risk_Fee_Toggle" data-hidden-input="id_risk_flag" class="profile_type_toggles" {% if risk_flag_on %}checked{% else %}unchecked{% endif %} {% if transaction_summary_extract_count > 0 or transition_count > 0 or values.broker_type == 'Broker' or go_id_detail.broker_type.broker_description == 'Broker' %}disabled{% endif %}>
+                                            <label for="Risk_Fee_Toggle"></label>
+                                        </div>
+                                    </td>
+                                    {# TODO: PAF Changes - Start #}
+                                    <td id="amf_toggle_wrapper" {% if Amf_Fee_Visible == 0 %} style="display: none;"{% endif %}>
+                                        <label for="AMF_Toggle" class="control-label">AMF</label>
+                                        <p></p>
+                                        <div class="switch vertical-center">
+                                            <input type="hidden" id="id_amf_flag" name="amf_flag" value="{% if amf_flag_on %}1{% endif %}">
+                                            <input type="checkbox" id="AMF_Toggle" data-hidden-input="id_amf_flag" class="profile_type_toggles" {% if amf_flag_on %}checked{% else %}unchecked{% endif %} {% if transaction_summary_extract_count > 0 or transition_count > 0 or values.broker_type == 'Broker' or go_id_detail.broker_type.broker_description == 'Broker' %}disabled{% endif %}>
+                                            <label for="AMF_Toggle"></label>
+                                        </div>
+                                    </td>
+                                    <td id="bamf_toggle_wrapper" {% if values.broker_type == 'Broker' or Bamf_Fee_Visible == 0 %}style="display: none;"{% endif %}>
+                                    {# TODO: PAF Changes - End #}
+                                        <label for="BAMF_Toggle" class="control-label">BAMF</label>
+                                        <p></p>
+                                        <div class="switch">&nbsp;
+                                            <input type="hidden" id="id_bamf_flag" name="bamf_flag" value="{% if bamf_flag_on %}1{% endif %}">
+                                            <input type="checkbox" id="BAMF_Toggle" data-hidden-input="id_bamf_flag" class="profile_type_toggles" {% if bamf_flag_on %}checked{% else %}unchecked{% endif %} {% if transaction_summary_extract_count > 0 or transition_count > 0 or values.broker_type == 'Broker' or go_id_detail.broker_type.broker_description == 'Broker' %}disabled{% endif %}>
+                                            <label for="BAMF_Toggle"></label>
+                                        </div>
+                                    </td>
+                                    {# TODO: PAF Changes - Start #}
+                                    <td id = "secondaries_toggle_wrapper" {% if Secondaries_Visible == 0 %} hidden {% endif %}>
+                                    {# TODO: PAF Changes - End #}
+                                        <label for="Secondaries_Toggle" class="control-label">Secondaries</label>
+                                        <p></p>
+                                        <div class="switch">
+                                            <input type="hidden" id="id_secondary_flag" name="secondary_flag" value="{% if secondary_flag_on %}1{% endif %}">
+                                            <input type="checkbox" id="Secondaries_Toggle" data-hidden-input="id_secondary_flag" class="profile_type_toggles" {% if secondary_flag_on %}checked{% else %}unchecked{% endif %} {% if transaction_summary_extract_count > 0 or transition_count > 0 or values.broker_type == 'Broker' or go_id_detail.broker_type.broker_description == 'Broker' %}disabled{% endif %}>
+                                            <label for="Secondaries_Toggle"></label>
+                                        </div>
+                                    </td>
+                                    {# TODO: PAF Changes - Start #}
+                                    <td id = "title_toggle_wrapper" {% if Title_Visible == 0 %} hidden {% endif %}>
+                                    {# TODO: PAF Changes - End #}
+                                        <label for="Title_Toggle" class="control-label">Title</label>
+                                        <p></p>
+                                        <div class="switch">
+                                            <input type="hidden" id="id_title_flag" name="title_flag" value="{% if title_flag_on %}1{% endif %}">
+                                            <input type="checkbox" id="Title_Toggle" data-hidden-input="id_title_flag" class="profile_type_toggles" {% if title_flag_on %}checked{% else %}unchecked{% endif %} {% if transaction_summary_extract_count > 0 or transition_count > 0 or values.broker_type == 'Broker' or go_id_detail.broker_type.broker_description == 'Broker' %}disabled{% endif %}>
+                                            <label for="Title_Toggle"></label>
+                                        </div>
+                                    </td>
+                                    {# TODO: PAF Changes - Start #}
+                                    <td id = "security_toggle_wrapper" {% if Security_Visible == 0 %} hidden {% endif %}>
+                                    {# TODO: PAF Changes - End#}
+
+                                        <label for="Security_Toggle" class="control-label">Security</label>
+                                        <p></p>
+                                        <div class="switch vertical-center">
+                                            <input type="hidden" id="id_security_flag" name="security_flag" value="{% if security_flag_on %}1{% endif %}">
+                                            <input type="checkbox" id="Security_Toggle" data-hidden-input="id_security_flag" class="profile_type_toggles" {% if security_flag_on %}checked{% else %}unchecked{% endif %} {% if transaction_summary_extract_count > 0 or transition_count > 0 or values.broker_type == 'Broker' or go_id_detail.broker_type.broker_description == 'Broker' %}disabled{% endif %}>
+                                            <label for="Security_Toggle"></label>
+                                        </div>
+                                    </td>
+                                    <td id="amf_toggle_wrapper" {% if not values or values.broker_type == 'Non-Broker' %}style="display: none;"{% endif %}>
+                                        <label for="AMF_Toggle" class="control-label">AMF</label>
+                                        <p></p>
+                                        <div class="switch vertical-center">
+                                            <input type="hidden" id="id_amf_flag" name="amf_flag" value="{% if amf_flag_on %}1{% endif %}">
+                                            <input type="checkbox" id="AMF_Toggle" data-hidden-input="id_amf_flag" class="profile_type_toggles" {% if amf_flag_on %}checked{% else %}unchecked{% endif %} {% if transaction_summary_extract_count > 0 or transition_count > 0 or values.broker_type == 'Broker' or go_id_detail.broker_type.broker_description == 'Broker' %}disabled{% endif %}>
+                                            <label for="AMF_Toggle"></label>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="10"><p class="small">&nbsp;</p></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label for="agreement-number" class="control-label">Agreement Number</label>
+                            {% if transaction_summary_extract_count > 0 or transition_count > 0 %}
+                                <input class="form-control{% if errors.agreement_id %} error{% endif %}" type="text" name="agreement_id" value="{{ values.agreement_id }}" autocomplete="off" data-validate="true" maxlength="10" readonly>
+                                {% if errors.agreement_id %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.agreement_id }}
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                <input class="form-control{% if errors.agreement_id %} error{% endif %}" type="text" name="agreement_id" value="{{ values.agreement_id }}" autocomplete="off" data-validate="true" maxlength="10">
+                                {% if errors.agreement_id %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.agreement_id }}
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group col-md-2">
+                            <div class="form-control width-70 float-right bold" style="margin-top:28px;{% if not values.customernumber %}display:none;{% endif %}"
+                                 readonly="readonly" id="customer-number-display">{{ values.customernumber }}</div>
+                        </div>
+                        {% if transaction_summary_extract_count > 0 or transition_count > 0 %}
+                            <div class="form-group col-md-4">
+                                <label for="company-name" id="company-name-title" class="control-label">Company Name</label>
+                                <input class="form-control {% if errors.company_name %}error{% endif %}" maxlength="60"
+                                       id="company_name" name="company_name" value="{{ values.company_name }}" autocomplete="off" readonly>
+                                <input class="form-control {% if errors.company_name %}error{% endif %}" autocomplete="off" disabled="true" maxlength="60"
+                                       name="company_name" value="{{ values.company_name }}" style="display:none;" id="new_company_name" disabled="">
+                                <div class="invalid-feedback{% if errors.company_name %} display-block{% endif %}" id="company-name-err">
+                                    {{ errors.company_name }}
+                                </div>
+                            </div>
+
+                            <div class="form-group col-md-2 p-t-45">
+                                <div class="switch d-inline">
+                                    <input type="checkbox" id="customer-switch" {% if new_customer %}checked{% endif %} data-validate="true" maxlength="35" disabled>
+                                    <label for="customer-switch"></label>
+                                </div>
+                                <label id="customer-switch-label" >
+                                    {% if new_customer %}
+                                        New Company
+                                    {% else %}
+                                        Existing Company
+                                    {% endif %}
+                                </label>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Company Reg No.</label>
+                                <input class="form-control" name="company_ref_no" autocomplete="off" onkeypress="return isNumber(event)" value="{{ values.company_ref_no }}" maxlength="35" id="id-company-reg-no" readonly>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Account Manager</label>
+{#                                Card 53 ~ Account Manager needs to be editable even after first payment or in batch or transitioned from Sentinel #}
+                                <select class="form-control{% if errors.agreementauthority %} error{% endif %}" name="agreementauthority" data-validate="true">
+                                    <option value="">Please Select</option>
+                                    {% for s in sales_authorities %}
+                                        <option value="{{ s.full_name }}" {% if values.agreementauthority == s.full_name %}selected{% endif %}>{{ s.full_name }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% if errors.agreementauthority %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.agreementauthority }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                        {% else %}
+                            <div class="form-group col-md-4">
+                                <label for="company-name" class="control-label" id="id-company-name-label">{% if agreement_detail.agreement_stage %}Company Name {% elif new_customer %}New Company Name{% else %}Company Search{% endif %}</label>
+                                <input placeholder="Search existing company..." class="form-control {% if errors.company_name %}error{% endif %}" maxlength="60"
+                                       id="company_name" name="company_name" value="{{ values.company_name }}" autocomplete="off" {% if new_customer %}disabled="disabled" style="display:none;"{% endif %}>
+                                <input placeholder="Enter new company..." class="form-control {% if errors.company_name %}error{% endif %}" autocomplete="off" maxlength="60"
+                                       name="company_name" value="{{ values.company_name }}" {% if not new_customer %}style="display:none;" disabled="disabled"{% endif  %} id="new_company_name">
+                                <div class="invalid-feedback{% if errors.company_name %} display-block{% endif %}" id="company-name-err">
+                                    {{ errors.company_name }}
+                                </div>
+                            </div>
+
+                            <div class="form-group col-md-2 p-t-45">
+                                <div class="switch d-inline">
+                                    <input type="checkbox" id="customer-switch" {% if new_customer %}checked{% else %}unchecked{% endif %} data-validate="true" maxlength="35">
+                                    <label for="customer-switch"></label>
+                                </div>
+                                <label id="customer-switch-label">
+                                    {% if new_customer %}
+                                        New Company
+                                    {% else %}
+                                        Existing Company
+                                    {% endif %}
+                                </label>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Company Reg No.</label>
+                                <input class="form-control" name="company_ref_no" autocomplete="off" onkeypress="return isNumber(event)" value="{{ values.company_ref_no }}" maxlength="35" id="id-company-reg-no" >
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Account Manager</label>
+                                <select class="form-control{% if errors.agreementauthority %} error{% endif %}" name="agreementauthority" data-validate="true">
+                                    <option value="">Please Select</option>
+                                    {% for s in sales_authorities %}
+                                        <option value="{{ s.full_name }}" {% if values.agreementauthority == s.full_name %}selected{% endif %}>{{ s.full_name }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% if errors.agreementauthority %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.agreementauthority }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% if agreement_detail.agreementstatus != 'CLOSED' %}
+                        <div class="form-row">
+                            <div class="form-group col-md-12">
+                                <label class="control-label">Post Code Search</label>
+                                <div class="input-group">
+                                    <input class="form-control" type="text" id="id-postcode-search" autocomplete="xyz" data-validate="true" maxlength="10">
+                                    <div class="input-group-append" style="cursor: pointer;" id="postcode-search">
+                                        <span class="input-group-text"><i class="fa fa-search"></i></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row" id="address-search-results" style="display:none;">
+                            <div class="form-group col-md-12">
+                                <label class="control-label text-success">Please select an address from the list below or enter the details manually</label>
+                                <select id="address-select" class="form-control"></select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Address Line 1</label>
+                                <input class="form-control{% if errors.customeraddress1 %} error{% endif %}" type="text" name="customeraddress1" value="{{ values.customeraddress1 }}" id="id-address-line-1" autocomplete="off" data-validate="true" maxlength="35">
+                                {% if errors.customeraddress1 %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.customeraddress1 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Address Line 2</label>
+                                <input class="form-control{% if errors.customeraddress2 %} error{% endif %}" type="text" name="customeraddress2" value="{{ values.customeraddress2 }}" id="id-address-line-2" autocomplete="off" data-validate="true" maxlength="35">
+                                {% if errors.customeraddress2 %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.customeraddress2 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Address Line 3</label>
+                                <input class="form-control{% if errors.customeraddress3 %} error{% endif %}" type="text" name="customeraddress3" value="{{ values.customeraddress3 }}" id="id-address-line-3" autocomplete="off" maxlength="35">
+                                {% if errors.customeraddress3 %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.customeraddress3 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Address Line 4</label>
+                                <input class="form-control{% if errors.customeraddress4 %} error{% endif %}" type="text" name="customeraddress4" value="{{ values.customeraddress4 }}" id="id-address-line-4" autocomplete="off" maxlength="35">
+                                {% if errors.customeraddress4 %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.customeraddress4 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Address Line 5</label>
+                                <input class="form-control{% if errors.customeraddress5 %} error{% endif %}" type="text" name="customeraddress5" value="{{ values.customeraddress5 }}" id="id-address-line-5" autocomplete="off" maxlength="35">
+                                {% if errors.customeraddress5 %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.customeraddress5 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Postcode</label>
+                                <input class="form-control{% if errors.customerpostcode %} error{% endif %}" type="text" name="customerpostcode" value="{{ values.customerpostcode }}" id="id-postcode" autocomplete="off" data-validate="true" maxlength="8">
+                                {% if errors.customerpostcode %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.customerpostcode }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+{#                        <label class="control-label">MAIN CONTACT</label>#}
+                        <div class="form-row">
+
+                            <div class="form-group col-md-6">
+
+                                <label class="control-label">Main Contact</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend{% if errors.customerfirstname %} error-border{% endif %}">
+                                        <span class="input-group-text"><i class="fa fa-user"></i></span>
+                                    </div>
+                                    <input class="form-control{% if errors.customerfirstname %} error{% endif %}" type="text" name="customerfirstname" value="{{ values.customerfirstname }}" autocomplete="off" id="id-customer-firstname" data-validate="true" maxlength="35" placeholder="First Name">
+                                </div>
+                                {% if errors.customerfirstname %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.customerfirstname }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">&nbsp;</label>
+                                <input class="form-control{% if errors.customersurname %} error{% endif %}" type="text" name="customersurname" value="{{ values.customersurname }}" autocomplete="off" id="id-customer-surname" data-validate="true" maxlength="35" placeholder="Last Name">
+
+                                {% if errors.customersurname %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.customersurname }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Mobile Number</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend{% if errors.customermobilenumber %} error-border{% endif %}">
+                                        <span class="input-group-text"><i class="fa fa-mobile-phone"></i></span>
+                                    </div>
+                                    <input class="form-control{% if errors.customermobilenumber %} error{% endif %}" type="text" name="customermobilenumber" value="{{ values.customermobilenumber }}" autocomplete="off" id="id-customer-mobile" onkeypress="return isNumber(event)" data-validate="true">
+                                </div>
+                                {% if errors.customermobilenumber %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.customermobilenumber }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Phone Number</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend{% if errors.customerphonenumber %} error-border{% endif %}">
+                                        <span class="input-group-text"><i class="fa fa-phone"></i></span>
+                                    </div>
+                                    <input class="form-control{% if errors.customerphonenumber %} error{% endif %}" type="text" name="customerphonenumber" value="{{ values.customerphonenumber }}" autocomplete="off" id="id-customer-phone" onkeypress="return isNumber(event)" data-validate="true">
+                                </div>
+                                {% if errors.customerphonenumber %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.customerphonenumber }}
+                                    </div>
+                                    {% endif %}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Email</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend{% if errors.customeremail %} error-border{% endif %}">
+                                        <span class="input-group-text">@</span>
+                                    </div>
+                                    <input class="form-control{% if errors.customeremail %} error{% endif %}" type="text" name="customeremail" value="{{ values.customeremail }}" autocomplete="off" id="id-customer-email" data-validate="true" maxlength="50">
+                                </div>
+                                {% if errors.customeremail %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.customeremail }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label class="control-label">Social Media 1</label>
+                                <input class="form-control" type="text" name="social_media1" autocomplete="off" value="{{ values.social_media1 }}" maxlength="35">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label class="control-label">Social Media 2</label>
+                                <input class="form-control" type="text" name="social_media2" autocomplete="off" value="{{ values.social_media2 }}" maxlength="35">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label class="control-label">Social Media 3</label>
+                                <input class="form-control" type="text" name="social_media3" autocomplete="off" value="{{ values.social_media3 }}" maxlength="35">
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="form-row">
+                            <div class="form-group col-md-12">
+                                <label class="control-label">Post Code Search</label>
+                                <div class="input-group">
+                                    <input class="form-control" type="text" id="id-postcode-search" autocomplete="xyz" data-validate="true" maxlength="10" readonly>
+                                    <div class="input-group-append" style="cursor: pointer;" disabled>
+                                        <span class="input-group-text"><i class="fa fa-search" disabled=""></i></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Address Line 1</label>
+                                <input class="form-control{% if errors.customeraddress1 %} error{% endif %}" type="text" name="customeraddress1" value="{{ values.customeraddress1 }}" id="id-address-line-1" autocomplete="off" data-validate="true" maxlength="35" readonly>
+                                {% if errors.customeraddress1 %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.customeraddress1 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Address Line 2</label>
+                                <input class="form-control{% if errors.customeraddress2 %} error{% endif %}" type="text" name="customeraddress2" value="{{ values.customeraddress2 }}" id="id-address-line-2" autocomplete="off" data-validate="true" maxlength="35" readonly>
+                                {% if errors.customeraddress2 %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.customeraddress2 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Address Line 3</label>
+                                <input class="form-control{% if errors.customeraddress3 %} error{% endif %}" type="text" name="customeraddress3" value="{{ values.customeraddress3 }}" id="id-address-line-3" autocomplete="off" maxlength="35" readonly>
+                                {% if errors.customeraddress3 %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.customeraddress3 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Address Line 4</label>
+                                <input class="form-control{% if errors.customeraddress4 %} error{% endif %}" type="text" name="customeraddress4" value="{{ values.customeraddress4 }}" id="id-address-line-4" autocomplete="off" maxlength="35" readonly>
+                                {% if errors.customeraddress4 %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.customeraddress4 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Address Line 5</label>
+                                <input class="form-control{% if errors.customeraddress5 %} error{% endif %}" type="text" name="customeraddress5" value="{{ values.customeraddress5 }}" id="id-address-line-5" autocomplete="off" maxlength="35" readonly>
+                                {% if errors.customeraddress5 %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.customeraddress5 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Postcode</label>
+                                <input class="form-control{% if errors.customerpostcode %} error{% endif %}" type="text" name="customerpostcode" value="{{ values.customerpostcode }}" id="id-postcode" autocomplete="off" data-validate="true" maxlength="8" readonly>
+                                {% if errors.customerpostcode %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.customerpostcode }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Main Contact</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend{% if errors.customerfirstname %} error-border{% endif %}">
+                                        <span class="input-group-text"><i class="fa fa-user"></i></span>
+                                    </div>
+                                    <input class="form-control{% if errors.customerfirstname %} error{% endif %}" type="text" name="customerfirstname" value="{{ values.customerfirstname }}" autocomplete="off" id="id-customer-firstname" data-validate="true" maxlength="35" placeholder="First Name">
+                                </div>
+                                {% if errors.customerfirstname %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.customerfirstname }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">&nbsp;</label>
+                                <input class="form-control{% if errors.customersurname %} error{% endif %}" type="text" name="customersurname" value="{{ values.customersurname }}" autocomplete="off" id="id-customer-surname" data-validate="true" maxlength="35" placeholder="Last Name">
+
+                                {% if errors.customersurname %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.customersurname }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Mobile Number</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend{% if errors.customermobilenumber %} error-border{% endif %}">
+                                        <span class="input-group-text"><i class="fa fa-mobile-phone"></i></span>
+                                    </div>
+                                    <input class="form-control{% if errors.customermobilenumber %} error{% endif %}" type="text" name="customermobilenumber" value="{{ values.customermobilenumber }}" autocomplete="off" id="id-customer-mobile" onkeypress="return isNumber(event)" data-validate="true" readonly>
+                                </div>
+                                {% if errors.customermobilenumber %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.customermobilenumber }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Phone Number</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend{% if errors.customerphonenumber %} error-border{% endif %}">
+                                        <span class="input-group-text"><i class="fa fa-phone"></i></span>
+                                    </div>
+                                    <input class="form-control{% if errors.customerphonenumber %} error{% endif %}" type="text" name="customerphonenumber" value="{{ values.customerphonenumber }}" autocomplete="off" id="id-customer-phone" onkeypress="return isNumber(event)" data-validate="true" readonly>
+                                </div>
+                                {% if errors.customerphonenumber %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.customerphonenumber }}
+                                    </div>
+                                    {% endif %}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">Email</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend{% if errors.customeremail %} error-border{% endif %}">
+                                        <span class="input-group-text">@</span>
+                                    </div>
+                                    <input class="form-control{% if errors.customeremail %} error{% endif %}" type="text" name="customeremail" value="{{ values.customeremail }}" autocomplete="off" id="id-customer-email" data-validate="true" maxlength="35" readonly>
+                                </div>
+                                {% if errors.customeremail %}
+                                    <div class="invalid-feedback display-block">
+                                        {{ errors.customeremail }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label class="control-label">Social Media 1</label>
+                                <input class="form-control" type="text" name="social_media1" autocomplete="off" value="{{ values.social_media1 }}" maxlength="35" readonly>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label class="control-label">Social Media 2</label>
+                                <input class="form-control" type="text" name="social_media2" autocomplete="off" value="{{ values.social_media2 }}" maxlength="35" readonly>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label class="control-label">Social Media 3</label>
+                                <input class="form-control" type="text" name="social_media3" autocomplete="off" value="{{ values.social_media3 }}" maxlength="35" readonly>
+                            </div>
+                        </div>
+                    {% endif %}
+                    <div class="form-group">
+                        <div class="text-sm-right">
+                            {% if not update %}
+                            <a class="btn btn-warning btn-rounded" href="{%  url 'core_agreement_crud:AgreementEnquiryList' %}">
+                                <span class="title">Cancel</span>
+                            </a>
+                            {% endif %}
+                            <input type="hidden" name="customernumber" id="id-customer-number" value="{{ values.customernumber }}">
+                            <input type="hidden" name="customerchanges" id="customer_changes" value="0">
+                            <input type="hidden" id="id-agreement-stage" value="{{ agreement_detail.agreement_stage }}">
+                            <input type="hidden" id="id-agreement-type-value" value="{{ values.agreement_type }}">
+                            <input type="hidden" id="id-profile-type-value" value="{{ values.profile_type }}">
+                            <input type="hidden" id="id-broker-type-value" value="{{ values.broker_type }}">
+                            <button class="btn btn-gradient-success btn-rounded" type="submit">
+                                <span class="title">Save/Next</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade in" id="confirm-changes">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Please confirm your changes</h2>
+                </div>
+                <div class="modal-body">
+                    <div class="card" id="agreement-changes-area" style="display: none;">
+                        <div class="card-body">
+                            <p>Please be aware the following changes will have financial implications for the agreement:</p>
+                            <p id="agreement-changes"></p>
+                            <p>Please confirm you wish to continue.</p>
+                            </div>
+                    </div>
+                    <div class="card" id="customer-changes-area" style="display: none;">
+                        <div class="card-body">
+                            <p>You are about to amend an existing customer details. Please confirm you wish to continue.</p>
+                            <p id="customer-changes">Please be aware this will effect the agreement profile.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" id="confirm-changes-ok">
+                        <i class="fa fa-thumbs-up"></i>
+                        Confirm
+                    </button>
+                    <button class="btn btn-danger" data-dismiss="modal">
+                        <i class="fa fa-thumbs-down"></i>
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade in" id="postcode-error">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Invalid/Unknown Postcode</h2>
+                    <button class="close" type="button" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>The postcode you searched for is either unknown or invalid. Please ensure you are entering a full postcode and try again.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" data-dismiss="modal">
+                        <i class="fa fa-thumbs-up"></i>
+                        OK
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade in" id="postcode-error-message">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Postcode Service Error</h2>
+                    <button class="close" type="button" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+{#                    {%  if postcode-error-message-text == 'Not Found'  %}#}
+{#                        Postcode does not exist#}
+{#                    {% elseif postcode-error-message-text == 'Bad Request'  %}#}
+{#                    {% else %}#}
+                    <div class="alert alert-danger" id="postcode-error-message-text"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" data-dismiss="modal">
+                        <i class="fa fa-thumbs-up"></i>
+                        OK
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{#    <!-- Consolidation -->#}
+{#    <input class="js-create-editor" data-url="{% url 'core_agreement_editor:modalconsolidate' %}" type="hidden">#}
+{#    <div id="modal-editor" class="modal fade in">#}
+{#        <div class="modal-dialog modal-lg">#}
+{#            <div class="modal-content"></div>#}
+{#        </div>#}
+{#    </div>#}
+
+{% endblock %}
+{% block page-js %}
+
+    <script src="{% static 'static_core_agreement_editor_template/js/editors.js' %}"></script>
+    <script src="{% static 'easyautocomplete/jquery.easy-autocomplete.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'easyautocomplete/easy-autocomplete.css' %}">
+
+    <script src="{% static 'core_agreement_crud.js' %}"></script>
+
+    <script type="text/javascript">
+
+    {# TODO: PAF Changes - Start#}
+    var Risk_Fee_Selectable;
+    var Bamf_Fee_Selectable;
+    var Secondaries_Selectable;
+    var Title_Selectable;
+    var Security_Selectable;
+    var Amf_Fee_Selectable;
+    var Doc_Fee_Selectable;
+
+    var Risk_Fee_Visible;
+    var Bamf_Fee_Visible;
+    var Secondaries_Visible;
+    var Title_Visible;
+    var Security_Visible;
+    var Amf_Fee_Visible;
+    var Doc_Fee_Visible;
+    {# TODO: PAF Changes - End#}
+
+        $(function() {
+
+            $("#id-agreement-type").change(function() {
+                if("{{ values.agreement_type }}" !== "") {
+                    if ("{{ values.agreement_type }}" !== $(this).val()) {
+                        typeChanged = true;
+                    } else {
+                        typeChanged = false;
+                    }
+                }
+             });
+
+            $("#id-postcode-search").change(function() {
+                if(!$(this).val()) {
+                    $("#address-search-results").hide();
+                }
+            });
+
+            {#$("#id-profile-type").change(function() {#}
+            {##}
+            {#    if("{{ values.profile_type }}" !== "") {#}
+            {#        if ("{{ values.profile_type }}" !== $(this).val()) {#}
+            {#            profileChanged = true;#}
+            {#        } else {#}
+            {#            profileChanged = false;#}
+            {#        }#}
+            {#    }#}
+            {##}
+            {#    if(customer && $(this).val() === "Consolidation") {#}
+            {#        //$('#consolidate-form').modal('show');#}
+            {#        $(".js-create-editor").trigger("click");#}
+            {#    }#}
+            {##}
+            {# });#}
+
+
+            var $amfFeeToggle = $("#AMF_Toggle");
+            var $bamfFeeToggle = $("#BAMF_Toggle");
+            var $securityToggle = $("#Security_Toggle");
+            var $secondariesToggle = $("#Secondaries_Toggle");
+            var $titleToggle = $("#Title_Toggle");
+            var $riskFeeToggle = $("#Risk_Fee_Toggle");
+            var $amfToggleWrapper = $("#amf_toggle_wrapper");
+            var $bamfToggleWrapper = $("#bamf_toggle_wrapper");
+
+            {# TODO: PAF Changes - Start#}
+            var $riskToggleWrapper = $("#risk_toggle_wrapper");
+            var $secondariesToggleWrapper = $("#secondaries_toggle_wrapper");
+            var $titleToggleWrapper = $("#title_toggle_wrapper");
+            var $securityToggleWrapper = $("#security_toggle_wrapper");
+
+            $("#id-agreement-type").on("change", function() {
+               Buttonchangefunction();
+            });
+            $("#id-funder-type").on("change", function() {
+               Buttonchangefunction();
+            });
+            $("#id-broker-type").on("change", function() {
+               Buttonchangefunction();
+            });
+
+            console.log(Risk_Fee_Selectable);
+            console.log(Bamf_Fee_Selectable);
+
+            var agreement_type = (document.getElementById('id-agreement-type').value||0);
+            var funder_info = (document.getElementById('id-funder-type').value||0);
+            var broker_info = (document.getElementById('id-broker-type').value||0);
+            console.log((document.getElementById('id-broker-type')).value);
+            console.log((document.getElementById('id-funder-type')).value);
+            console.log('problem')
+            console.log(agreement_type)
+            console.log((document.getElementById('id-agreement-type')).value);
+
+            {# Initialise data #}
+            var data = {
+               agreement_type: agreement_type,
+               funder_info: funder_info,
+               broker_info: broker_info,
+               csrfmiddlewaretoken: '{{ csrf_token }}'
+            };
+
+
+
+            function Buttonchangefunction() {
+                {# Only proceed if the value requested > 0 #}
+                {#if (amount > 0) {#}
+                console.log('test0');
+
+                {# submit ajax request #}
+                $.ajax({
+                    method: 'POST',
+                    url: '{% url 'core_agreement_crud:go_agreement_button_selector' %}',
+                    data: data,
+                    dataType: 'json',
+                    success: function(data) {
+                        if(data.success) {
+                            Risk_Fee_Selectable = parseFloat(data.Risk_Fee_Selectable);
+                            Bamf_Fee_Selectable = parseFloat(data.Bamf_Fee_Selectable);
+                            Secondaries_Selectable = parseFloat(data.Secondaries_Selectable);
+                            Title_Selectable = parseFloat(data.Title_Selectable);
+                            Security_Selectable = parseFloat(data.Security_Selectable);
+                            Amf_Fee_Selectable = parseFloat(data.Amf_Fee_Selectable);
+                            Doc_Fee_Selectable = parseFloat(data.Doc_Fee_Selectable);
+                            Risk_Fee_Visible = parseFloat(data.Risk_Fee_Visible);
+                            Bamf_Fee_Visible = parseFloat(data.Bamf_Fee_Visible);
+                            Secondaries_Visible = parseFloat(data.Secondaries_Visible);
+                            Title_Visible = parseFloat(data.Title_Visible);
+                            Security_Visible = parseFloat(data.Security_Visible);
+                            Amf_Fee_Visible = parseFloat(data.Amf_Fee_Visible);
+                            Doc_Fee_Visible = parseFloat(data.Doc_Fee_Visible);
+                            console.log(Risk_Fee_Selectable);
+                            console.log(Bamf_Fee_Selectable);
+                            console.log(Secondaries_Selectable);
+                            console.log(Title_Selectable);
+                            console.log(Security_Selectable);
+                            console.log(Amf_Fee_Selectable);
+                            console.log(Doc_Fee_Selectable);
+                            console.log(Risk_Fee_Visible);
+                            console.log(Bamf_Fee_Visible);
+                            console.log(Secondaries_Visible);
+                            console.log(Title_Visible);
+                            console.log(Security_Visible);
+                            console.log(Amf_Fee_Visible);
+                            console.log(Doc_Fee_Visible);
+                        } else {
+                            console.log('test2');
+                            var msg = data.message;
+                            $('#card-error').html("<div>TEST1</div><div>" + msg + "</div>");
+                        }
+                    },
+                    error: function(data) {
+                        $('#card-error').html("<div>TEST2</div>"+JSON.stringify(data));
+                    }
+                })
+
+
+                if (broker_info=='2'){
+                {#if (broker_info==1){#}
+                {#    alert('working')#}
+
+
+                    if("{{ values.broker_type }}") {
+                        if ("{{ values.broker_type }}" !== $(this).val()) {
+                            brokerChanged = true;
+                        } else {
+                            brokerChanged = false;
+                        }
+                    }
+
+                 {#Hidden Button Functions #}
+                    if ( Risk_Fee_Visible ==0){
+                        console.log('test1');
+                        // Hide risk fee
+                        $riskToggleWrapper.hide();
+                    }
+
+                    if ( Bamf_Fee_Visible ==0){
+                        console.log('0')
+                        // Hide BAMF fee
+                        $amfFeeToggle.is(":unchecked")
+                        $bamfToggleWrapper.hide();
+                    }
+
+                    if ( Secondaries_Visible ==0){
+                         // Hide Secondaries
+                        $secondariesToggleWrapper.hide();
+                    }
+
+                    if ( Security_Visible==0)
+                    {
+                        // Hide Security
+                        $securityToggleWrapper.hide();
+                    }
+                    if ( Title_Visible ==0){
+                         // Hide BAMF fee
+                        $titleToggleWrapper.hide();
+                    }
+                    if ( Amf_Fee_Visible ==0){
+                         // Hide AMF fee
+                        $amfToggleWrapper.hide();
+                    }
+
+                 {#Disable Button Functions #}
+
+                    if ( Secondaries_Selectable ==1){
+                        // Disable Secondaries
+                        $secondariesToggle.attr("disabled", "true");
+                    }
+                    if ( Security_Selectable ==1){
+                        // Disable Security
+                        $securityToggle.attr("disabled", "true");
+                    }
+                    if ( Title_Selectable ==1){
+                       // Disable Title
+                        $titleToggle.attr("disabled", "true");
+                    }
+                    if ( Risk_Fee_Selectable ==1){
+                        // Disable Risk
+                        $riskFeeToggle.attr("disabled", "true");
+                    }
+                    if ( Bamf_Fee_Selectable ==1){
+                        // Disable Risk
+                        $bamfFeeToggle.attr("disabled", "true");
+                    }
+                    if ( Amf_Fee_Selectable ==0)
+                        // Disable Amf
+                        $amfFeeToggle.attr("disabled", "true");
+                    }
+                // Temporarily Enable so we can progromatically toggle
+                $(".profile_type_toggles").removeAttr("disabled");
+
+                    if ( Secondaries_Visible ==1){
+                        // Turn ON Secondaries
+                        if(!$secondariesToggle.is(":checked")) {
+                            $secondariesToggle.trigger("click");
+                        }
+                    }
+                    if ( Security_Visible ==1){
+                        // Turn ON Security
+                        if(!$securityToggle.is(":checked")) {
+                            $securityToggle.trigger("click");
+                        }
+                    }
+                    if ( Title_Visible ==1){
+                        // Turn ON title
+                        if(!$titleToggle.is(":checked")) {
+                            $titleToggle.trigger("click");
+                        }
+                    }
+                {#console.log(Bamf_Fee_Visible)#}
+                if ( broker_info =='2'){
+                    if ( Risk_Fee_Visible ==1){
+                            // Turn OFF risk fee
+                        if ($riskFeeToggle.is(":checked")) {
+                            $riskFeeToggle.trigger("click");
+                        }
+                    }
+                    if ( Bamf_Fee_Visible ==1){
+                        console.log('11')
+                        // Turn OFF BAMF fee
+                        if ($bamfFeeToggle.is(":checked")) {
+
+                        }
+                            // Hide BAMF fee
+                        $bamfToggleWrapper.hide();
+                    }
+                        // Turn ON AMF fee
+                    if ( Amf_Fee_Visible ==0)
+                    {
+                            {#if (!$amfFeeToggle.is(":checked")) {#}
+                            {#    $amfFeeToggle.trigger("click");#}
+                    }
+                        // Show AMF fee toggle
+                    $amfToggleWrapper.show();
+                }
+                if ( Amf_Fee_Selectable ==0)
+                {
+                    $(".profile_type_toggles").attr("disabled", "true");
+                }
+
+                else if ( broker_info =='1'){
+                {#else if ( broker_info  ==1){#}
+                    $(".profile_type_toggles").removeAttr("disabled");
+
+                    if ( Risk_Fee_Visible ==1){
+                        // Turn ON risk fee
+                        if (!$riskFeeToggle.is(":checked")) {
+                            $riskFeeToggle.trigger("click");
+                        }
+                    }
+                    if ( Bamf_Fee_Visible == 1){
+                        console.log('2')
+                        // Turn ON BAMF fee and show
+                        if (!$bamfFeeToggle.is(":checked")) {
+                            $bamfFeeToggle.trigger("click");
+                        }
+                     }
+
+                    if ( Amf_Fee_Visible ==1){
+                        // Turn OFF AMF fee and hide
+                        if ($amfFeeToggle.is(":checked")) {
+                            {#$amfFeeToggle.trigger("click");#}
+                        }
+                    }
+                    if ( Bamf_Fee_Visible ==1)
+                    {   console.log('3')
+                        // Show BAMF fee toggle
+                        $bamfToggleWrapper.show();
+                    }
+                    if ( Amf_Fee_Visible ==0)
+                    {
+                        // Hide AMF fee toggle
+                        $amfToggleWrapper.hide();
+                    }
+                }
+            }
+        })
+
+
+        $("#id-postcode-search").focus(function() {
+            $("#postcode-search").addClass("active_input_border");
+        });
+        $("#id-postcode-search").focusout(function() {
+            $("#postcode-search").removeClass("active_input_border");
+        });
+
+    </script>
+{# TODO: PAF Changes - End#}
+    <script>
+        $(function() {
+            $(".profile_type_toggles").click(function() {
+                var $this = $(this);
+                var hiddenElementId = $("#" + $this.attr("data-hidden-input")) ;
+                if($this.is(":checked")) {
+                    hiddenElementId.val("1");
+                } else {
+                    hiddenElementId.val("0");
+                }
+            });
+        });
+</script>
+
+{% endblock %}

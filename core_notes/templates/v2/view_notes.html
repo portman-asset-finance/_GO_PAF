@@ -1,0 +1,1229 @@
+{% extends 'dashboard_base.html' %}
+{% load dashboard_extras %}
+{% load static %}
+
+{% block page-css %}
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css"
+          xmlns="http://www.w3.org/1999/html">
+{% endblock %}
+
+{% block content %}
+
+    <style type="text/css">
+        .side-nav,
+        .nav-left {
+            display: none;
+        }
+        .page-container {
+            padding: 15px;
+        }
+        .dataTables_filter input {
+            border-radius: 4px;
+            border: 1px solid #e8e8e8;
+            padding: 4px 3px;
+        }
+        .view-file {
+            cursor: pointer;
+            padding: 0px 3px;
+        }
+        .view-file:hover {
+            background-color: #F1F1F1;
+        }
+        .dt-note {
+            cursor: pointer;
+        }
+        #drop-files:hover {
+            background-color: #f7fbff;
+            cursor: pointer;
+        }
+        .second {
+            outline: #24d5d8 thin solid;
+        }
+        .second-th {
+            font-weight: normal !important;
+        }
+        .second-th-font {
+            font-style: italic !important;
+        }
+        #id-notes td {
+            padding-left: 18px;
+            padding-right: 18px;
+        }
+        #id-notes th, td {
+            vertical-align: top !important;
+        }
+        .active_input_border {
+            border: 1px solid #2acfd2 ;
+            border-left: 0px;
+            border-bottom-right-radius: 5px;
+            border-top-right-radius: 5px;
+            transition: all 0.2s ease-in;
+        }
+        {#.table-striped > tbody > tr:nth-child(2n+1) > td, .table-striped > tbody > tr:nth-child(2n+1) > th {#}
+        {#    {% if agreement_id %}#}
+        {#        background-color: #e9f7ff;#}
+        {#    {% else %}#}
+        {#        background-color: #fffefa;#}
+        {#    {% endif %}#}
+        {# }#}
+
+        /*.file_name {
+            display: inline-block;
+            width: 250px;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            vertical-align: center;
+            overflow: hidden;
+        }
+        */
+    </style>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-9">
+                <div class="page-header">
+                    <h2 class="header-title">
+                        {% if agreement_detail %}
+                            <h2 class="header-title" style="color: #8dabc4">AGREEMENT</h2>
+                            <h2 class="header-title inline-block"> &nbsp; {{ agreement_detail.agreementnumber }}&nbsp;</h2>&nbsp;
+                        {% else %}
+                            <h2 class="header-title" style="color: #8dabc4">CUSTOMER</h2>
+                            <h2 class="header-title inline-block"> &nbsp; {{ customer_detail.customernumber }}&nbsp;</h2>&nbsp;
+                        {% endif %}
+                        <h2 class="header-title inline-block"> &nbsp; {{ customer_detail.customercompany }}&nbsp;</h2>
+                        {% if agreement_detail %}
+                            <h2 class="header-title inline-block" data-toggle="tooltip" data-placement="bottom" title="Sales Representative"> &nbsp; {{ agreement_detail.agreementauthority }}&nbsp;</h2>&nbsp;
+                        {% endif %}
+                        {% if agreement_regulated_flag %}
+                        <button type="button" class="btn btn-success btn-w-sm" data-toggle="popover" data-trigger="hover" title="" data-content="This is a regulated agreement, please deal with accordingly." data-original-title="Regulated Agreement" aria-describedby="popover676999">
+                            <i class="mdi mdi-help-circle-outline"></i>&nbsp;Regulated
+                        </button>
+                        {% endif %}
+                        {% if agreement_detail %}
+                        <div class="inline-block">&nbsp;
+                            {% if  agreement_detail.agreementdefname != 'Hire Purchase' and agreement_detail.agreementdefname != 'Management Fee' %}
+                            <span class="badge badge-info badge-lg">{{ agreement_detail.agreementdefname }}</span>
+                            {% else %}
+                            <span class="badge badge-primary badge-lg">{{ agreement_detail.agreementdefname }}</span>
+                            {% endif %}
+                            {% if agreement_detail.agreementclosedflag_id == 902 %}
+                            <span class="badge badge-danger badge-lg">Closed</span>
+                            {% endif %}
+                            {% if agreement_detail.agreementddstatus_id == 'I' %}
+                            <span class="badge badge-danger badge-lg">DD Inactive</span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </h2>
+                </div>
+                {% if display_message %}
+                <div class="row" id="id-important-message">
+                    <div class="col-sm-12">
+                        <div class="alert alert-info alert-dismissible fade show">
+                            <strong>Information:</strong> Notes Window open for {% if agreement_id %}Agreement {{ agreement_id }}{% else %}Customer {{ customer_id }}{% endif %}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">×</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                <div class="card" id="input_note" style="display: none;">
+                    <div class="card-header border bottom">
+                        <div class="pull-left">
+                            <span class="m-b-20 m-r-15"><h4 class="text-thin" id="add_note_header">Create/Update Note</h4></span>
+                        </div>
+                        <div class="pull-right">
+                            <button type="button" class="btn btn-danger" id="cancel_add_new_note">
+                                <i class="fa fa-hand-o-left"></i> Back
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" enctype="multipart/form-data" action="{% url 'notes:main' %}" onsubmit="return validate();">
+                            {% csrf_token %}
+                            <input type="hidden" name="customer_id" value="{{ customer_id }}">
+                            {% if agreement_id %}
+                            <input type="hidden" name="agreement_id" value="{{ agreement_id }}">
+                            {% endif %}
+                            <input type="hidden" name="id" id="note_id" value="">
+                            {% include 'includes/v2/input-notes-modal.html' %}
+                        </form>
+                    </div>
+                </div>
+                <div class="card" id="view_notes">
+                    <div class="card-header border bottom">
+                        <div class="pull-left">
+                            <form class="form-inline" id="id-filter-notes">
+                                <span class="m-b-20 m-r-15"><h4 class="text-thin">View</h4></span>
+                                <input type="hidden" class="form-control m-b-20 m-r-15" placeholder="Customer ID" value="{{ customer_id }}" name="customer_id">
+                                <select class="form-control m-b-20 m-r-15" value="{{ agreement_id }}" name="agreement_id" id="id-note-selection">
+                                    {% for agreement in agreements %}
+                                        <option value="{{ agreement }}" {% if agreement == agreement_id %}selected{% endif %}>Agreement Notes   &nbsp;&nbsp;for {{ agreement }}</option>
+                                    {% endfor %}
+                                    <option value="" {% if not agreement_id %}selected{% endif %}>&nbsp;&nbsp;Customer Notes&nbsp;&nbsp;&nbsp;for {{ customer_id }}</option>
+                                </select>
+                            </form>
+                        </div>
+                        <div class="pull-right">
+                            {% if not request.user|has_group:"GO_ViewOnly_Notes" %}
+                                <button type="button" class="btn btn-success m-b-20" id="add_new_note">
+                                    <i class="fa fa-plus"></i> Add {% if agreement_id %}<i class="fa fa-file-text"></i>{% else %}<i class="fa fa-user"></i>{% endif %} Note
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="notes-table-wrapper">
+                            <table class="table table-hover table-striped table-bordered" id="id-notes" style="width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th style="width:180px;">Type</th>
+                                        <th>Note</th>
+                                        <th style="width: 140px;">User</th>
+                                        <th style="width:150px;">Added/Amended</th>
+                                    </tr>
+                                    {% if has_pinned %}
+                                        <tr class="second dt-note" data-note-id="{{ has_pinned }}" data-url="{% url 'notes:note' has_pinned %}">
+                                            <th class="second-th second-th-font"></th>
+                                            <th class="second-th"></th>
+                                            <th class="second-th second-th-font"></th>
+                                            <th class="second-th second-th-font"style="width:140px;"></th>
+                                        </tr>
+                                    {% endif %}
+                                </thead>
+                                <tbody>
+                                {% for rec in data %}
+                                    <tr data-note-id="{{ rec.id }}" data-is-pinned="true" class="dt-note" data-url="{% url 'notes:note' rec.id %}">
+                                        <td style="width: 180px;">
+                                            {% if rec.type == 'Pinned Note' %}
+                                                Pinned Note
+                                            {% elif not rec.agreement_id %}
+                                                <i class="fa fa-user" style="color:#dc473c;opacity: 0.7;"></i> &nbsp; {{ rec.type }}
+                                            {% else %}
+                                                <i class="fa fa-file-text" style="color:#0087be;opacity: 0.7;"></i> &nbsp; {{ rec.type }}
+                                            {% endif %}
+                                        </td>
+                                        <td style="word-break: break-word;">{{ rec.entry|safe }}</td>
+                                        <td>{{ rec.user }}</td>
+                                        <td style="width: 180px;">{{ rec.created }}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="page-header">
+                    <h2 class="header-title">
+                        <h2 class="header-title notes" id="files_header" style="color: #8dabc4; cursor: pointer">FILES</h2>
+                    </h2>
+                    <h2 class="header-title">
+                        <h2 class="header-title" id="contacts_header" style="color: #8dabc4; cursor: pointer">CONTACTS</h2>
+                    </h2>
+                </div>
+                <div class="card" hidden>
+                    <div class="card-body">
+                        <div class="card-body text-center drop-files" id="drop-files" style="border:1px dashed #334a65;">
+                            <span class="text-thin drop-files">click or drop files here to upload</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" id="files_tab">
+                    <div class="card-body">
+                        <h5 class="text-thin m-b-5">Customer Files</h5>
+                        <hr class="m-t-0 m-b-20">
+                        {% if not agreement_id %}
+                            {% if not request.user|has_group:"GO_ViewOnly_Files" %}
+                            <div class="card-body m-t-0 p-t-0 p-r-0 p-l-0">
+                                <div class="card-body text-center drop-files" id="drop-files" style="border:1px dashed #334a65;">
+                                    <span class="text-thin drop-files">click or drop files here to upload</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endif %}
+                        {% for file in files.customer %}
+                            <p data-toggle="tooltip" title="Uploaded on {{ file.created }} by {{ file.user }}{% if file.on_disk == '0' %} (File Moved or Deleted){% endif %}" data-placement="left" class="view-file" {% if file.is_pdf == '1' %}data-is-pdf="true"{% endif %} {% if file.on_disk == '1' %}data-asset-id="{{ file.id }}"{% else %}style="cursor:not-allowed;"{% endif %}><img src="{{ file.original_file_name|get_icon_for_note_asset }}"  style="width:30px;height:30px;">&nbsp; <span class="file_name">{{ file.original_file_name|view_truncate:30 }}</span> {% if not request.user|has_group:"GO_ViewOnly_Files" %}<span class="btn btn-rounded btn-xs btn-outline-danger pull-right" data-remove-asset="{{ file.id }}">&times;</span>{% endif %}</p>
+                        {% endfor %}
+                        {% if files.customer|length > 0 %}
+                            <div class="overflow-hidden p-5"></div>
+                        {% endif %}
+                        <h5 class="text-thin m-b-5">Agreement Files</h5>
+                        <hr class="m-t-0 m-b-20">
+                        {% if agreement_id %}
+                            {% if not request.user|has_group:"GO_ViewOnly_Files" %}
+                            <div class="card-body m-t-0 p-t-0 p-r-0 p-l-0">
+                                <div class="card-body text-center drop-files" id="drop-files" style="border:1px dashed #334a65;">
+                                    <span class="text-thin drop-files">click or drop files here to upload</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endif %}
+                        {% for file in files.agreement %}
+                            <p data-toggle="tooltip" title="Uploaded on {{ file.created }} by {{ file.user }}{% if file.on_disk == '0' %} (File Moved or Deleted){% endif %}" data-placement="left" class="view-file" {% if file.is_pdf == '1' %}data-is-pdf="true"{% endif %} {% if file.on_disk == '1' %}data-asset-id="{{ file.id }}"{% else %}style="cursor:not-allowed;"{% endif %}><img src="{{ file.original_file_name|get_icon_for_note_asset }}" style="width:30px;height:30px;"> &nbsp; <span class="file_name">{{ file.original_file_name|view_truncate:30 }}</span> {% if not request.user|has_group:"GO_ViewOnly_Files" %}<span class="btn btn-rounded btn-xs btn-outline-danger pull-right" data-remove-asset="{{ file.id }}">&times;</span>{% endif %}</p>
+                        {% endfor %}
+                        {% if files.agreement|length > 0 %}
+                            <div class="overflow-hidden p-5"></div>
+                        {% endif %}
+                        <h5 class="text-thin m-b-5" hidden>Note Files</h5>
+                        <hr class="m-t-0 m-b-20" hidden>
+                        {% for rec in data %}
+                            {% for file in rec.files %}
+                                <p hidden data-toggle="tooltip" title="Uploaded on {{ file.created }} by {{ file.user }}{% if file.on_disk == '0' %} (File Moved or Deleted){% endif %}" data-placement="left" class="view-file" {% if file.is_pdf == '1' %}data-is-pdf="true"{% endif %} {% if file.on_disk == '1' %}data-asset-id="{{ file.id }}"{% else %}style="cursor:not-allowed;"{% endif %}><img src="{{ file.original_file_name|get_icon_for_note_asset }}" style="width:30px;height:30px;"> &nbsp; <span class="file_name">{{ file.original_file_name|view_truncate:30 }}</span>  {% if not request.user|has_group:"GO_ViewOnly_Files" %}<span class="btn btn-rounded btn-xs btn-outline-danger pull-right" data-remove-asset="{{ file.id }}">&times;</span>{% endif %}</p>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card" style="display: none" id="contacts_tab">
+                    <div class="card-header border bottom">
+                        <div class="pull-left">
+                            <form class="form-inline" id="id-filter-notes">
+                                <span class="m-b-20 m-r-15"><h4 class="m-b-5">Customer Contacts</h4></span>
+                            </form>
+                        </div>
+                        <div class="pull-right">
+                            {% if not request.user|has_group:"GO_ViewOnly_Contacts" %}
+                            <button type="button" class="btn btn-success m-b-20" id="add_contact" data-backdrop="static" data-keyboard="false">
+                                <i class="fa fa-plus"></i> Add Contact
+                            </button>
+                            {% endif    %}
+                        </div>
+                    </div>
+                    <div>
+
+                        <style type="text/css">
+                            .list-media, .info {
+                                padding-left: 0px !important;
+                            }
+                            .info {
+                                padding: 25px !important ;
+                                padding-left: 44px !important;
+
+                            }
+                            .title {
+                                margin-bottom: 0.1rem !important;
+                                margin-left: -18px !important;
+                            }
+                            .title-icons {
+                                font-size: 13px;
+                                color: #8A8A8A;
+                                cursor: pointer;
+                            }
+                            .modal-overflow {
+                                overflow-y:auto;
+                            }
+                            .modal { overflow: auto !important; }
+                        </style>
+
+                    {% for c in contacts %}
+
+                    <ul class="list-media">
+                        <li class="list-item border bottom">
+                            <div class="info">
+                                <h5 class="title text-thin">
+                                    <div class="pull-left" style="width:20px;">
+                                        {% if c.contact_type.contact_type_description == "Phone/Email Only" %}
+                                            <i class="fa fa-phone" style="color: #8A8A8A;"></i>
+                                        {% else %}
+                                        <i class="fa fa-chevron-right cursor-pointer title-icons" data-contact-id="{{ c.id }}" id="toggle_contact_details_{{ c.id }}_right"></i>
+                                        <i class="fa fa-chevron-down cursor-pointer title-icons" style="display: none;" id="toggle_contact_details_{{ c.id }}_down" data-contact-id="{{ c.id }}"></i>
+                                        {% endif %}
+                                    </div>
+                                    &nbsp; {% if c.contact_type.contact_type_description == "Phone/Email Only" %}{{ c.contact_description|view_truncate:20 }} (Phone/Email){% else %}{{ c.contact_first_name|add:" "|add:c.contact_surname|view_truncate:18 }} ({{ c.contact_type.contact_type_description }}){% endif %} &nbsp;&nbsp;&nbsp;
+                                    {% if not request.user|has_group:"GO_ViewOnly_Contacts" %}
+                                    <i class ="ti-pencil inline-block edit-contact" style="cursor: pointer;" data-edit-url="{% url 'notes:manage_contact' c.id %}"></i> &nbsp;
+{#                                    <i class ="ti-archive inline-block archive-contact" style="cursor: pointer;" data-archive-url="{% url 'notes:manage_contact' c.id %}"></i>#}
+                                    {% endif %}
+                                </h5>
+                                <div style="margin-left:10px;">
+                                    {% if c.contact_mobile_number or c.contact_phone_number %}<span class= "inline-block sub-title"><i class="fa fa-phone-square"></i> &nbsp; <a href="tel:{{ c.contact_mobile_number }}">{{ c.contact_mobile_number }}</a></span>&nbsp;&nbsp;<span class="m-b-5 inline-block sub-title"><a href="tel:{{ c.contact_phone_number }}"> {{ c.contact_phone_number }}</a></span>{% endif %}
+                                    {% if c.contact_email %}<span class="sub-title"><i class="fa fa-envelope"></i> &nbsp; <a href="mailto:{{ c.contact_email }}">{{ c.contact_email }}</a></span>{% endif %}
+                                    <div class="panel text-thin" id="contact_details_{{ c.id }}" style="display: none;">
+                                        {% if c.contact_address_line1 %}{{ c.contact_address_line1 }}{% endif %}
+                                        {% if c.contact_address_line2 %}<br>{{ c.contact_address_line2 }}{% endif %}
+                                        {% if c.contact_address_line3 %}<br>{{ c.contact_address_line3 }}{% endif %}
+                                        {% if c.contact_address_line4 %}<br>{{ c.contact_address_line4 }}{% endif %}
+                                        {% if c.contact_address_line5 %}<br>{{ c.contact_address_line5 }}{% endif %}
+                                        {% if c.contact_postcode %}<br>{{ c.contact_postcode }}{% endif %}
+                                        {% if c.contact_social_media1 %}<br>{{ c.contact_social_media1 }}{% endif %}
+                                        {% if c.contact_social_media2 %}<br>{{ c.contact_social_media2}}{% endif %}
+                                        {% if c.contact_social_media3 %}<br>{{ c.contact_social_media3}}{% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                    {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade in" id="confirm-remove-asset-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Are you sure?</h3>
+                    <button class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <b>Are you sure you wish to remove this file?</b>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" id="confirm-remove-asset">
+                        <i class="fa fa-thumbs-up"></i> Continue
+                    </button>
+                    <button class="btn btn-danger" data-dismiss="modal">
+                        <i class="fa fa-thumbs-down"></i> Back
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+{#    <form method="POST" enctype="multipart/form-data" action="{% url 'notes:main' %}" onsubmit="return validate();">#}
+{#        {% csrf_token %}#}
+{#        <input type="hidden" name="customer_id" value="{{ customer_id }}">#}
+{#        {% if agreement_id %}#}
+{#        <input type="hidden" name="agreement_id" value="{{ agreement_id }}">#}
+{#        {% endif %}#}
+{#        {% include 'includes/input-notes-modal.html' %}#}
+{#    </form>#}
+
+    {% include 'includes/view-note-modal.html' %}
+
+    {% comment %}
+    <form method="POST" action="{% url 'notes:create_or_update_contact' %}?customer_id={{ customer_id }}&agreement_id={{ agreement_id }}" id="add_contact_form" onsubmit="return validateContact();">
+        {% csrf_token %}
+        <input type="hidden" name="customer_id" value="{{ customer_id }}">
+        {% if agreement_id %}
+            <input type="hidden" name="agreement_id" value="{{ agreement_id }}">
+        {% endif %}
+        <input type="hidden" name="contact_id" value="{{ contact.contact_id }}">
+        {% include 'includes/input-contacts-modal.html' %}
+    </form>
+    {% endcomment %}
+
+    <div class="modal fade in" id="input-contact-modal">
+        <form id="contact_form">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content"></div>
+            </div>
+            {% csrf_token %}
+            <input type="hidden" name="customer_id" value="{{ customer_id }}">
+            {% if agreement_id %}
+                <input type="hidden" name="agreement_id" value="{{ agreement_id }}">
+            {% endif %}
+            <input type="hidden" name="contact_id" value="{{ contact.contact_id }}" id="contact_id">
+        </form>
+    </div>
+
+    <div class="modal fade in" id="postcode-error">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Invalid/Unknown Postcode</h2>
+                    <button class="close" type="button" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>The postcode you searched for is either unknown or invalid. Please ensure you are entering a full postcode and try again.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" data-dismiss="modal">
+                        <i class="fa fa-thumbs-up"></i>
+                        OK
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade in" id="postcode-error-message">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Postcode Service Error</h2>
+                    <button class="close" type="button" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger" id="postcode-error-message-text"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" data-dismiss="modal">
+                        <i class="fa fa-thumbs-up"></i>
+                        OK
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block page-js %}
+
+    <script type="text/javascript" src="/static/static_core_notes/dropzone.js"></script>
+
+    <script type="text/javascript">
+
+        window.saveNote = true ;
+
+        var err = $(".notes-input-error");
+
+        function submitButton(action) {
+            document.getElementById('submit-note').disabled = action ;
+        }
+
+        function validate() {
+
+            $("#changes-not-saved-message").hide();
+
+            submitButton(true);
+
+            err.hide().html("");
+
+            var submitNoteTypeElement = document.getElementById('submit-note-type');
+
+            var checkNote = true;
+            if ($("#note_id").val()) {
+                if (submitNoteTypeElement.value === 'Pinned Note') {
+                    checkNote = false;
+                }
+            } else {
+                if (submitNoteTypeElement.value === 'Pinned Note') {
+                    checkNote = false;
+                }
+            }
+            if (submitNoteTypeElement.style.display !== 'none') {
+                if (!$("#submit-note-type").val()) {
+                    err.html("Please select an action/type.").show();
+                    submitButton(false);
+                    return false;
+                }
+            }
+
+            if (checkNote) {
+                if (!tinymce.get('submit-note-entry').getContent()) {
+                    err.html('Please enter a note.').show();
+                    submitButton(false);
+                    return false;
+                }
+            }
+
+            if (String(tinymce.get('submit-note-entry').getContent({format: 'text'})).length > 2000) {
+                err.html('Note must not exceed 2000 characters.').show();
+                submitButton(false);
+                return false;
+            }
+
+            var now = moment();
+            var date = $("#follow_up_date").val();
+            var time = $("#follow_up_time").val();
+
+            var jDate = new Date(date);
+
+            if(date) {
+                let mDate = moment(date);
+                if (!mDate.isValid()) {
+                    err.html("Please select a valid date.").show();
+                    submitButton(false);
+                    return false;
+                }
+                if (mDate.year() > 9999) {
+                    err.html("Please select a valid date.").show();
+                    submitButton(false);
+                    return false;
+                }
+                if (jDate.setHours(0,0,0,0) < new Date().setHours(0,0,0,0)) {
+                    err.html("Follow up date cannot be in the past.").show();
+                    submitButton(false);
+                    return false;
+                }
+             } else if(time) {
+                err.html("Please select a date.").show();
+                submitButton(false);
+                return false ;
+             }
+
+            if(time) {
+                let mDateTime = moment(date + " " + time);
+                if(!mDateTime.isValid()) {
+                    err.html("Please enter a valid time.").show();
+                    submitButton(false);
+                    return false;
+                }
+                if(mDateTime < now) {
+                    err.html("Follow up date and time cannot be in the past.").show();
+                    submitButton(false);
+                    return false;
+                }
+             }
+
+            var datetime = date ;
+
+            if(datetime && time) {
+                datetime += ' ' + time ;
+            }
+
+            if(datetime) {
+                $("#follow_up").val(datetime);
+            }
+
+            return true ;
+
+        }
+
+        function yesnoCheck() {
+            contact_type = document.getElementById('contact_type').value || 0 ;
+            if (contact_type === "Guarantor") {
+                document.getElementById("ifYes").style.display = "";
+                phoneOrEmailDisplay('', contact_type);
+            } else if(contact_type === "Phone/Email Only") {
+                 document.getElementById("ifYes").style.display = "none";
+                phoneOrEmailDisplay('none', contact_type);
+            } else {
+                 document.getElementById("ifYes").style.display = "none";
+                 phoneOrEmailDisplay('', contact_type);
+            }
+        }
+
+        function phoneOrEmailDisplay(display, contact_type) {
+            var elements = document.getElementsByClassName('not_phone_or_email') ;
+            for(var i = 0; i < elements.length; i++) {
+                elements[i].style.display = display ;
+            }
+            $("#address-search-results").hide();
+            if(display === "none") {
+                //document.getElementById("contact_form").reset();
+                document.getElementById('contact_type').value = "Phone/Email Only";
+                document.getElementById('id-contact-description').style.display = '';
+            } else {
+                document.getElementById('id-contact-description').style.display = 'none';
+            }
+        }
+
+        $(function() {
+
+            $('#postcode-error, #postcode-error-message').on("hidden.bs.modal", function (e) {
+                if ($('.modal:visible').length) {
+                    $('body').addClass('modal-open');
+                }
+            });
+
+            $('#contacts_header').click(function () {
+                document.getElementById('files_tab').style.display = 'none';
+                document.getElementById('contacts_tab').style.display = '';
+            });
+
+            if(/contacts_tab=1/.exec(location.search)) {
+                $("#contacts_header").trigger("click");
+                // Remove contacts_tab from URL
+            }
+
+            $('#files_header').click(function(){
+                document.getElementById('files_tab').style.display = '';
+                document.getElementById('contacts_tab').style.display = 'none';
+            });
+
+            var headerTitle = 'Create {% if agreement_id %}Agreement{% else %}Customer{% endif %} Note';
+            var has_pinned = "{{ has_pinned }}";
+            var pinned_option_string = '<option value="{{ type }}">{{ type }}</option>';
+
+            $("#add_new_note").click(function() {
+                $("#note_id").val('');
+                initialise_new_note();
+            });
+
+            function initialise_new_note() {
+                window.saveNote = true ;
+                $("#input_note, #view_notes").toggle();
+                $("#add_note_header").html(headerTitle);
+                $("#submit-note-type option[value='Pinned Note']").remove();
+                $("#submit-note-type").append('<option value="Pinned Note">Pinned Note</option>');
+
+                {# TODO - workaround for tinyMCE redisplay error and populate value of note-type based on passed header text.#}
+                $(function() {
+                if ($("#add_note_header").html().indexOf('Agreement') != -1) {
+                    $("#submit-note-type").val('Agreement Note');
+                    if (has_pinned !== 'False') {
+                        $("#submit-note-type option[value='Pinned Note']").remove();
+                }
+                }
+                if ($("#add_note_header").html().indexOf('Customer') != -1) {
+                    $("#submit-note-type").val('Customer Note');
+                    if (has_pinned !== 'False') {
+                        $("#submit-note-type option[value='Pinned Note']").remove();
+                }
+                }
+                if ($("#add_note_header").html().indexOf('Pinned') != -1) {
+                    $("#submit-note-type").val('Pinned Note');
+                }
+                    tinyMCE.get('submit-note-entry').focus();
+                });
+            }
+
+            var notesObj = sessionStorage.getItem('noteObj') ;
+            if (notesObj) {
+                notesObj = JSON.parse(notesObj);
+                $("#submit-note-type").val(notesObj.type);
+                $("#follow_up_date").val(notesObj.follow_up_date);
+                $("#follow_up_time").val(notesObj.follow_up_time);
+                $("#submit-note-entry").html(notesObj.note);
+                $("#note_id").val(notesObj.id);
+                var headerTitle = 'Update Customer Note';
+                if(notesObj.type === 'Pinned Note') {
+                    headerTitle = 'Update Pinned Note';
+                }
+                if(notesObj.type === 'Agreement Note') {
+                    headerTitle = 'Update Agreement Note';
+                }
+                $("#add_note_header").html(headerTitle);
+                sessionStorage.removeItem('noteObj') ;
+                initialise_new_note();
+                {#$("#add_new_note").trigger("click");#}
+            }
+
+            $("#cancel_add_new_note").click(function() {
+                window.saveNote = false ;
+                $("#input_note, #view_notes").toggle();
+                {#$("#submit-note-type").val("");#}
+                $("#submit-note-type").show().attr("disabled", false) ;
+                $("#follow_up_date").val("");
+                $("#follow_up_time").val("");
+                $("#id-pinned-type").hide().attr("disabled", true);
+                tinymce.get('submit-note-entry').setContent('');
+                $(".notes-input-error").hide();
+                $("#changes-not-saved-message").hide();
+            });
+
+            {#$("#input-notes-modal").on("hidden.bs.modal", function(e) {#}
+            {#    $("#submit-note-type").val("");#}
+            {#    $(".notes-input-error").hide();#}
+            {#    $("#changes-not-saved-message").hide();#}
+            {#    $("#follow_up_date").val("");#}
+            {#    $("#follow_up_time").html("");#}
+            {#    tinymce.get('submit-note-entry').setContent('');#}
+            {# });#}
+
+            $("#id-postcode-search").focus(function() {
+                $("#postcode-search").addClass("active_input_border");
+            });
+
+            $("#id-postcode-search").focusout(function() {
+                $("#postcode-search").removeClass("active_input_border");
+            });
+
+            $("#postcode-error, #postcode-error-message").on("hidden.bs.modal", function() {
+                //$("#input-contact-modal").addClass("modal-overflow");
+            });
+
+            $("#submit-note-type, #submit-note-entry").change(function() {
+                if(this.value) {
+                    err.hide();
+                }
+            });
+
+            $("#follow_up").change(function() {
+            });
+
+            $("#id-note-selection").change(function() {
+                $("#id-filter-notes").submit();
+            });
+
+            var dropFiles = $("#drop-files");
+
+            dropFiles.on("dragover", function() {
+                $(this).css("background-color", "#f7fbff").css("border-color", "#24d5d8");
+            });
+
+            dropFiles.on("dragleave", function() {
+                $(this).css("background-color", "").css("border-color", "#334a65");
+            });
+
+            var note_id ;
+            $("[data-remove-asset]").click(function() {
+                note_id = $(this).attr("data-remove-asset");
+                $("#confirm-remove-asset-modal").modal();
+            });
+
+            $("#confirm-remove-asset").click(function() {
+                var t = this ;
+                t.disabled = true ;
+                saveIncompleteNote();
+                $.ajax({
+                    method: 'DELETE',
+                    url: '/notes/asset/' + note_id,
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                    },
+                    success: function() {
+                        location.reload();
+                    },
+                    error: function(res) {
+                        t.disabled = false ;
+                        alert(JSON.stringify(res));
+                    }
+                });
+            });
+
+            $(".drop-files").dropzone({
+                url: '{% url 'notes:upload_asset' %}',
+                init: function() {
+                    this.on('sending', function(file, xhr, formData) {
+                        xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                        formData.append("customer_id", "{{ customer_id }}");
+                        {% if agreement_id %}
+                        formData.append("agreement_id", "{{ agreement_id }}");
+                        {% endif %}
+                    });
+                },
+                success: function() {
+                    saveIncompleteNote();
+                    location.reload();
+                }
+            });
+
+            $.fn.dataTable.moment("DD/MM/YYYY HH:mm");
+
+            var table = $("#id-notes").DataTable({
+                orderCellsTop: true,
+                order: [3, "desc"],
+            });
+            var indexes = table.rows().eq( 0 ).filter( function (rowIdx) {    //check column 0 of each row for tradeMsg.message.coin
+                return table.cell( rowIdx, 0 ).data() === 'Pinned Note' ;
+            });
+            var data = table.row(indexes).data();
+            if (data) {
+                for (i = 0; i < data.length; i++) {
+                    if (i === 0) {
+                        data[i] = '<i class="fa fa-thumb-tack" style="color:#24d5d8;"></i> &nbsp; ' + data[i];
+                    }
+                    $('.second').find('th').eq(i).html(data[i]);
+                }
+            }
+
+            table.row(indexes).remove().draw(false);
+
+            $("[data-asset-id]").click(function(e) {
+                if(e.target.localName === "span") {
+                    var _ret = true;
+                    if(e.target.classList.length > 0) {
+                        if(e.target.classList[0] === "file_name") {
+                            _ret = false;
+                        }
+                    }
+                    if (_ret) return ;
+                }
+                var url = "/notes/asset/" + $(this).attr("data-asset-id");
+                if($(this).attr("data-is-pdf") === "true") {
+                    window.open(url, '_blank', 'height=1000,width=1000,left=100,top=100,resizable=yes,scrollbars=yes,toolbar=yes,menubar=no,location=no,directories=no, status=yes');
+                } else {
+                    window.location.assign(url);
+                }
+            });
+
+            {#$("#update-notes-modal").on("click", "[data-asset-id]", function() {#}
+            {#    window.open("/notes/asset/" + $(this).attr("data-asset-id"));#}
+            {# });#}
+
+            var clicked = false ;
+            $("#notes-table-wrapper").on("click", ".dt-note", function() {
+                console.log('amend_note');
+                if (clicked) return ;
+                clicked = true ;
+                $.ajax({
+                    method: "GET",
+                    url: $(this).attr("data-url"),
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                        //$("#update-notes-modal").modal();
+                    },
+                    success: function(data) {
+                        var headerTitle = 'Update Customer Note' ;
+                        if (data.type === 'Pinned Note') {
+                            headerTitle = 'Update Pinned Note' ;
+                            $("#id-pinned-type").hide().attr("disabled", true);
+                            $("#submit-note-type").show().attr("disabled", false);
+                        } else {
+                            $("#submit-note-type").val(data.type);
+                        }
+                        $("#note_id").val(data.id);
+                        if (data.agreement_id) {
+                            headerTitle = 'Update Agreement Note';
+                        }
+                        $("#follow_up_date").val(data.follow_up_date);
+                        $("#follow_up_time").val(data.follow_up_time);
+                        for(var i = 0; i < data.files.length; i++) {
+                            if (!data.files[i].archived) {
+                                $("#note-assets").append('<p class="view-file" data-asset-id="' + data.files[i].id + '"><img src=" ' + data.files[i].icon + ' " style="width:30px;height:30px;"> &nbsp; ' + data.files[i].original_file_name + '</p>');
+                            }
+                        }
+                        initialise_new_note();
+                        {#$("#add_new_note").trigger("click");#}
+                        $("#add_note_header").html(headerTitle);
+                        tinymce.get('submit-note-entry').setContent(data.entry);
+                        clicked = false ;
+                    },
+                    error: function(data) {
+                        alert(JSON.stringify(data));
+                    }
+                });
+            });
+
+            $("#add_contact").click(function() {
+                getContactForm();
+            });
+
+            //$("#input-contact-modal").on("hidden.bs.modal", function() {
+            //    alert("Modal closed!!!") ;
+            //});
+
+            $("#input-contact-modal .modal-content").on("click", "#add_contact_continue", function() {
+
+                $("#input-contact-modal .modal-content button").attr("disabled", true);
+
+                saveIncompleteNote();
+
+                $.ajax({
+                    method: 'POST',
+                    url: '{% url 'notes:create_or_update_contact' %}',
+                    data: $("#contact_form").serialize(),
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+                    },
+                    success: function(data) {
+                        if(data.html) {
+                            $("#input-contact-modal .modal-content").html(data.html);
+                        } else {
+                            if (/contacts_tab/.test(location.search)) {
+                                location.reload();
+                            } else {
+                                var url = location.href;
+                                if (/\?/.test(location.search)) {
+                                    url += '&contacts_tab=1';
+                                } else {
+                                    url += '?contacts_tab=1';
+                                }
+                                location.href = url;
+                            }
+                        }
+                    },
+                    error: function(error) {
+                        $("#input-contact-modal .modal-content button").attr("disabled", false);
+                        alert(JSON.stringify(error));
+                    }
+                });
+
+            });
+
+            $(".edit-contact").click(function() {
+
+                var url = $(this).attr("data-edit-url");
+
+                getContactForm(function() {
+
+                    $.ajax({
+                        method: 'GET',
+                        url: url,
+                        beforeSend: function (xhr) {
+                            xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                        },
+                        success: function (data) {
+
+                            var rec = JSON.parse(data.data);
+                            rec = rec.fields;
+
+                            rec.contact_type = data.contact_type;
+
+                            var form = document.getElementById("contact_form");
+
+                            form.elements["contact_type"].value = rec.contact_type;
+                            form.elements["contact_priority"].value = rec.contact_priority;
+                            form.elements["contact_first_name"].value = rec.contact_first_name;
+                            form.elements["contact_last_name"].value = rec.contact_surname;
+                            form.elements["contact_address_1"].value = rec.contact_address_line1;
+                            form.elements["contact_address_2"].value = rec.contact_address_line2;
+                            form.elements["contact_address_3"].value = rec.contact_address_line3;
+                            form.elements["contact_address_4"].value = rec.contact_address_line4;
+                            form.elements["contact_address_5"].value = rec.contact_address_line5;
+                            form.elements["contact_email"].value = rec.contact_email;
+                            form.elements["contact_mobile"].value = rec.contact_mobile_number;
+                            form.elements["contact_phone"].value = rec.contact_phone_number;
+                            form.elements["contact_postcode"].value = rec.contact_postcode;
+                            form.elements["social_media1"].value = rec.contact_social_media1;
+                            form.elements["social_media2"].value = rec.contact_social_media2;
+                            form.elements["social_media3"].value = rec.contact_social_media3;
+                            form.elements["contact_id"].value = rec.contact_id;
+                            form.elements["contact_guarantor_info"].value = rec.guarantor_info;
+                            form.elements["contact_description"].value = rec.contact_description;
+
+                            if (rec.contact_type === 'Guarantor') {
+                                document.getElementById("ifYes").style.display = "";
+                            }
+
+                            if(rec.contact_type === "Phone/Email Only") {
+                                phoneOrEmailDisplay("none");
+                            }
+
+
+                        },
+                        error: function (data) {
+                            alert(JSON.stringify(data));
+                        }
+                    });
+                });
+
+            });
+
+            var submitted = false ;
+            $(".archive-contact").click(function() {
+
+                if (submitted) return ;
+
+                submitted = true ;
+
+                var url = $(this).attr("data-archive-url");
+
+                $.ajax({
+                    method: 'DELETE',
+                    url: url,
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                    },
+                    success: function(data) {
+                        location.href = location.href + '&contact_tab=1'
+                    },
+                    error: function(res) {
+                        alert(JSON.stringify(res))
+                    }
+                });
+
+            });
+
+            $("[id^=toggle_contact_details]").click(function() {
+                var contact_id = $(this).attr("data-contact-id");
+                $("#contact_details_" + contact_id).toggle('slow');
+                var toggleIds = "[id^=toggle_contact_details_" + contact_id + "]";
+                $(toggleIds).toggle();
+            });
+
+            var uri = window.location.toString();
+                if (uri.indexOf("&contacts_tab=1") > 0) {
+                var clean_uri = uri.substring(0, uri.indexOf("&contacts_tab=1"));
+                window.history.replaceState({}, document.title, clean_uri);
+            }
+
+            var clicked = false;
+            $("#postcode-search").click(function() {
+                runPostcodeSearch() ;
+            });
+
+            $("#input-contact-modal .modal-content").on("click", "#postcode-search", function() {
+                runPostcodeSearch();
+            });
+
+            function runPostcodeSearch() {
+
+                if(clicked) return;
+                clicked = true;
+                var postcode = $("#id-postcode-search").val();
+
+                postcoder(postcode, function() {
+                    clicked = false;
+                    $("#id-postcode").val(postcode);
+                });
+
+            }
+
+        });
+
+        function getContactForm(callback) {
+
+            $.ajax({
+                method: 'GET',
+                url: '{% url 'notes:create_or_update_contact' %}',
+                beforeSend: function(xhr) {
+                    $("#input-contact-modal").modal({'backdrop': 'static', 'keyboard': false});
+                    xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+                },
+                success: function(data) {
+                    $("#contact_id").val("");
+                    $("#input-contact-modal .modal-content").html(data.html)
+                    $("#add_contact").trigger("formLoaded");
+                    if(callback && typeof callback === 'function') {
+                        callback();
+                    }
+                },
+                error: function() {
+                    if(callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            });
+
+        }
+
+        function postcoder(p, c) {
+
+            $("#address-select").html("") ;
+            $("#address-search-results").hide() ;
+
+            var postcodes ;
+
+            $.ajax({
+                url: "https://api.getAddress.io/find/" + p + "?api-key=7aC6nUQ6DEC9t9E3oRSxvQ18620",
+                dataType: "json",
+                success: function(data) {
+
+                    var count = 0;
+                    postcodes = data;
+
+                    $("#address-select").append($("<option>", {
+                        value: '',
+                        text: 'Please Select'
+                    }));
+
+                    $.each(data.addresses, function(i, item) {
+
+                        count = i + 1;
+                        var address = "";
+                        var lines = data.addresses[i].split(",");
+                        for(var i = 0; i < lines.length; i++) {
+                            if(lines[i] && lines[i] !== " ") {
+                                address = address + lines[i] + ",";
+                            }
+                        }
+                        address = address.replace(/,$/, '');
+
+                        $("#address-select").append($("<option>", {
+                            value: address,
+                            text: address
+                       }));
+
+                    });
+
+                    var addr5 = $("#id-address-line-5") ;
+                    $("#address-select").change(function() {
+
+                        $("[id^=id-address-line-]").val("");
+
+                        var lines = $(this).val().split(",");
+                        for(var i = 0; i < lines.length; i++) {
+                            if (i < 5) {
+                                $("#id-address-line-" + Math.floor(i + 1)).val(lines[i].trim()).trigger("change");
+                            } else {
+                                var val = addr5.val() + ", " + lines[i].trim();
+                                addr5.val(val);
+                            }
+                        }
+
+                        $("#id-postcode").val(p).trigger("change") ;
+
+                    });
+
+                    if(count) {
+                       $("#address-search-results").show();
+                    }
+
+                    if(c && typeof c === "function") c();
+
+                },
+                error: function(data) {
+
+                    var systemFailure = false ;
+
+                    if(data) {
+                        if('responseText' in data) {
+                            try {
+                                var response = JSON.parse(data.responseText);
+                                if('Message' in response) {
+                                    systemFailure = response.Message ;
+                                }
+                            } catch(err) {
+                            }
+                        }
+                    }
+
+                    if(systemFailure) {
+                        if (systemFailure === 'Not Found'){
+                            $("#postcode-error-message-text").html('<b>Postcode is Invalid</b>')
+                        }
+                        if (systemFailure === 'Bad Request') {
+                            $("#postcode-error-message-text").html('<b>Postcode has been entered incorrectly</b>')
+                        }
+                        // $("#postcode-error-message-text").html('<b>Request Failed:</b> ' + systemFailure) ;
+                        $("#postcode-error-message").modal();
+                    } else {
+                        $("#postcode-error").modal();
+                    }
+
+                    if(c && typeof c === "function") c() ;
+                }
+            })
+
+        }
+
+        function saveIncompleteNote() {
+
+            // Are we saving the note?
+            if (!window.saveNote) return ;
+
+            // Do they have the 'Add Note' tab open?
+            if (document.getElementById('input_note').style.display !== 'none') {
+                var noteObj = {
+                    'note': tinymce.get('submit-note-entry').getContent(),
+                    'type': $("#submit-note-type").val(),
+                    'follow_up_date': $("#follow_up_date").val(),
+                    'follow_up_time': $("#follow_up_time").val(),
+                    'id': $("#note_id").val()
+                };
+                sessionStorage.setItem('noteObj', JSON.stringify(noteObj));
+            }
+
+        }
+
+        function deleteIncompleteNote() {
+            sessionStorage.removeItem('noteObj') ;
+        }
+
+    </script>
+    <script>
+
+        var acc = document.getElementsByClassName("accordion");
+        var i;
+        for (i = 0; i < acc.length; i++) {
+            acc[i].addEventListener("click", function() {
+                this.classList.toggle("active");
+                var panel = this.nextElementSibling;
+                if (panel.style.display === "block") {
+                    panel.style.display = "none";
+                } else {
+                    panel.style.display = "block";
+                }
+            });
+        }
+
+        function isNumber(e) {
+
+            return true ;
+
+            e = e ? e : window.event ;
+
+            var charCode = e.which ? e.which : e.keyCode ;
+
+            if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+                return false ;
+            }
+
+            return true ;
+
+        }
+
+    </script>
+
+{% endblock %}

@@ -1,0 +1,944 @@
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+<script src="{% static 'static_core_agreement_alm/js/partial_arrear_form.js' %}"></script>
+<form method="post" action="{% url 'core_agreement_editor:modalsettlement' agreement_id %}" id="settlement-form">
+    {% csrf_token %}
+<div class="card">
+    <div class="card-body" style="border: 1px solid rgba(141, 171, 196, 0.3);">
+{#    SUMMARY ARREARS #}
+        {#    Card 68 Settlement Work Package #}
+        {% if in_payment_cycle %}
+            <div class="col-sm-12">
+                <div class="alert alert-danger m-t-25">
+                    <b>Warning:</b> This Agreement is in a payment cycle, please check the details before sending the settlement document for scheduled payment:
+                </div>
+            </div>
+        {% endif %}
+        {#    Card 68 Settlement Work Package #}
+
+        <div class="row">
+{#            <div class="col-sm-0">#}
+{#                <div class="form-group text-right form-group-summary-bottom">#}
+{#                    <label class="control-label">&nbsp;</label>#}
+{#                    <div class="input-group">#}
+{#                        <p class="form-control-plaintext"><b>DRAWDOWN TOTAL</b></p>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+            <div class="col-sm-2">
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right form-group-summary-bottom">
+                    <label class="control-label">Calculated</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text arrears-active-border-color arrears-active-font-color">£</span>
+                        </div>
+                        <input id="arrears_total_arrears" type="text" name="arrears_total_arrears"
+                               class="form-control arrears_money arrears-active-border-color
+                               arrears-active-font-color arrears-money-style" value = "{{ settlement_figure|floatformat:2 }}" readonly>
+                        <input hidden id="hidden_settlement" value = "{{ settlement_figure|floatformat:2 }}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right hide-inputbtns form-group-summary-bottom">
+                    <label class="control-label">Actuals</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text collected-active-border-color collected-active-font-color">£</span>
+                        </div>
+                        <input id="arrears_total_collected" name="arrears_total_collected" type="text"
+                               class="form-control arrears_money arrears-money-style
+                               collected-active-border-color collected-active-font-color"
+                               value="0.00" onchange="formatCurrency(this)">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right form-group-summary-bottom">
+                    <label class="control-label">Adjustment</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text adjustment-active-border-color adjustment-active-font-color">£</span>
+                        </div>
+                        <input id="arrears_total_adjustment" name="arrears_total_adjustment" type="text" readonly
+                               class="form-control arrears_money arrears-money-style
+                               adjustment-active-border-color adjustment-active-font-color" onchange="formatCurrency(this)" value ="0.00">
+                    </div>
+                </div>
+            </div>
+           <div class="col-sm-2">
+                <div id="switchdiv1" class="input-group switchdiv">
+                    <div class="switch m-t-30">
+                        <button id="switch0" onclick="change()" class ="btn btn-icon btn-success m-b-20" name="remove_doc_fee" type = "button">
+                            <i class="mdi mdi-credit-card-plus"></i>
+                        </button>
+                        <a id="btn-refresh-all" class="btn btn-icon btn-warning m-b-20" href="javascript:void(0)" title="Reset ALL">
+                            <i class="mdi mdi-refresh"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right form-group-summary-bottom">
+                    <label class="control-label">Variance</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text arrears-active-border-color arrears-active-font-color">£</span>
+                        </div>
+                        <input id="variance" name="variance" type="text" readonly
+                               class="form-control arrears_money arrears-money-style
+                               arrears-active-border-color arrears-active-font-color" readonly>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                <i>DOC FEE</i>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="balance_cur" class="input-group-text">£</span>
+                        </div>
+                        <input id="balance1" type="text"  name="balance1"
+                               class="form-control form-control-sm arrears_money arrears-money-style"
+                               value = "{{ doc_figure|floatformat:2 }}" readonly>
+                        <input id = balance1hidden value = "{{ doc_figure|floatformat:2 }}" hidden>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="balance_cur_1" class="input-group-text">£</span>
+                        </div>
+                        <input id="collected1" type="text"  name="collected1"
+                               class="form-control form-control-sm arrears_money arrears-money-style"
+                               value="0.00" onchange="formatCurrency(this)" readonly>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="balance_cur" class="input-group-text">£</span>
+                        </div>
+                        <input id="adjustment1" type="text"  name="adjustment1"
+                               class="form-control form-control-sm arrears_money arrears-money-style"
+                               value="0.00" onchange="formatCurrency(this)" readonly>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-1">
+                <div id="switchdiv1" class="input-group switchdiv">
+                    <div class="switch m-t-10">
+                        <input type="checkbox" class="switchbutton" unchecked="" id="switch1" onclick="change()" name="remove_doc_fee">
+                        <label for="switch1"></label>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="input-group">
+                    <select id="arrears_total_adjustment1" name="arrears_total_adjustment1" type="text"
+                            class="form-control arrears_money arrears-money-style adjustment-active-border-color adjustment-active-font-color"
+                            placeholder="For Adjustment" hidden>
+                        {% for t in reason_codes %}
+                            <option {% if values.reason_text == t.reason_code %}selected{% endif %}>{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if errors.reason_code %}
+                        <div class="invalid-feedback display-block">
+                            {{ errors.reason_code }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                <i>PRINCIPAL</i>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="balance_cur" class="input-group-text">£</span>
+                        </div>
+                        <input id="balance2" type="text"  name="balance2"
+                               class="form-control form-control-sm arrears_money arrears-money-style"
+                               value = "{{ principal_figure|floatformat:2 }}" readonly>
+                        <input hidden value = "{{ principal_figure|floatformat:2 }}" id = balance2hidden>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="balance_cur_2" class="input-group-text">£</span>
+                        </div>
+                        <input id="collected2" type="text"  name="collected2"
+                               class="form-control form-control-sm arrears_money arrears-money-style"
+                               value="0.00" onchange="formatCurrency(this)" readonly>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="balance_cur" class="input-group-text">£</span>
+                        </div>
+                        <input id="adjustment2" type="text"  name="adjustment2"
+                               class="form-control form-control-sm arrears_money arrears-money-style"
+                               value="0.00" onchange="formatCurrency(this)" readonly>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-1">
+                <div id="switchdiv2" class="input-group switchdiv">
+                    <div class="switch m-t-10">
+                        <input type="checkbox" class="switchbutton" id="switch2">
+                        <label for="switch2"></label>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="input-group" >
+                    <select id="arrears_total_adjustment2" name="arrears_total_adjustment2" type="text"
+                            class="form-control arrears_money arrears-money-style adjustment-active-border-color adjustment-active-font-color"
+                            placeholder="For Adjustment" hidden>
+                        {% for t in reason_codes %}
+                            <option {% if values.reason_text == t.reason_code %}selected{% endif %}>{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if errors.reason_code %}
+                        <div class="invalid-feedback display-block">
+                            {{ errors.reason_code }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+{#    RISK FEE ARREARS #}
+        <div class="row">
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <i>CHARGES</i>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="balance_cur" class="input-group-text">£</span>
+                        </div>
+                        <input id="balance3" type="text"  name="balance3" onchange="formatCurrency(this)"
+                               class="form-control form-control-sm arrears_money arrears-money-style"
+                              value = "{{ charges_figure|floatformat:2 }}" readonly>
+                        <input hidden value = "{{ charges_figure|floatformat:2 }}" id = balance3hidden>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="balance_cur_3" class="input-group-text">£</span>
+                        </div>
+                        <input id="collected3" type="text"  name="collected3" onchange="formatCurrency(this)"
+                               class="form-control form-control-sm arrears_money arrears-money-style"
+                               value="0.00" value="{{ risk_balance_value|floatformat:2|intcomma }}" readonly>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="balance_cur" class="input-group-text">£</span>
+                        </div>
+                        <input id="adjustment3" type="text"  name="adjustment3" onchange="formatCurrency(this)"
+                               class="form-control form-control-sm arrears_money arrears-money-style"
+                               value="0.00" value="{{ risk_balance_value|floatformat:2|intcomma }}" readonly>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-1">
+                <div id="switchdiv3" class="input-group switchdiv">
+                    <div class="switch m-t-10">
+                        <input type="checkbox" class="switchbutton" id="switch3">
+                        <label for="switch3"></label>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="input-group">
+                    <select id="arrears_total_adjustment3" name="arrears_total_adjustment3" type="text"
+                            class="form-control arrears_money arrears-money-style adjustment-active-border-color adjustment-active-font-color"
+                            placeholder="For Adjustment" hidden>
+                        {% for t in reason_codes %}
+                            <option {% if values.reason_text == t.reason_code %}selected{% endif %}>{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if errors.reason_code %}
+                        <div class="invalid-feedback display-block">
+                            {{ errors.reason_code }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+{#    BOUNCE CHARGES #}
+        <div class="row">
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                <i>RISK FEE</i>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="balance_cur" class="input-group-text">£</span>
+                        </div>
+                        <input id="balance4" type="text"  name="balance4" onchange="formatCurrency(this)"
+                               class="form-control form-control-sm arrears_money arrears-money-style"
+                               value = "{{ risk_figure|floatformat:2 }}" readonly>
+                        <input hidden value = "{{ risk_figure|floatformat:2 }}" id = balance4hidden>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="balance_cur_4" class="input-group-text">£</span>
+                        </div>
+                        <input id="collected4" type="text"  name="collected4" onchange="formatCurrency(this)"
+                               class="form-control form-control-sm arrears_money arrears-money-style"
+                               value="0.00" value="{{ bounce_balance_value|floatformat:2|intcomma }}" readonly>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="balance_cur" class="input-group-text">£</span>
+                        </div>
+                        <input id="adjustment4" type="text"  name="adjustment4" onchange="formatCurrency(this)"
+                               class="form-control form-control-sm arrears_money arrears-money-style"
+                               value="0.00" value="{{ bounce_balance_value|floatformat:2|intcomma }}" readonly>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-1">
+                <div id="switchdiv4" class="input-group switchdiv">
+                    <div class="switch m-t-10">
+                        <input type="checkbox" class="switchbutton" id="switch4">
+                        <label for="switch4"></label>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="input-group">
+                    <select id="arrears_total_adjustment4" name="arrears_total_adjustment4" type="text"
+                            class="form-control arrears_money arrears-money-style adjustment-active-border-color adjustment-active-font-color"
+                            placeholder="For Adjustment" hidden>
+                        {% for t in reason_codes %}
+                            <option {% if values.reason_text == t.reason_code %}selected{% endif %}>{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if errors.reason_code %}
+                        <div class="invalid-feedback display-block">
+                            {{ errors.reason_code }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+{#    LETTER CHARGE#}
+        <div class="row">
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                <i>BAMF</i>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="balance_cur" class="input-group-text">£</span>
+                        </div>
+                        <input id="balance5" type="text"  name="balance5" onchange="formatCurrency(this)"
+                               class="form-control form-control-sm arrears_money arrears-money-style"
+                               value = "{{ bamf_figure|floatformat:2 }}" readonly>
+                        <input hidden value = "{{ bamf_figure|floatformat:2 }}" id = balance5hidden>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="balance_cur_5" class="input-group-text">£</span>
+                        </div>
+                        <input id="collected5" type="text"  name="collected5" onchange="formatCurrency(this)"
+                               class="form-control form-control-sm arrears_money arrears-money-style"
+                               value="0.00" value="{{ letter_balance_value|floatformat:2|intcomma }}" readonly>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="balance_cur" class="input-group-text">£</span>
+                        </div>
+                        <input id="adjustment5" type="text"  name="adjustment5" onchange="formatCurrency(this)"
+                               class="form-control form-control-sm arrears_money arrears-money-style"
+                               value="0.00" value="{{ letter_balance_value|floatformat:2|intcomma }}" readonly>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-1">
+                <div id="switchdiv5" class="input-group switchdiv">
+                     <div class="switch m-t-10">
+                         <input type="checkbox" class="switchbutton" id="switch5">
+                         <label for="switch5"></label>
+                     </div>
+                 </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="input-group">
+                    <select id="arrears_total_adjustment5" name="arrears_total_adjustment5" type="text"
+                            class="form-control arrears_money arrears-money-style adjustment-active-border-color adjustment-active-font-color"
+                            placeholder="For Adjustment" hidden>
+                        {% for t in reason_codes %}
+                            <option {% if values.reason_text == t.reason_code %}selected{% endif %}>{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if errors.reason_code %}
+                        <div class="invalid-feedback display-block">
+                            {{ errors.reason_code }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+{#    VISIT FEE #}
+        <div class="row">
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                <i>SECONDARIES</i>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="balance_cur" class="input-group-text">£</span>
+                        </div>
+                        <input id="balance6" type="text" name="balance6" onchange="formatCurrency(this)"
+                               class="form-control form-control-sm arrears_money arrears-money-style"
+                                value = "{{ secondary_figure|floatformat:2 }}" readonly>
+                        <input hidden value = "{{secondary_figure|floatformat:2 }}" id = balance6hidden>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="balance_cur_6" class="input-group-text">£</span>
+                        </div>
+                        <input id="collected6" type="text" name="collected6" onchange="formatCurrency(this)"
+                               class="form-control form-control-sm arrears_money arrears-money-style"
+                               value="0.00" value="{{ visit_balance_value|floatformat:2|intcomma }}" readonly>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="balance_cur" class="input-group-text">£</span>
+                        </div>
+                        <input id="adjustment6" type="text" name="adjustment6" onchange="formatCurrency(this)"
+                               class="form-control form-control-sm arrears_money arrears-money-style"
+                               value="0.00" value="{{ visit_balance_value|floatformat:2|intcomma }}" readonly>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-1">
+                 <div id="switchdiv6" class="input-group switchdiv">
+                     <div class="switch m-t-10">
+                         <input type="checkbox" class="switchbutton" id="switch6">
+                         <label for="switch6"></label>
+                     </div>
+                 </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="input-group">
+                    <select id="arrears_total_adjustment6" name="arrears_total_adjustment6" type="text"
+                            class="form-control arrears_money arrears-money-style adjustment-active-border-color adjustment-active-font-color"
+                            placeholder="For Adjustment" hidden>
+                        {% for t in reason_codes %}
+                            <option {% if values.reason_text == t.reason_code %}selected{% endif %}>{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if errors.reason_code %}
+                        <div class="invalid-feedback display-block">
+                            {{ errors.reason_code }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class = "modal-footer">
+                <div style="text-align: right !important; padding-top:10px;">
+                    <a id="settlement_docs"
+{#                       href="{% url 'core_agreement_editor:print_pdf_EARLY_SETTLEMENT' agreement_id 32000 %}"#}
+                       href="javascript:void(0);" data-settlement-url="{% url 'core_agreement_editor:print_pdf_EARLY_SETTLEMENT' agreement_id%}"
+                    >
+                    <button type="button" class="btn btn-outline btn-warning">Settlement Document</button>
+                            </a>
+                    <button id="btn-confirm-payment" type="submit" class="btn btn-outline btn-success"  disabled>Settle Agreement</button>
+                    <button id="btn-dismiss-card-modal" type="button" class="btn btn-outline btn-info" data-dismiss="modal">Cancel and Close</button>
+                </div>
+            </div>
+     </div>
+</form>
+<script>
+
+$(document).ready(function() {
+    //this calculates values automatically
+    {#sum();#}
+    $("#collected1, #collected2, #collected3, #collected4, #collected5, #collected6").on("focusout", function() {
+        editor();
+    });
+
+    $("[data-settlement-url]").click(function() {
+        var url = $(this).attr("data-settlement-url");
+        url += "?arrears_total_collected=" + $("#arrears_total_collected").val();
+        location.href = url ;
+    })
+
+ });
+
+function url() {
+    arrears_total_collected = parseFloat(document.getElementById('arrears_total_collected').value || 0);
+    console.log(arrears_total_collected)
+
+    {#document.getElementById('settlement_docs').removeAttribute('href',{% url 'core_agreement_editor:print_pdf_EARLY_SETTLEMENT' agreement_id 32000 %})#}
+    {#document.getElementById('settlement_docs').removeAttribute("href", "{% url 'core_agreement_editor:print_pdf_EARLY_SETTLEMENT' agreement_id 32000 %}");#}
+    {#try:#}
+    {#document.getElementById('settlement_docs').setAttribute("href", "{% url 'core_agreement_editor:print_pdf_EARLY_SETTLEMENT' agreement_id arrears_total_collected %}");#}
+        {#"core_agreement_editor:print_pdf_EARLY_SETTLEMENT" + agreement_id + arrears_total_collected);#}
+
+}
+
+
+function editor() {
+    var collected1 = parseFloat(document.getElementById('collected1').value || 0);
+    var collected2 = parseFloat(document.getElementById('collected2').value || 0);
+    var collected3 = parseFloat(document.getElementById('collected3').value || 0);
+    var collected4 = parseFloat(document.getElementById('collected4').value || 0);
+    var collected5 = parseFloat(document.getElementById('collected5').value || 0);
+    var collected6 = parseFloat(document.getElementById('collected6').value || 0);
+
+    adjustment1= balance1-collected1
+    console.log(adjustment1)
+    adjustment2= balance2-collected2
+    console.log(adjustment2)
+    adjustment3= balance3-collected3
+    console.log(adjustment3)
+    adjustment4= balance4-collected4
+    console.log('adjustment',adjustment4)
+    adjustment5= balance5-collected5
+    adjustment6= balance6-collected6
+
+    actuals = collected1+collected2+collected3+collected4+collected5+collected6
+
+    adjustmenttotal = adjustment1+adjustment2+adjustment3+adjustment4+adjustment5+adjustment6
+
+    if (!isNaN(adjustmenttotal)) {
+        document.getElementById('arrears_total_collected').value = actuals.toFixed(2);
+        document.getElementById('arrears_total_adjustment').value = adjustmenttotal.toFixed(2);
+        document.getElementById('adjustment1').value = adjustment1.toFixed(2);
+        document.getElementById('adjustment2').value = adjustment2.toFixed(2);
+        document.getElementById('adjustment3').value = adjustment3.toFixed(2);
+        document.getElementById('adjustment4').value = adjustment4.toFixed(2);
+        document.getElementById('adjustment5').value = adjustment5.toFixed(2);
+        document.getElementById('adjustment6').value = adjustment6.toFixed(2);
+    }
+}
+
+$(document).ready(function() {
+    //this calculates values automatically
+    {#sum();#}
+    $("#arrears_total_collected").on("focusout", function() {
+        distribute();
+        url();
+        console.log('test123')
+    });
+ });
+
+function distribute() {
+    var arrears_total_arrears = document.getElementById('arrears_total_arrears').value;
+    var arrears_total_collected = document.getElementById('arrears_total_collected').value;
+    var arrears_total_adjustment = document.getElementById('arrears_total_adjustment').value;
+    {#var balance1 = document.getElementById('balance1').value;#}
+
+    adjustmentamount = arrears_total_arrears - arrears_total_collected;
+
+    if (!isNaN(adjustmentamount)) {
+        document.getElementById('arrears_total_adjustment').value = adjustmentamount.toFixed(2);
+    }
+    wip_arrears_total_collected = arrears_total_collected;
+    wip_detail_balance1 = balance1;
+    wip_detail_balance2 = balance2;
+    wip_detail_balance3 = balance3;
+    wip_detail_balance4 = balance4;
+    wip_detail_balance5 = balance5;
+    wip_detail_balance6 = balance6;
+
+    if (wip_arrears_total_collected >= wip_detail_balance1) {
+        wip_detail_collected_1 = wip_detail_balance1;
+        wip_arrears_total_collected = wip_arrears_total_collected - wip_detail_collected_1;
+    } else {
+        wip_detail_collected_1 = wip_arrears_total_collected;
+        wip_arrears_total_collected = 0;
+    }
+    document.getElementById('collected1').value = wip_detail_collected_1.toFixed(2);
+
+     if (wip_arrears_total_collected >= wip_detail_balance2) {
+        wip_detail_collected_2 = wip_detail_balance2;
+        wip_arrears_total_collected = wip_arrears_total_collected - wip_detail_collected_2;
+    } else {
+        wip_detail_collected_2 = wip_arrears_total_collected;
+        wip_arrears_total_collected = 0;
+    }
+    document.getElementById('collected2').value = wip_detail_collected_2.toFixed(2);
+     
+     if (wip_arrears_total_collected >= wip_detail_balance3) {
+        wip_detail_collected_3 = wip_detail_balance3;
+        wip_arrears_total_collected = wip_arrears_total_collected - wip_detail_collected_3;
+    } else {
+        wip_detail_collected_3 = wip_arrears_total_collected;
+        wip_arrears_total_collected = 0;
+    }
+    document.getElementById('collected3').value = wip_detail_collected_3.toFixed(2);
+     
+     if (wip_arrears_total_collected >= wip_detail_balance4) {
+        wip_detail_collected_4 = wip_detail_balance4;
+        wip_arrears_total_collected = wip_arrears_total_collected - wip_detail_collected_4;
+    } else {
+        wip_detail_collected_4 = wip_arrears_total_collected;
+        wip_arrears_total_collected = 0;
+    }
+    document.getElementById('collected4').value = wip_detail_collected_4.toFixed(2);
+     
+     if (wip_arrears_total_collected >= wip_detail_balance5) {
+        wip_detail_collected_5 = wip_detail_balance5;
+        wip_arrears_total_collected = wip_arrears_total_collected - wip_detail_collected_5;
+    } else {
+        wip_detail_collected_5 = wip_arrears_total_collected;
+        wip_arrears_total_collected = 0;
+    }
+    document.getElementById('collected5').value = wip_detail_collected_5.toFixed(2);
+     
+     if (wip_arrears_total_collected >= wip_detail_balance6) {
+        wip_detail_collected_6 = wip_detail_balance6;
+        wip_arrears_total_collected = wip_arrears_total_collected - wip_detail_collected_6;
+    } else {
+        wip_detail_collected_6 = wip_arrears_total_collected;
+        wip_arrears_total_collected = 0;
+    }
+    document.getElementById('collected6').value = wip_detail_collected_6.toFixed(2);
+    sum();
+    if (arrears_total_arrears >= arrears_total_collected) {
+        document.getElementById('variance').value = 0.00.toFixed(2);
+        document.getElementById('btn-confirm-payment').disabled = false
+    }
+}
+
+function sum() {
+    var hidden_settlement = document.getElementById('hidden_settlement').value;
+    var arrears_total_arrears = document.getElementById('arrears_total_arrears').value;
+    var arrears_total_adjustment = document.getElementById('arrears_total_adjustment').value;
+    var arrears_total_collected = document.getElementById('arrears_total_collected').value;
+
+    var adjustment1 = parseFloat(document.getElementById('adjustment1').value || 0);
+    var adjustment2 = parseFloat(document.getElementById('adjustment2').value || 0);
+    var adjustment3 = parseFloat(document.getElementById('adjustment3').value || 0);
+    var adjustment4 = parseFloat(document.getElementById('adjustment4').value || 0);
+    var adjustment5 = parseFloat(document.getElementById('adjustment5').value || 0);
+    var adjustment6 = parseFloat(document.getElementById('adjustment6').value || 0);
+
+    var collected1 = parseFloat(document.getElementById('collected1').value || 0);
+    var collected2 = parseFloat(document.getElementById('collected2').value || 0);
+    var collected3 = parseFloat(document.getElementById('collected3').value || 0);
+    var collected4 = parseFloat(document.getElementById('collected4').value || 0);
+    var collected5 = parseFloat(document.getElementById('collected5').value || 0);
+    var collected6 = parseFloat(document.getElementById('collected6').value || 0);
+
+    var balance1hidden = parseFloat(document.getElementById('balance1hidden').value||0);
+    var balance2hidden = parseFloat(document.getElementById('balance2hidden').value||0);
+    var balance3hidden = parseFloat(document.getElementById('balance3hidden').value||0);
+    var balance4hidden = parseFloat(document.getElementById('balance4hidden').value||0);
+    var balance5hidden = parseFloat(document.getElementById('balance5hidden').value||0);
+    var balance6hidden = parseFloat(document.getElementById('balance6hidden').value||0);
+    
+    var balance1 = parseFloat(document.getElementById('balance1').value||0);
+    var balance2 = parseFloat(document.getElementById('balance2').value||0);
+    var balance3 = parseFloat(document.getElementById('balance3').value||0);
+    var balance4 = parseFloat(document.getElementById('balance4').value||0);
+    var balance5 = parseFloat(document.getElementById('balance5').value||0);
+    var balance6 = parseFloat(document.getElementById('balance6').value||0);
+
+    var resultbalance =
+        parseFloat(hidden_settlement)
+        - adjustment1 - adjustment2 - adjustment3 - adjustment4 - adjustment5 - adjustment6
+        - collected1 - collected2 - collected3 - collected4 - collected5 - collected6;
+
+    var resultcollected = collected1 + collected2 + collected3 + collected4 + collected5 + collected6;
+    var docfeeadjustment1 = balance1hidden - collected1;
+    var docfeeadjustment2 = balance2hidden - collected2;
+    var docfeeadjustment3 = balance3hidden - collected3;
+    var docfeeadjustment4 = balance4hidden - collected4;
+    var docfeeadjustment5 = balance5hidden - collected5;
+    var docfeeadjustment6 = balance6hidden - collected6;
+    var resultdocfeeadjustment = docfeeadjustment1 + docfeeadjustment2 + docfeeadjustment3 + docfeeadjustment4 + docfeeadjustment5 + docfeeadjustment6;
+    var resultadjustment = adjustment1 + adjustment2 + adjustment3 + adjustment4 + adjustment5 + adjustment6;
+    var variance = hidden_settlement-arrears_total_collected-resultadjustment;
+
+    if (!isNaN(resultbalance)) {
+
+        document.getElementById('variance').value = variance.toFixed(2);
+        document.getElementById('adjustment1').value = docfeeadjustment1.toFixed(2);
+        document.getElementById('adjustment2').value = docfeeadjustment2.toFixed(2);
+        document.getElementById('adjustment3').value = docfeeadjustment3.toFixed(2);
+        document.getElementById('adjustment4').value = docfeeadjustment4.toFixed(2);
+        document.getElementById('adjustment5').value = docfeeadjustment5.toFixed(2);
+        document.getElementById('adjustment6').value = docfeeadjustment6.toFixed(2);
+
+    }
+     document.getElementById('arrears_total_adjustment').value = resultdocfeeadjustment.toFixed(2);
+
+    if (variance.toFixed(2) === '0.00') {
+        document.getElementById('btn-confirm-payment').disabled = false
+     } else {
+        document.getElementById('btn-confirm-payment').disabled = true
+     }
+    if (docfeeadjustment1 > 0){
+    document.getElementById("switch1").click();
+    }
+    if (docfeeadjustment2 > 0){
+    document.getElementById("switch2").click();
+    }
+    if (docfeeadjustment3 > 0){
+    document.getElementById("switch3").click();
+    }
+    if (docfeeadjustment4 > 0){
+    document.getElementById("switch4").click();
+    }
+    if (docfeeadjustment5 > 0){
+    document.getElementById("switch5").click();
+    }
+    if (docfeeadjustment6 > 0){
+    document.getElementById("switch6").click();
+    }
+}
+function formatCurrency(t) {
+    // Input type MUST be text
+    // t = this
+    t.value = parseFloat(t.value ||0).toFixed(2);
+}
+var hidden_settlement = document.getElementById('hidden_settlement').value;
+$("#btn-refresh-all").click(function(){
+    $('#arrears_total_collected').val(addCommas((0.00).toFixed(2)));
+    $('#arrears_total_adjustment').val(addCommas((0.00).toFixed(2)));
+    $('#adjustment1').val(addCommas((0.00).toFixed(2)));
+    $('#adjustment2').val(addCommas((0.00).toFixed(2)));
+    $('#adjustment3').val(addCommas((0.00).toFixed(2)));
+    $('#adjustment4').val(addCommas((0.00).toFixed(2)));
+    $('#adjustment5').val(addCommas((0.00).toFixed(2)));
+    $('#adjustment6').val(addCommas((0.00).toFixed(2)));
+    $('#collected1').val(addCommas((0.00).toFixed(2)));
+    $('#collected2').val(addCommas((0.00).toFixed(2)));
+    $('#collected3').val(addCommas((0.00).toFixed(2)));
+    $('#collected4').val(addCommas((0.00).toFixed(2)));
+    $('#collected5').val(addCommas((0.00).toFixed(2)));
+    $('#collected6').val(addCommas((0.00).toFixed(2)));
+    $('#variance').val(hidden_settlement);
+    document.getElementById('btn-confirm-payment').disabled = true
+});
+
+function addCommas(nStr) {
+    nStr += '';
+    let x = nStr.split('.');
+    let x1 = x[0];
+    let x2 = x.length > 1 ? '.' + x[1] : '';
+    let rgx = /(\d+)(\d{3})/;
+    while (rgx.test(x1)) {
+        x1 = x1.replace(rgx, '$1' + ',' + '$2');
+    }
+    return x1 + x2;
+}
+
+</script>
+<script>
+    var balance1 = parseFloat(document.getElementById('balance1').value||0);
+    var balance2 = parseFloat(document.getElementById('balance2').value||0);
+    var balance3 = parseFloat(document.getElementById('balance3').value||0);
+    var balance4 = parseFloat(document.getElementById('balance4').value||0);
+    var balance5 = parseFloat(document.getElementById('balance5').value||0);
+    var balance6 = parseFloat(document.getElementById('balance6').value||0);
+    var arrears_total_arrears = parseFloat(document.getElementById('arrears_total_arrears').value||0);
+
+    var balance1hidden = parseFloat(document.getElementById('balance1hidden').value||0);
+    var balance2hidden = parseFloat(document.getElementById('balance2hidden').value||0);
+    var balance3hidden = parseFloat(document.getElementById('balance3hidden').value||0);
+    var balance4hidden = parseFloat(document.getElementById('balance4hidden').value||0);
+    var balance5hidden = parseFloat(document.getElementById('balance5hidden').value||0);
+    var balance6hidden = parseFloat(document.getElementById('balance6hidden').value||0);
+
+    var collected1 = parseFloat(document.getElementById('collected1').value || 0);
+    var collected2 = parseFloat(document.getElementById('collected2').value || 0);
+    var collected3 = parseFloat(document.getElementById('collected3').value || 0);
+    var collected4 = parseFloat(document.getElementById('collected4').value || 0);
+    var collected5 = parseFloat(document.getElementById('collected5').value || 0);
+    var collected6 = parseFloat(document.getElementById('collected6').value || 0);
+
+    var adjustment1 = parseFloat(document.getElementById('adjustment1').value || 0);
+    var arrears_total_adjustment1 = parseFloat(document.getElementById('arrears_total_adjustment1').value||0);
+
+    $('#switch1').click(function(){
+        if (collected1 != 1){
+            document.getElementById('arrears_total_adjustment1').hidden = false;
+            document.getElementById('collected1').removeAttribute('readonly');
+            $('#collected1').addClass('collected-active-border-color collected-active-font-color');
+            $('#balance_cur_1').addClass('collected-active-border-color collected-active-font-color');
+            collected1 = 1
+        }else {
+            collected1 = 0
+            document.getElementById('arrears_total_adjustment1').hidden = true;
+            document.getElementById('collected1').setAttribute('readonly',true);
+             $('#collected1').removeClass('collected-active-border-color collected-active-font-color');
+             $('#balance_cur_1').removeClass('collected-active-border-color collected-active-font-color');
+            {#$('#adjustment1').val('0.00');#}
+        }
+    });
+
+   $('#switch2').click(function(){
+        if (collected2 != 1){
+            document.getElementById('arrears_total_adjustment2').hidden = false;
+            document.getElementById('collected2').removeAttribute('readonly');
+            $('#collected2').addClass('collected-active-border-color collected-active-font-color');
+            $('#balance_cur_2').addClass('collected-active-border-color collected-active-font-color');
+            collected2 = 1
+        }else {
+            collected2 = 0
+            document.getElementById('arrears_total_adjustment2').hidden = true;
+            document.getElementById('collected2').setAttribute('readonly',true);
+             $('#collected2').removeClass('collected-active-border-color collected-active-font-color');
+             $('#balance_cur_2').removeClass('collected-active-border-color collected-active-font-color');
+            {#$('#adjustment2').val('0.00');#}
+        }
+    });
+   
+   $('#switch3').click(function(){
+       if (collected3 != 1){
+           document.getElementById('arrears_total_adjustment3').hidden = false;
+           document.getElementById('collected3').removeAttribute('readonly');
+           $('#collected3').addClass('collected-active-border-color collected-active-font-color');
+           $('#balance_cur_3').addClass('collected-active-border-color collected-active-font-color');
+           collected3 = 1
+       }else {
+           collected3 = 0
+           document.getElementById('arrears_total_adjustment3').hidden = true;
+           document.getElementById('collected3').setAttribute('readonly',true);
+           $('#collected3').removeClass('collected-active-border-color collected-active-font-color');
+           $('#balance_cur_3').removeClass('collected-active-border-color collected-active-font-color');
+       }
+   });
+   
+   $('#switch4').click(function(){
+        if (collected4 != 1){
+            document.getElementById('arrears_total_adjustment4').hidden = false;
+            document.getElementById('collected4').removeAttribute('readonly');
+            $('#collected4').addClass('collected-active-border-color collected-active-font-color');
+            $('#balance_cur_4').addClass('collected-active-border-color collected-active-font-color');
+            collected4 = 1
+        }else {
+            collected4 = 0
+            document.getElementById('arrears_total_adjustment4').hidden = true;
+            document.getElementById('collected4').setAttribute('readonly',true);
+             $('#collected4').removeClass('collected-active-border-color collected-active-font-color');
+             $('#balance_cur_4').removeClass('collected-active-border-color collected-active-font-color');
+            {#$('#adjustment4').val('0.00');#}
+        }
+    });
+   
+   $('#switch5').click(function(){
+        if (collected5 != 1){
+            document.getElementById('arrears_total_adjustment5').hidden = false;
+            document.getElementById('collected5').removeAttribute('readonly');
+            $('#collected5').addClass('collected-active-border-color collected-active-font-color');
+            $('#balance_cur_5').addClass('collected-active-border-color collected-active-font-color');
+            collected5 = 1
+        }else {
+            collected5 = 0
+            document.getElementById('arrears_total_adjustment5').hidden = true;
+            document.getElementById('collected5').setAttribute('readonly',true);
+             $('#collected5').removeClass('collected-active-border-color collected-active-font-color');
+             $('#balance_cur_5').removeClass('collected-active-border-color collected-active-font-color');
+            {#$('#adjustment5').val('0.00');#}
+        }
+    });
+   
+   $('#switch6').click(function(){
+        if (collected6 != 1){
+            document.getElementById('arrears_total_adjustment6').hidden = false;
+            document.getElementById('collected6').removeAttribute('readonly');
+            $('#collected6').addClass('collected-active-border-color collected-active-font-color');
+            $('#balance_cur_6').addClass('collected-active-border-color collected-active-font-color');
+            collected6 = 1
+        }else {
+            collected6 = 0
+            document.getElementById('arrears_total_adjustment6').hidden = true;
+            document.getElementById('collected6').setAttribute('readonly',true);
+             $('#collected6').removeClass('collected-active-border-color collected-active-font-color');
+             $('#balance_cur_6').removeClass('collected-active-border-color collected-active-font-color');
+            {#$('#adjustment6').val('0.00');#}
+        }
+    });
+   
+    $('#switch0').click(function(){
+        $('#collected1').val(balance1);
+        $('#collected2').val(balance2);
+        $('#collected3').val(balance3);
+        $('#collected4').val(balance4);
+        $('#collected5').val(balance5);
+        $('#collected6').val(balance6);
+        $('#arrears_total_collected').val(arrears_total_arrears);
+        sum();
+    });
+
+</script>
+
+

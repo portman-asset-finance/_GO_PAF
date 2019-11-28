@@ -1,0 +1,103 @@
+<form method="post" action="{% url 'core_agreement_editor:modalchangedate' agreement_id %}?transaction_id={{ transaction_id}}" id="change-dates-form">
+    {% csrf_token %}
+            <div class="modal-body">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="edit_dates_agreement_modalLabel">Change Dates For {{ transactiondate|date:"d-m-Y"}}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p></p>
+                    <label class="control-label">Current Date</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="fa fa-calendar"></i></span>
+                        </div>
+                        <input class="form-control" name="" type="date" id="current_date" readonly value="{{ transactiondate|date:"Y-m-d"}}">
+                    </div>
+                    <label class="control-label">Changed Date</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="fa fa-calendar"></i></span>
+                        </div>
+                        <input class="form-control" name="changed_date" id="changed_date" type="date">
+                    </div>
+                    <p></p>
+                    <input type="hidden" id="submit_type" name="submit_type">
+                    <button type="button" class="btn btn-success" id="submit_single">Just This Transaction</button>
+                    {% if transactiondate >= comparisondate  %}
+                    <button type="button" class="btn btn-success" id="submit_all">All Future Transactions</button>
+                    {% endif %}
+                    <p></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+</form>
+<script type="text/javascript">
+
+    $("#submit_single").click(function() {
+        $("#submit_type").val("singledates");
+        if(validate()) {
+            $("#change-dates-form").submit();
+        }
+    });
+
+    $("#submit_all").click(function() {
+        $("#submit_type").val("futuredates");
+        if(validate()) {
+            $("#change-dates-form").submit();
+        }
+    });
+
+    function validate() {
+
+        var form = document.getElementById('change-dates-form') ;
+
+        if(!form.elements['changed_date'].value) {
+            $("#change_dates_error_message").html("<b>Please select a valid date.</b>");
+            $("#change_dates_error").modal();
+            return false ;
+        }
+
+        var mDate = moment(form.elements['changed_date'].value) ;
+        if(mDate.year() > 9999) {
+            $("#change_dates_error_message").html("<b>Please select a valid date.</b>");
+            $("#change_dates_error").modal();
+            return false ;
+        }
+
+        var today = moment().add(7, 'days');
+        mdate_wip = mDate;
+        today_wip = today;
+
+
+        if (mdate_wip < today_wip) {
+            $("#change_dates_error_message").html("<b>DD Scheduled Due Date not callable.</b>");
+            $("#change_dates_error").modal();
+            return false ;
+        }
+
+        var current_date = moment(form.elements['current_date'].value) ;
+        plus_month = current_date.clone().add(1, 'months');
+        minus_month = current_date.clone().subtract(1, 'months');
+
+        if(mdate_wip <= minus_month){
+            $("#change_dates_error_message").html("<b>Changed Date differs by more than 1 month, please Reschedule.</b>");
+            $("#change_dates_error").modal();
+            return false ;
+         }
+
+        if(mdate_wip >= plus_month){
+            $("#change_dates_error_message").html("<b>Changed Date differs by more than 1 month, please Reschedule.</b>");
+            $("#change_dates_error").modal();
+            return false ;
+        }
+
+        return true ;
+
+
+    }
+</script>

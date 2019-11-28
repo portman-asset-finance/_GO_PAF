@@ -1,0 +1,210 @@
+{% extends "dashboard_base.html" %}
+{% load staticfiles %}
+{% load humanize %}
+{% load widget_tweaks %}
+{% block metadescription %}
+	GO Dashboard
+{% endblock %}
+{% block title %}
+	GO Dashboard
+{% endblock %}
+{% block page-css %}
+{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2 class="header-title" style="color: #8dabc4">ARREARS & COLLECTIONS</h2>
+</div>
+<div class="card">
+    <div class="card-header border bottom m-b-0 p-b-0">
+        <div class="row">
+        <div class="col-md-8 m-l-0">
+        <form method="get" class="form-inline">
+          <span class="m-b-20 m-r-15"><h4 class="text-thin">Filter by: </h4></span>
+          {% render_field collections_list.form.agreementnumber class="form-control m-b-20 m-r-15" placeholder="APEL Number"%}
+          {% render_field collections_list.form.customercompany class="form-control m-b-20 m-r-15" placeholder="Customer Name"%}
+          {% render_field collections_list.form.col_agent_id class="form-control m-b-20 m-r-15" placeholder="Agent Name"%}
+          {% render_field collections_list.form.col_arrears_sum_status class="form-control m-b-20 m-r-15" placeholder="Status"%}
+          <button type="submit" class="btn btn-icon btn-success m-b-20">
+            <i class="mdi mdi-magnify"></i>
+          </button>
+            {% if has_filter %}
+                <a class="btn btn-icon btn-warning m-b-20" href="{%  url 'dashboard:collectionslist' %}">
+                    <i class="mdi mdi-refresh"></i>
+                </a>
+            {% endif %}
+        </form>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group row">
+                <label class="col-sm-6  control-label text-dark text-right">Number of Arrears:</label>
+                <span class=" col-sm-6">
+                    {% with total=collections_list.qs.count %}
+                        {{ total }}
+                    {% endwith %}
+                </span>
+                <label class="col-sm-6  control-label text-dark text-right">Gross Total of Arrears:</label>
+                <span class=" col-sm-6">
+                    {{ total_gross.col_arrears_gross_total__sum|floatformat:2|intcomma }} GBP
+                </span>
+            </div>
+        </div>
+    </div>
+    </div>
+    <div class="card-body">
+        <div class="table-overflow">
+            <table class="table table-hover table-sm border">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Agreement</th>
+                        <th>Customer</th>
+                        <th>Type</th>
+                        <th>Collection Agent</th>
+                        <th class="text-right">Gross Arrears</th>
+                        <th class="text-right">Gross Fees</th>
+                        <th class="text-right">Gross Total</th>
+                        <th>Status</th>
+                        <th class="text-right"></th>
+                        <th class="text-right"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for collection in collections_list_qs %}
+                    <tr>
+                        <td> {# Agreement #}
+                            <span class="title">{{ collection.col_agreement_id }}</span>
+                        </td>
+                        <td> {# Customer #}
+                            <span class="">{{ collection.col_agreement_id.agreementcustomernumber.customercompany }}</span>
+                        </td>
+                        <td> {# Type #}
+                            <span class="">{{ collection.col_agreement_id.agreementagreementtypeid.agreementdefname }}</span>
+                        </td>
+                        <td> {# Agent #}
+                            <span class="">{{ collection.col_agent_id.bd_collection_agent.get_full_name}}</span>
+                        </td>
+                        <td class="text-right"> {# Gross Arrears #}
+                            <span class="">{{ collection.col_arrears_gross_rental|floatformat:2|intcomma }} GBP</span>
+                        </td>
+                        <td class="text-right"> {# Gross Fees #}
+                            <span class="">{{ collection.col_arrears_gross_fee|floatformat:2|intcomma }} GBP</span>
+                        </td>
+                        <td class="text-right"> {# Gross Total #}
+                            <span class="">{{ collection.col_arrears_gross_total|floatformat:2|intcomma }} GBP</span>
+                        </td>
+                        <td> {# Status #}
+                            <span class="">{{ collection.col_arrears_sum_status }}</span>
+                        </td>
+                        <td class="text-right font-size-18">
+                            <a href="{% url 'dashboard:collectionsdetail' collection.col_agreement_id %}" class="text-success m-r-15"><i class="ti-credit-card"></i></a>
+                        </td>
+                        <td class="text-right font-size-18">
+                            <a href="{% url 'dashboard:AgreementEnquiryDetail' collection.col_agreement_id %}" class="text-success m-r-15"><i class="ti-layers"></i></a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer border bottom text-center">
+        <div >
+            <div class="dataTables_paginate paging_simple_numbers">
+                <ul class="pagination">
+                    {% if collections_list_qs.has_previous %}
+                    <li class="paginate_button page-item previous">
+                        {% if 'agreementnumber' in request.get_full_path %}
+                            <a href="{{ request.get_full_path }}&page={{ collections_list_qs.previous_page_number }}" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                        {% else %}
+                            <a href="?page={{ collections_list_qs.previous_page_number }}" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                        {% endif %}
+                        </li>
+                    {% else %}
+                    <li class="paginate_button page-item previous disabled">
+                        <a href="#" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                    </li>
+                    {% endif %}
+                    {% for i in collections_list_qs.paginator.page_range %}
+                        {% if collections_list_qs.number == i %}
+                            <li class="paginate_button page-item active">
+                                {% if 'agreementnumber' in request.get_full_path %}
+                                    <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                {% else %}
+                                    <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                {% endif %}
+                            </li>
+                        {% else %}
+                            {% if collections_list_qs.number < i %}
+                                {% if collections_list_qs.number|add:"1" >= i %}
+                                    <li class="paginate_button page-item">
+                                        {% if 'agreementnumber' in request.get_full_path %}
+                                            <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% else %}
+                                            <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% endif %}
+                                    </li>
+                                {% else %}
+                                    {% if collections_list_qs.paginator.num_pages == i %}
+                                        <li class="paginate_button page-item disabled">
+                                            <a href="#" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">
+                                                <i class="mdi mdi-dots-horizontal"></i>
+                                            </a>
+                                        </li>
+                                        <li class="paginate_button page-item">
+                                            {% if 'agreementnumber' in request.get_full_path %}
+                                                <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% endif %}
+                                        </li>
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                            {% if collections_list_qs.number > i %}
+                                {% if collections_list_qs.number|add:"-2" < i  %}
+                                    <li class="paginate_button page-item">
+                                        {% if 'agreementnumber' in request.get_full_path %}
+                                            <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% endif %}
+                                    </li>
+                                {% else %}
+                                    {% if 1 == i %}
+                                        <li class="paginate_button page-item">
+                                            {% if 'agreementnumber' in request.get_full_path %}
+                                                <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% endif %}
+                                        </li>
+                                        <li class="paginate_button page-item disabled">
+                                            <a href="#" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">
+                                                <i class="mdi mdi-dots-horizontal"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                            {% endif %}
+                        {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                    {% if collections_list_qs.has_next %}
+                        <li class="paginate_button page-item next" id="dt-opt_next">
+                            {% if 'agreementnumber' in request.get_full_path %}
+                                <a href="{{ request.get_full_path }}&page={{ collections_list_qs.next_page_number }}" aria-controls="dt-opt" data-dt-idx="3" tabindex="0" class="page-link">Next</a>
+                            {% else %}
+                                <a href="?page={{ collections_list_qs.next_page_number }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">Next</a>
+                            {% endif %}
+                        </li>
+                    {% else %}
+                        <li class="paginate_button page-item next disabled" id="dt-opt_next">
+                            <a href="#" aria-controls="dt-opt" data-dt-idx="3" tabindex="0" class="page-link">Next</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block page-js %}
+{% endblock %}

@@ -1,0 +1,61 @@
+{% load widget_tweaks %}
+<form method="post" action="{% url 'core_agreement_editor:editor_create' agreement_id %}?transaction_id={{ transaction_id}}" id="reschedule-form">
+  {% csrf_token %}
+  <div class="modal-header">
+    <h4 class="modal-title">Reschedule Agreement </h4>
+  </div>
+  <div class="modal-body" onclose="location.reload()">
+      <div>
+          Net Amount to be Rescheduled : £{{ settlement_figure_net|floatformat:2 }}
+          <p></p>
+          <label class="control-label">Reschedule Date</label>
+          <div class="input-group">
+              <div class="input-group-prepend">
+                  <span class="input-group-text"><i class="fa fa-calendar"></i></span>
+              </div>
+              <input class="form-control" name="rescheduled_date" id="agreement_rescheduled_date" type="date">
+          </div>
+          <p></p>
+          <label class="control-label">New Term (Excluding Original Term)</label>
+          <input class="form-control" type="number" name="new_term" id="agreement_rescheduled_term">
+          <p></p>
+          <label class="control-label">Instalments (NET)</label>
+          <div class="input-group">
+              <div class="input-group-prepend">
+                  <span class="input-group-text">&pound;</span>
+              </div>
+              <input class="form-control" name="rescheduled_instalment_net"
+                     id="agreement_rescheduled_instalment_net"
+                     readonly value="{{ values.agreement_rescheduled_instalment_net }}" >
+          </div>
+      </div>
+      <p></p>
+      <p>You are rescheduling an agreement.</p>
+      <p>Do you really want to do this? {{ agreement_rescheduled_instalment_net }}</p>
+  </div>
+  <div class="modal-footer">
+      <input type="hidden" id="submit_type" name="submit_type">
+      <button type="button" class="btn btn-success" id="submit_single" data-dismiss="modal">Yes</button>
+      <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+  </div>
+</form>
+<script type="text/javascript">
+    $("#submit_single").click(function() {
+        $("#submit_type").val("singledates");
+        $("#reschedule-form").submit();
+    });
+</script>
+<script>
+     $(function() {
+            var agreement_rescheduled_term = $("#agreement_rescheduled_term");
+            var agreement_rescheduled_instalment_net = $("#agreement_rescheduled_instalment_net");
+            agreement_rescheduled_term.on('change', calculate);
+            function calculate() {
+                a = {{ settlement_figure_net }}
+                    {#- {{ docfee_net }}#}
+                b = agreement_rescheduled_term.val()
+                agreement_rescheduled_instalment_net = (a/b).toFixed(2)
+                document.getElementById("agreement_rescheduled_instalment_net").value = agreement_rescheduled_instalment_net ;
+            }
+        })();
+</script>

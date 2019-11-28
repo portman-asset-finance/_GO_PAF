@@ -1,0 +1,174 @@
+{% extends 'dashboard_base.html' %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+{% load widget_tweaks %}
+{% block metadescription %}
+
+{% endblock %}
+{% block title %}
+
+{% endblock %}
+{% block page-css %}
+{% endblock %}
+{% block page-js %}
+  <script src="{% static 'static_core_agreement_notice_template/js/notices.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="header-title" style="color: #8dabc4">NOTICE MANAGEMENT</h2>
+</div>
+    <div class="card">
+        <div class="card-body">
+            <form method="get" class="form-inline">
+                <span class="m-b-20 m-r-15"><h4 class="text-thin">Filter by: </h4></span>
+                {% render_field notice_list.form.agreement_number class="form-control m-b-20 m-r-15" placeholder="APEL Number"%}
+       {% comment %}           <span class="m-b-20 m-r-15"><h5 class="text-thin"> and </h5></span>
+       {% render_field notice_list.form.customercompany class="form-control m-b-20 m-r-15" placeholder="Customer Name"%}
+          <span class="m-b-20 m-r-15"><h5 class="text-thin"> and </h5></span>
+          {% render_field notice_list.form.agreementclosedflag class="form-control m-b-20 m-r-15" placeholder="Agreement Status"%}
+          <span class="m-b-20 m-r-15"><h5 class="text-thin"> and </h5></span>
+          {% render_field notice_list.form.agreementddstatus class="form-control m-b-20 m-r-15" placeholder="DD Status"%}{% endcomment %}
+          <button type="submit" class="btn btn-icon btn-success m-b-20">
+            <i class="mdi mdi-magnify"></i>
+          </button>
+            {% if has_filter %}
+           {% comment %}     <a class="btn btn-icon btn-warning m-b-20" href="{%  url 'dashboard:AgreementEnquiryList' %}">
+            #        <i class="mdi mdi-refresh"></i>
+             #   </a>{% endcomment %}
+
+            {% endif %}
+        </form>
+            <!-- BUTTON TO TRIGGER THE ACTION -->
+    {% comment %}      <p>
+            <button type="button" class="btn btn-success js-create-notice" data-url="{% url 'core_agreement_notice:notice_create' %}">
+              <span class="mdi mdi-open-in-new"></span>
+              New Notice
+            </button>
+          </p>{% endcomment %}
+            <table class="table table-hover table-sm border" id="notice-table">
+                <thead class="thead-light">
+                <tr>
+                    <th>Agreement Number</th>
+                    <th>Given Notice</th>
+                    <th>Notice Date</th>
+                    <th>1st Secondary</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% include 'includes/partial_notice_list.html' %}
+                </tbody>
+            </table>
+
+          <!-- THE MODAL WE WILL BE USING -->
+            <div class="modal fade" id="modal-notice">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                    </div>
+              </div>
+            </div>
+        </div>
+        <div class="card-footer border bottom text-center">
+            <div >
+                <div class="dataTables_paginate paging_simple_numbers">
+                    <ul class="pagination">
+                        {% if notice_list_qs.has_previous %}
+                            <li class="paginate_button page-item previous">
+                                {% if 'agreementnumber' in request.get_full_path %}
+                                    <a href="{{ request.get_full_path }}&page={{ notice_list_qs.previous_page_number }}" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                                {% else %}
+                                    <a href="?page={{ notice_list_qs.previous_page_number }}" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                                {% endif %}
+                            </li>
+                        {% else %}
+                            <li class="paginate_button page-item previous disabled">
+                                <a href="#" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                            </li>
+                        {% endif %}
+                        {% for i in notice_list_qs.paginator.page_range %}
+                            {% if notice_list_qs.number == i %}
+                                <li class="paginate_button page-item active">
+                                    {% if 'agreementnumber' in request.get_full_path %}
+                                        <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                    {% else %}
+                                        <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                    {% endif %}
+                                </li>
+                            {% else %}
+                                {% if notice_list_qs.number < i %}
+                                    {% if notice_list_qs.number|add:"1" >= i %}
+                                        <li class="paginate_button page-item">
+                                            {% if 'agreementnumber' in request.get_full_path %}
+                                                <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% endif %}
+                                        </li>
+                                    {% else %}
+                                        {% if notice_list_qs.paginator.num_pages == i %}
+                                            <li class="paginate_button page-item disabled">
+                                                <a href="#" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">
+                                                    <i class="mdi mdi-dots-horizontal"></i>
+                                                </a>
+                                            </li>
+                                            <li class="paginate_button page-item">
+                                                {% if 'agreementnumber' in request.get_full_path %}
+                                                    <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                                {% else %}
+                                                    <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                                {% endif %}
+                                            </li>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endif %}
+                                {% if notice_list_qs.number > i %}
+                                    {% if notice_list_qs.number|add:"-2" < i  %}
+                                        <li class="paginate_button page-item">
+                                            {% if 'agreementnumber' in request.get_full_path %}
+                                                <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% endif %}
+                                        </li>
+                                    {% else %}
+                                        {% if 1 == i %}
+                                            <li class="paginate_button page-item">
+                                                {% if 'agreementnumber' in request.get_full_path %}
+                                                    <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                                {% else %}
+                                                    <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                                {% endif %}
+                                            </li>
+                                            <li class="paginate_button page-item disabled">
+                                                <a href="#" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">
+                                                    <i class="mdi mdi-dots-horizontal"></i>
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if notice_list_qs.has_next %}
+                            <li class="paginate_button page-item next" id="dt-opt_next">
+                                {% if 'agreementnumber' in request.get_full_path %}
+                                    <a href="{{ request.get_full_path }}&page={{ notice_list_qs.next_page_number }}" aria-controls="dt-opt" data-dt-idx="3" tabindex="0" class="page-link">Next</a>
+                                {% else %}
+                                    <a href="?page={{ notice_list_qs.next_page_number }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">Next</a>
+                                {% endif %}
+                            </li>
+                        {% else %}
+                            <li class="paginate_button page-item next disabled" id="dt-opt_next">
+                                <a href="#" aria-controls="dt-opt" data-dt-idx="3" tabindex="0" class="page-link">Next</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+

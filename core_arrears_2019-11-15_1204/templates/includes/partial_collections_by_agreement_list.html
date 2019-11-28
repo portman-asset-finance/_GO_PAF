@@ -1,0 +1,33 @@
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+{% load dashboard_extras %}
+{% for receipt_collection in receipt_collections %}
+    <tr class="table-light SP">
+     <td  class="text-right"><small class="text-muted"><i>{{ receipt_collection.row2_index }}</i></small></td>
+        <td style="border-right:1px solid gainsboro"></td>
+        <td class="text-center">
+           <span>{{ receipt_collection.rr_receipt_created_on|date:"d/m/Y H:i"  }}</span>
+        </td>
+        <td style="border-right:1px solid gainsboro">&nbsp;</td>
+        <td class="text-center">
+            <span class="">{{ receipt_collection.rr_receipt_source }}</span>
+        </td>
+        <td style="border-right:1px solid gainsboro"></td>
+        <td class="text-center">
+            <span class="">{{ receipt_collection.rr_receipt_type_id }}</span>
+        </td>
+        <td style="border-right:1px solid gainsboro"></td>
+        <td class="text-right " style="{% if receipt_collection.receipt_crdr_flag == 'DR' %}color:red{% else %}color: forestgreen;{% endif %}">
+            <span>£{{ receipt_collection.rr_receipt_value_net|floatformat:2|intcomma }}</span>
+        </td>
+        <td style="border-right:1px solid gainsboro"></td>
+        <td class="text-right " style="{% if receipt_collection.receipt_crdr_flag == 'DR' %}color:red;{% else %}color: forestgreen;{% endif %}">
+            <span>£{{ receipt_collection.rr_receipt_value_gross|floatformat:2|intcomma }}</span>
+        </td>
+        <td style="border-right:1px solid gainsboro"></td>
+        <td class="text-left ">
+            <span>{{ receipt_collection.rr_receipt_user_id }}</span>
+        </td>
+    </tr>
+{% endfor %}

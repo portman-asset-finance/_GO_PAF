@@ -1,0 +1,47 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<meta name="description" content="{% block metadescription %}{% endblock %}">
+	<link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+	<title>GO FINTECH</title>
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" href="{% static 'assets/images/logo/apple-touch-icon.png'%}">
+    <link rel="shortcut icon" href="{% static 'assets/images/logo/favicon.png'%}">
+
+    <!-- core dependcies css -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/bootstrap/dist/css/bootstrap.css'%}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/PACE/themes/blue/pace-theme-minimal.css'%}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/perfect-scrollbar/css/perfect-scrollbar.min.css'%}" />
+
+    <!-- page css -->
+
+    <!-- core css -->
+    <link href="{% static 'assets/css/font-awesome.min.css'%}" rel="stylesheet">
+    <link href="{% static 'assets/css/themify-icons.css'%}" rel="stylesheet">
+    <link href="{% static 'assets/css/materialdesignicons.min.css'%}" rel="stylesheet">
+    <link href="{% static 'assets/css/animate.min.css'%}" rel="stylesheet">
+    <link href="{% static 'assets/css/app.css'%}" rel="stylesheet">
+</head>
+<body>
+
+    {# Main Container Content#}
+    {% block content %}
+    {% endblock %}
+    {# End of Main Container Content   #}
+
+    {#  Build and Config js  #}
+    <script src="{% static 'assets/vendor/jquery/dist/jquery.min.js'%}"></script>
+    <script src="{% static 'assets/vendor/popper.js/dist/umd/popper.min.js'%}"></script>
+    <script src="{% static 'assets/vendor/bootstrap/dist/js/bootstrap.js'%}"></script>
+    <script src="{% static 'assets/vendor/PACE/pace.min.js'%}"></script>
+    <script src="{% static 'assets/vendor/perfect-scrollbar/js/perfect-scrollbar.jquery.js'%}"></script>
+    <script src="{% static 'assets/vendor/d3/d3.min.js'%}"></script>
+    <script src="{% static 'assets/js/app.js'%}"></script>
+    <script src="{% static 'assets/js/configurator.js'%}"></script>
+    {#  End of Build and Config js  #}
+
+</body>
+</html>

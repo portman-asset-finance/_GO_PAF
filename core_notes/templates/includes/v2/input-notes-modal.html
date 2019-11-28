@@ -1,0 +1,47 @@
+{% load dashboard_extras %}
+<div class="form">
+    <div class="notes-input-error alert alert-danger" style="display:none;"></div>
+    <div class="alert alert-info" id="changes-not-saved-message" style="display: none;">
+        Please be aware your changes have not yet been saved.
+    </div>
+    <form class="form-horizontal" id="submit-note-form">
+        <div class="form-group">
+            <label class="control-label">Action/Type</label>
+            <select class="form-control" id="submit-note-type" name="type">
+                {% for type in note_types %}
+                    <option value="{{ type }}">{{ type }}</option>
+                {% endfor %}
+            </select>
+            <input type="text" id="id-pinned-type" name="type" value="Pinned Note" style="display: none;" class="form-control" disabled readonly>
+        </div>
+        <div class="form-group">
+            <label class="control-label">Note</label>
+            <textarea rows="4" class="form-control" placeholder="Enter note here..." id="submit-note-entry" name="entry"></textarea>
+        </div>
+        <div class="form-group" hidden>
+            <div class="row">
+                <div class="col-sm-6">
+                    <label class="control-label">Follow up date</label>
+                    <input type="date" class="form-control" name="follow_up_date" id="follow_up_date">
+                </div>
+                <div class="col-sm-6">
+                    <label class="control-label">Follow up time</label>
+                    <input type="time" class="form-control" name="follow_up_time" id="follow_up_time">
+                </div>
+            </div>
+        </div>
+        {% if not request.user|has_group:"GO_ViewOnly_Files" %}
+        <div class="form-group" hidden>
+            <label class="control-label">Files</label><br>
+            <input type="file" multiple="multiple" name="files">
+        </div>
+        {% endif %}
+        <input type="hidden" name="follow_up" id="follow_up">
+    </form>
+    <button class="btn btn-success btn-labeled float-right" id="submit-note">
+        <span class="btn-label">
+            <i class="fa fa-thumbs-o-up"></i>
+        </span>
+        Save
+    </button>
+</div>

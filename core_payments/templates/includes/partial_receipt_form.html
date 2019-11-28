@@ -1,0 +1,87 @@
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+<div class="card">
+    <div class="card-body">
+{#    SUMMARY ARREARS #}
+        <div class="row">
+            <div class="col-sm-2">
+                <div class="form-group text-right form-group-summary-bottom">
+                    <label class="control-label">&nbsp;</label>
+                    <div class="input-group">
+                        <p class="form-control-plaintext"><b>DRAWDOWN TOTAL</b></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right form-group-summary-bottom">
+                    <label class="control-label">Arrears</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text arrears-active-border-color arrears-active-font-color">£</span>
+                        </div>
+                        <input id="arrears_total_arrears" type="text" readonly name="arrears_total_arrears"
+                               class="form-control arrears_money arrears-active-border-color
+                               arrears-active-font-color arrears-money-style"
+                               placeholder="Total Value">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right hide-inputbtns form-group-summary-bottom">
+                    <label class="control-label">Collected</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text collected-active-border-color collected-active-font-color">£</span>
+                        </div>
+                        <input id="arrears_total_collected" name="arrears_total_collected" type="text"
+                               class="form-control arrears_money arrears-money-style
+                               collected-active-border-color collected-active-font-color"
+                               placeholder="Enter Value" value="0.00">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right form-group-summary-bottom">
+                    <label class="control-label">Adjustment</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text adjustment-active-border-color adjustment-active-font-color">£</span>
+                        </div>
+                        <input id="arrears_total_adjustment" name="arrears_total_adjustment" type="text" readonly
+                               class="form-control arrears_money arrears-money-style
+                               adjustment-active-border-color adjustment-active-font-color"
+                               placeholder="Total Value" value="0.00">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right form-group-summary-bottom">
+                    <label class="control-label">Balance</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text balance-active-border-color balance-active-font-color">£</span>
+                        </div>
+                        <input id="arrears_total_balance" name="arrears_total_balance" type="text" readonly
+                               class="form-control arrears_money arrears-money-style
+                               balance-active-border-color balance-active-font-color"
+                               placeholder="Total Value" value="0.00">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group arrears-detail-margin-bottom">
+                    <label class="control-label"></label>
+                    <div class="input-group">
+                        <div class="m-t-10">
+                            <a id="btn-collect-all" class="btn btn-icon btn-outline btn-success m-b-20" href="javascript:void(0)"
+                               title="WorldPay Collection">
+                             <i class="fa fa-credit-card-alt"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

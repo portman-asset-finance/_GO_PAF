@@ -1,0 +1,25 @@
+{% for editor in editor_list_qs %}
+  <tr>
+    <td>{{ editor.agreement_number }}</td>
+    <td>{{ editor.get_editor_given_display }}</td>
+    <td>{{ editor.editor_date|date:'d/m/Y' }}</td>
+    <td>{{ editor.secondary_date|date:'d/m/Y' }}</td>
+    <td>
+      <button type="button"
+              class="btn btn-warning btn-sm js-update-editor"
+              data-url="{% url 'core_agreement_editor:editor_update' editor.id %}">
+              <span class="mdi mdi-table-edit"></span> Edit
+      </button>
+        <button type="button"
+              class="btn btn-danger btn-sm js-delete-editor"
+              data-url="{% url 'core_agreement_editor:editor_delete' editor.id %}">
+          <span class="mdi mdi-delete"></span> Delete
+      </button>
+    </td>
+  </tr>
+{% empty %}
+  <tr>
+    <td colspan="7" class="text-center">No Editors</td>
+  </tr>
+{% endfor %}
+

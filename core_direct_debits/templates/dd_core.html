@@ -1,0 +1,85 @@
+{% load staticfiles %}
+
+<!-- Modal for list of direct debits -->
+<div class="modal fade" id="dd-list-modal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="title">Direct Debit History <span class="id-manual-payment-information"></span></h2>
+                <button class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger" id="id-error-message" style="display: none;"></div>
+                <button class="pull-right btn btn-primary btn-sm js-create-dd-form">
+                    <i class="fa fa-plus"></i>
+                </button>
+                <table class="table"></table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal to create new direct debits -->
+<div class="modal fade" id="dd-new-modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="title">Create New Direct Debit <span class="id-manual-payment-information"></span></h2>
+                <button class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body"></div>
+        </div>
+    </div>
+</div>
+
+{% block javascript %}
+
+    <script src="{% static 'core_direct_debits.js' %}"></script>
+
+    <script type="text/javascript">
+
+        $(function() {
+
+            var clicked = false ;
+            $("#dd-list-modal").on("click", "[data-revoke]", function() {
+
+                if (clicked) {
+                    return ;
+                }
+
+                clicked = true ;
+
+                // Disabled All Buttons.
+                $("#dd-list-modal button").attr("disabled", "disabled");
+
+                // Make an AJAX request.
+                $.ajax({
+                    method: 'POST',
+                    url: $(this).attr("data-revoke"),
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                    },
+                    success: function(data) {
+                        if (data.error) {
+                            alert(data.error) ;
+                        }
+                        if (data.success) {
+                            $("[data-manage-ddi='" + data.agreement_id + "']").trigger("click") ;
+                        }
+                        clicked = false ;
+                        $("#dd-list-modal button").attr("disabled", false);
+
+                    },
+                    error: function(data) {
+                        alert(JSON.stringify(data));
+                        clicked = false ;
+                        $("#dd-list-modal button").attr("disabled", "false");
+
+                    }
+                });
+
+            });
+        });
+    </script>
+
+{% endblock %}

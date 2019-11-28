@@ -1,0 +1,61 @@
+{% extends 'dashboard_base.html' %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+{% load widget_tweaks %}
+{% block metadescription %}
+
+{% endblock %}
+{% block title %}
+
+{% endblock %}
+{% block page-css %}
+{% endblock %}
+{% block page-js %}
+  <script src="{% static 'static_core_agreement_notice_template/js/notices.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+
+    <div class="page-header">
+        <h2 class="header-title" style="color: #8dabc4">NOTICE MANAGEMENT FOR {{ notice_detail.agreementnumber }}</h2>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <!-- BUTTON TO TRIGGER THE ACTION -->
+          <p>
+            <button type="button" class="btn btn-success js-create-notice" data-url="{% url 'core_agreement_notice:notice_create' notice_detail.agreementnumber %}">
+              <span class="mdi mdi-open-in-new"></span>
+              Give Notice
+            </button>
+          </p>
+
+          <table class="table table-hover table-sm border" id="notice-table">
+            <thead class="thead-light">
+              <tr>
+                <th>Agreement Number</th>
+                <th>Given Notice</th>
+                <th>Notice Date</th>
+                <th>1st Secondary</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% include 'includes/partial_notice_list.html' %}
+            </tbody>
+          </table>
+
+          <!-- THE MODAL WE WILL BE USING -->
+          <div class="modal fade" id="modal-notice">
+            <div class="modal-dialog">
+              <div class="modal-content">
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+    </div>
+
+{% endblock %}
+

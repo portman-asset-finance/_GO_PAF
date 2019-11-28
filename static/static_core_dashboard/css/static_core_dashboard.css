@@ -1,0 +1,92 @@
+.go_sticky_header {
+  position: -webkit-sticky;
+  position: fixed;
+  background-color: #f7fbff;
+  top: 60px;
+  padding-top: 30px;
+  padding-bottom: 20px;
+  padding-right: 1735px;
+  padding-left: 153px;
+  left: 102px;
+  z-index: 3;
+  display:inline;
+  width: 71px;
+  overflow: hidden;
+  white-space: nowrap;
+  border-bottom: none;
+  margin-left: 30px;
+}
+
+.go_sticky_navbar {
+  position: -webkit-sticky;
+  position: fixed;
+  top: 154px;
+  left: 280px;
+  z-index: 3;
+  display:inline;
+  width: 1593px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.go_sticky_buttons {
+  position: -webkit-sticky;
+  position: fixed;
+  top: 236px;
+  left: 306px;
+  z-index: 3;
+  width: 1541px;
+  overflow: hidden;
+  white-space: nowrap;
+  border-bottom: none;
+}
+.go_sticky_table_header {
+  position: -webkit-sticky;
+  position: fixed;
+  top: 342px;
+  left: 277px;
+  z-index: 3;
+  display:inline;
+  width: 1312px;
+}
+
+.go_card_navbar { position:  relative; z-index: 3; background-color: #ffffff; margin-bottom: 30px; border: 1px solid #e9eaec; border-bottom: none;  border-radius: 0px; transition: all 0.3s ease-in-out; -webkit-transition: all 0.3s ease-in-out; -moz-transition: all 0.3s ease-in-out; -o-transition: all 0.3s ease-in-out; -ms-transition: all 0.3s ease-in-out; }
+
+.go_card-header { position: relative; z-index: 4; width: 1282px; background-color: #ffffff;  margin-left: 30px; padding-left: 40px; margin-bottom: 50px;  margin-right: 30px; padding-right: 40px; transition: all 0.3s ease-in-out; -webkit-transition: all 0.3s ease-in-out; -moz-transition: all 0.3s ease-in-out; -o-transition: all 0.3s ease-in-out; -ms-transition: all 0.3s ease-in-out; }
+
+.inline {
+    border: 1px solid red;
+    margin:10px;
+    float:left;
+    margin :10px;
+}
+
+.menuhover:hover {
+    color: #24d5d8 !important;
+}
+
+#progressBar {
+    width: 90%;
+    margin: 10px auto;
+    height: 22px;
+    background-color: #334a65;
+}
+
+#progressBar div {
+    height: 100%;
+    text-align: right;
+    padding: 5px 10px;
+    line-height: 22px; /* same as #progressBar height if we want text middle aligned */
+    width: 0;
+    background-color: #2ACFD2;
+    box-sizing: border-box;
+}
+
+#myBar {
+    width: 10%;
+    margin-top: 10px;
+    height: 30px;
+    background-color: #2acfd2;
+    text-align: center; /* To center it horizontally (if you want) */
+    line-height: 30px; /* To center it vertically */
+    color: white;
+}

@@ -1,0 +1,835 @@
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+<script src="{% static 'static_core_arrears/js/partial_arrear_form.js' %}"></script>
+    <div class="row border top p-t-10 p-b-10">
+            <div class="col-md-3">
+                <div class="card m-b-0">
+                    <div class="card-body">
+                        <span class="status info"></span>
+                        <span class="m-b-10 font-size-14 m-l-5">Billing to Date</span>
+                        <div class="float-right">
+                            <b class=" font-size-14 text-dark">{{ agreement_billing_totals_val|floatformat:2|intcomma }}</b>
+                            <span>GBP</span>
+                        </div>
+                        <div class="progress progress-sm m-t-14 m-b-0">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: {{ agreement_billing_to_date_percent }}%" aria-valuenow="{{ agreement_billing_to_date_val }}" aria-valuemin="0" aria-valuemax="{{ agreement_billing_totals_val }}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card m-b-0">
+                    <div class="card-body">
+                        <span class="status danger"></span>
+                        <span class="m-b-10 font-size-14 m-l-5">Current Arrears</span>
+                        <div class="float-right">
+                            <b class=" font-size-14 text-dark"><span id="widget_agreement_arrears_total" data-value="{{ total_agreement_arrears_value }}">{{ total_agreement_arrears_value|floatformat:2|intcomma }}</span></b>
+                            <span>GBP</span>
+                        </div>
+                        <div class="progress progress-sm m-t-14 m-b-0">
+                            <div class="progress-bar bg-gradient-danger" role="progressbar" style="width: {{ agreement_arrears_percent }}%" aria-valuenow="{{ total_agreement_arrears_value }}" aria-valuemin="0" aria-valuemax="{{ agreement_billing_totals_val }}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card m-b-0">
+                    <div class="card-body">
+                        <span class="status primary"></span>
+                        <span class="m-b-10 font-size-14 m-l-5">Unallocated Receipts</span>
+                        <div class="float-right" >
+                            <b class="font-size-14 text-dark"><span id="widget_unallocated_arrears_total" data-value="{{ unallocated_receipts_total_val }}">{{ unallocated_receipts_total_val|floatformat:2|intcomma }}</span></b>
+                            <span>GBP </span><span>
+                        </span>
+                        </div>
+                        <div class="progress progress-sm m-t-14 m-b-0">
+                            <div class="progress-bar bg-gradient-primary" role="progressbar" style="width: {{ unallocated_receipts_percent }}%" aria-valuenow="{{ unallocated_receipts_total_val }}" aria-valuemin="0" aria-valuemax="{{ agreement_billing_totals_val }}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-1 float-left">
+                <button id="record-payment-receipt" type="button" data-url="{% url 'core_payments:modal_record_payment' agreement_detail.agreementnumber %}"
+                        style="margin-bottom: 3px !important; width:180px !important;"
+                        class="btn btn-outline btn-success" data-agreement-id="{{ agreement_detail.agreementnumber }}">RECORD RECEIPT</button>
+
+                <button id="enter-card-details" type="button" class="btn btn-outline btn-success" data-agreement-id="{{ agreement_detail.agreementnumber }}"
+                        data-url="{% url 'core_payments:payment_receipt_modal' agreement_detail.agreementnumber %}" style="width:180px !important;" disabled>TAKE CC PAYMENT</button>
+            </div>
+        </div>
+<div class="card">
+    <div class="card-body" style="border: 1px solid rgba(141, 171, 196, 0.3);">
+{#    SUMMARY ARREARS #}
+        <div class="row">
+            <div class="col-sm-2">
+                <div class="form-group text-right form-group-summary-bottom">
+                    <label class="control-label">&nbsp;</label>
+                    <div class="input-group">
+                        <p class="form-control-plaintext"><b>DRAWDOWN TOTAL</b></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right form-group-summary-bottom">
+                    <label class="control-label">Arrears</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text arrears-active-border-color arrears-active-font-color">£</span>
+                        </div>
+                        <input id="arrears_total_arrears" type="text" name="arrears_total_arrears"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control arrears-active-border-color arrears-active-font-color arrears-money-style"
+                               placeholder="Total Value" readonly >
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right hide-inputbtns form-group-summary-bottom">
+                    <label class="control-label">Collected</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text collected-active-border-color collected-active-font-color">£</span>
+                        </div>
+                        <input id="arrears_total_collected" name="arrears_total_collected" type="text"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control collected-active-border-color collected-active-font-color arrears-money-style"
+                               placeholder="Enter Value" value="0.00">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right form-group-summary-bottom">
+                    <label class="control-label">Adjustment</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text adjustment-active-border-color adjustment-active-font-color">£</span>
+                        </div>
+                        <input id="arrears_total_adjustment" name="arrears_total_adjustment" type="text" readonly
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control adjustment-active-border-color adjustment-active-font-color arrears-money-style"
+                               placeholder="Total Value" value="0.00">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right form-group-summary-bottom">
+                    <label class="control-label">Balance</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text balance-active-border-color balance-active-font-color">£</span>
+                        </div>
+                        <input id="arrears_total_balance" name="arrears_total_balance" type="text" readonly
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control balance-active-border-color balance-active-font-color arrears-money-style"
+                               placeholder="Total Value" value="0.00">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group arrears-detail-margin-bottom">
+                    <label class="control-label"></label>
+                    <div class="input-group">
+                        <div class="m-t-10">
+                            <a id="btn-collect-all" class="btn btn-icon btn-success m-b-20" href="javascript:void(0)"
+                               title="Collect ALL">
+                             <i class="mdi mdi-credit-card-plus"></i>
+                            </a>
+                            <a id="btn-refresh-all" class="btn btn-icon btn-warning m-b-20" href="javascript:void(0)"
+                               title="Reset ALL">
+                             <i class="mdi mdi-refresh"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+{#    RENTAL ARREARS #}
+        <div class="row">
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom ">
+                    <div class="input-group">
+                        <p class="form-control-plaintext form-control-sm"><span><i>{{ return_description|upper  }}</i></span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="arrear_cur_1" class="input-group-text">£</span>
+                        </div>
+                        <input id="arrear_val_1" type="text" readonly name="arrear_val_1"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control form-control-sm arrears-money-style"
+                               placeholder="0.00" value="{{ rental_arrears_value|floatformat:2|intcomma }}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right hide-inputbtns arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="collected_cur_1" class="input-group-text">£</span>
+                        </div>
+                        <input id="collected_val_1" type="text" readonly name="collected_val_1"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control form-control-sm check-for-change arrears-money-style"
+                               placeholder="0.00" value="{{ rental_collected_value|floatformat:2|intcomma }}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group" hidden>
+                        <div class="input-group-prepend">
+                            <span id="adjustment_cur_1" class="input-group-text">£</span>
+                        </div>
+                        <input id="adjustment_val_1" type="text" readonly name="adjustment_val_1"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control form-control-sm check-for-change arrears-money-style"
+                               placeholder="0.00" value="{{ rental_adjustment_value|floatformat:2|intcomma }}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="balance_cur_1" class="input-group-text">£</span>
+                        </div>
+                        <input id="balance_val_1" type="text" readonly name="balance_val_1"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control form-control-sm arrears-money-style"
+                               placeholder="0.00" value="{{ rental_balance_value|floatformat:2|intcomma }}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group arrears-detail-margin-bottom">
+                    <div id="switchdiv1" class="input-group switchdiv">
+                        <div class="switch m-t-10">
+                            <input type="checkbox" class="switchbutton" id="switch1">
+                            <label for="switch1"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+{#    BAMF ARREARS #}
+        <div class="row">
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <p class="form-control-plaintext form-control-sm "><span><i>BAMF</i></span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="arrear_cur_2" class="input-group-text">£</span>
+                        </div>
+                        <input id="arrear_val_2" type="text" readonly name="arrear_val_2"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control form-control-sm arrears-money-style"
+                               placeholder="0.00" value="{{ bamf_arrears_value|floatformat:2|intcomma }}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right hide-inputbtns arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="collected_cur_2" class="input-group-text">£</span>
+                        </div>
+                        <input id="collected_val_2" type="text" readonly name="collected_val_2"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control form-control-sm check-for-change arrears-money-style"
+                               placeholder="0.00" value="{{ bamf_collected_value|floatformat:2|intcomma }}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="adjustment_cur_2" class="input-group-text">£</span>
+                        </div>
+                        <input id="adjustment_val_2" type="text" readonly name="adjustment_val_2"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control form-control-sm check-for-change arrears-money-style"
+                               placeholder="0.00" value="{{ bamf_adjustment_value|floatformat:2|intcomma }}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="balance_cur_2" class="input-group-text">£</span>
+                        </div>
+                        <input id="balance_val_2" type="text" readonly name="balance_val_2"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control form-control-sm arrears-money-style"
+                               placeholder="0.00" value="{{ bamf_balance_value|floatformat:2|intcomma }}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group arrears-detail-margin-bottom">
+                    <div id="switchdiv2" class="input-group switchdiv">
+                        <div class="switch m-t-10">
+                            <input type="checkbox" class="switchbutton" id="switch2">
+                            <label for="switch2"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+{#    RISK FEE ARREARS #}
+        <div class="row">
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <p class="form-control-plaintext form-control-sm"><span><i>RISK FEE</i></span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="arrear_cur_3" class="input-group-text">£</span>
+                        </div>
+                        <input id="arrear_val_3" type="text" readonly name="arrear_val_3"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control form-control-sm arrears-money-style"
+                               placeholder="0.00" value="{{ risk_arrears_value|floatformat:2|intcomma }}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right hide-inputbtns arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="collected_cur_3" class="input-group-text">£</span>
+                        </div>
+                        <input id="collected_val_3" type="text" readonly name="collected_val_3"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control form-control-sm check-for-change arrears-money-style"
+                               placeholder="0.00" value="{{ risk_collected_value|floatformat:2|intcomma }}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="adjustment_cur_3" class="input-group-text">£</span>
+                        </div>
+                        <input id="adjustment_val_3" type="text" readonly name="adjustment_val_3"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control form-control-sm check-for-change arrears-money-style"
+                               placeholder="0.00" value="{{ risk_adjustment_value|floatformat:2|intcomma }}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="balance_cur_3" class="input-group-text">£</span>
+                        </div>
+                        <input id="balance_val_3" type="text" readonly name="balance_val_3"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control form-control-sm arrears-money-style"
+                               placeholder="0.00" value="{{ risk_balance_value|floatformat:2|intcomma }}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group arrears-detail-margin-bottom">
+                    <div id="switchdiv3" class="input-group  switchdiv">
+                        <div class="switch m-t-10">
+                            <input type="checkbox" class="switchbutton" id="switch3">
+                            <label for="switch3"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+{#    BOUNCE CHARGES #}
+        <div class="row">
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <p class="form-control-plaintext form-control-sm"><span><i>BOUNCE FEE</i></span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="arrear_cur_4" class="input-group-text">£</span>
+                        </div>
+                        <input id="arrear_val_4" type="text" readonly name="arrear_val_4"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control form-control-sm arrears-money-style"
+                               placeholder="0.00" value="{{ bounce_arrears_value|floatformat:2|intcomma }}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right hide-inputbtns arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="collected_cur_4" class="input-group-text">£</span>
+                        </div>
+                        <input id="collected_val_4" type="text" readonly name="collected_val_4"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control form-control-sm check-for-change arrears-money-style"
+                               placeholder="0.00" value="{{ bounce_collected_value|floatformat:2|intcomma }}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="adjustment_cur_4" class="input-group-text">£</span>
+                        </div>
+                        <input id="adjustment_val_4" type="text" readonly name="adjustment_val_4"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control form-control-sm check-for-change arrears-money-style"
+                               placeholder="0.00" value="{{ bounce_adjustment_value|floatformat:2|intcomma }}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="balance_cur_4" class="input-group-text">£</span>
+                        </div>
+                        <input id="balance_val_4" type="text" readonly name="balance_val_4"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control form-control-sm arrears-money-style"
+                               placeholder="0.00" value="{{ bounce_balance_value|floatformat:2|intcomma }}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group arrears-detail-margin-bottom">
+                    <div id="switchdiv4" class="input-group  switchdiv">
+                        <div class="switch m-t-10">
+                            <input type="checkbox" class="switchbutton" id="switch4">
+                            <label for="switch4"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+{#    LETTER CHARGE#}
+        <div class="row">
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <p class="form-control-plaintext form-control-sm"><span><i>LETTER FEE</i></span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="arrear_cur_5" class="input-group-text">£</span>
+                        </div>
+                        <input id="arrear_val_5" type="text" readonly name="arrear_val_5"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control form-control-sm arrears-money-style"
+                               placeholder="0.00" value="{{ letter_arrears_value|floatformat:2|intcomma }}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right hide-inputbtns arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="collected_cur_5" class="input-group-text">£</span>
+                        </div>
+                        <input id="collected_val_5" type="text" readonly name="collected_val_5"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control form-control-sm check-for-change arrears-money-style"
+                               placeholder="0.00" value="{{ letter_collected_value|floatformat:2|intcomma }}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="adjustment_cur_5" class="input-group-text">£</span>
+                        </div>
+                        <input id="adjustment_val_5" type="text" readonly name="adjustment_val_5"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control form-control-sm check-for-change arrears-money-style"
+                               placeholder="0.00" value="{{ letter_adjustment_value|floatformat:2|intcomma }}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="balance_cur_5" class="input-group-text">£</span>
+                        </div>
+                        <input id="balance_val_5" type="text" readonly name="balance_val_5"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control form-control-sm arrears-money-style"
+                               placeholder="0.00" value="{{ letter_balance_value|floatformat:2|intcomma }}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group arrears-detail-margin-bottom">
+                    <div id="switchdiv5" class="input-group  switchdiv">
+                        <div class="switch m-t-10">
+                            <input type="checkbox" class="switchbutton" id="switch5">
+                            <label for="switch5"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+{#    VISIT FEE #}
+        <div class="row">
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <p class="form-control-plaintext form-control-sm"><span><i>VISIT FEE</i></span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="arrear_cur_6" class="input-group-text">£</span>
+                        </div>
+                        <input id="arrear_val_6" type="text" readonly name="arrear_val_6"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control form-control-sm arrears-money-style check-for-change"
+                               placeholder="0.00" value="{{ visit_arrears_value|floatformat:2|intcomma }}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right hide-inputbtns arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="collected_cur_6" class="input-group-text">£</span>
+                        </div>
+                        <input id="collected_val_6" type="text" readonly name="collected_val_6"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control form-control-sm check-for-change arrears-money-style"
+                               placeholder="0.00" value="{{ visit_collected_value|floatformat:2|intcomma }}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="adjustment_cur_6" class="input-group-text">£</span>
+                        </div>
+                        <input id="adjustment_val_6" type="text" readonly name="adjustment_val_6"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control form-control-sm check-for-change arrears-money-style"
+                               placeholder="0.00" value="{{ visit_adjustment_value|floatformat:2|intcomma }}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span id="balance_cur_6" class="input-group-text">£</span>
+                        </div>
+                        <input id="balance_val_6" type="text" readonly name="balance_val_6"
+                               onchange="formatCurrency(this)" onkeypress="return isCurrency(event)"
+                               class="form-control form-control-sm arrears-money-style"
+                               placeholder="0.00" value="{{ visit_balance_value|floatformat:2|intcomma }}">
+                    </div>
+                </div>
+            </div>
+{#            <div class="col-sm-2">#}
+{#                <div class="form-group arrears-detail-margin-bottom">#}
+{#                    <div id="switchdiv6" class="input-group switchdiv">#}
+{#                        <div class="switch m-t-10">#}
+{#                            <input type="checkbox" class="switchbutton" id="switch6">#}
+{#                            <label for="switch6"></label>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+        </div>
+{# COLLECTIONS AGENT #}
+        <div class="row m-t-15">
+            <div class="col-sm-2">
+                <div class="form-group text-right arrears-detail-margin-bottom">
+                    <div class="input-group">
+                        <p class="form-control-plaintext"><b>COLLECTION AGENT</b></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+            <div class="input-group">
+                <select id="target_agent" name="target_agent"
+                        style="border-color: #2acfd2 !important; color: #2acfd2 !important;"
+                        class="form-control" type="text">
+                        {% for agent in collection_agents %}
+                            <option value="{{ agent.id }}" {% if agent.id == current_agent %}selected{% endif %}>
+                                {{ agent.username }}
+                            </option>
+                        {% endfor %}
+                </select>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{#<script src="{% static 'static_core_payments/js/payments.js' %}"></script>#}
+<script type="text/javascript">
+
+$(function() {
+
+    var amount;
+    var agreement_id;
+    var floatvalue;
+    var target_account;
+
+    {# Variables to control multiple submission error - handles user double clicking/hitting enter multiple times #}
+    var proceed = true;
+    var difference = 0;
+    var today = new Date();
+    var hours_in_seconds_01 = (today.getHours())*3600;
+    var minutes_in_seconds_01 = (today.getMinutes()*60);
+    var seconds_in_seconds_01 = today.getSeconds();
+    var seconds_01 = hours_in_seconds_01 + minutes_in_seconds_01 + seconds_in_seconds_01;
+    var hours_in_seconds_02 = (today.getHours())*3600;
+    var minutes_in_seconds_02 = (today.getMinutes()*60);
+    var seconds_in_seconds_02 = today.getSeconds();
+    var seconds_02 = hours_in_seconds_01 + minutes_in_seconds_02 + seconds_in_seconds_02;
+
+    {# Handle close and refresh underlying screen #}
+    $("#btn-dismiss-collection-modal,#btn-dismiss-modal").click(function() {
+        location.href = "{% url 'core_arrears:arrears_by_arrears_summary_view' agreement_detail.agreementnumber %}";
+    });
+
+    $('#payment_target_account').change(function() {
+        if ($('#payment_target_account').val().substring(0,2) == 'DR') {
+                $('.payment-detail-group').removeClass('cr-payment-type');
+                $('.payment-detail-group').addClass('dr-payment-type');
+        } else {
+                $('.payment-detail-group').addClass('cr-payment-type');
+                $('.payment-detail-group').removeClass('dr-payment-type');
+        }
+    });
+
+    {#  Handle click event on button requesting record payment modal #}
+    $("#record-payment-receipt").click(function() {
+
+        {#agreement_id = $(this).attr("data-agreement-id");#}
+        $("#record-payment-val").val($("#widget_agreement_arrears_total").html());
+        $('#record-payment-error').html('');
+
+        {# protect modal nehind #}
+        paymentSectionActive();
+
+        {# display card payment modal on top #}
+        $("#modal-record-payment").modal({backdrop:'static'});
+    });
+
+    {# Dismiss/Cancel requesting record payment modal and reinstate underlying modal#}
+    $("#btn-dismiss-payment-modal").click(function() {
+        paymentSectionInactive();
+    });
+
+    $("#btn-confirm-payment").click(function() {
+
+        if ($('#payment_target_account').val().substring(0,2) == 'DR') {
+            wip_payment_val = (initNaN(parseFloat($('#record-payment-val').val().replace(',', '')))) * 100;
+            wip_unallocated = (initNaN(parseFloat($('#widget_unallocated_arrears_total').html().replace(',', '')))) * 100;
+
+            if (wip_payment_val > wip_unallocated) {
+                $('#payment-error').html('Cancelled value cannot be greater than Unallocated value')
+            } else {
+                $('#payment-error').html('');
+                recordPaymentDetail();
+            }
+        }
+        else {
+            recordPaymentDetail();
+        }
+    });
+
+
+
+    function recordPaymentDetail(obj) {
+
+        {# Get the requested value from the form #}
+        amount = (initNaN(parseFloat($('#record-payment-val').val().replace(',',''))))*100;
+        target_account = $('#payment_target_account').val();
+        agreement_id = '{{ agreement_detail.agreementnumber }}';
+
+        var data = {};
+        data = {
+            amount: amount,
+            agreement_id: agreement_id,
+            target_account: target_account,
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        };
+
+        if (amount > 0) {
+
+            {# submit ajax request #}
+            $.ajax({
+                method: 'POST',
+                url: '{% url 'core_payments:record_payment' %}',
+                data: data,
+                dataType: 'json',
+                success: function(data) {
+                    if(data.success) {
+                        floatvalue = parseFloat(data.unallocated_value);
+                        $("#modal-record-payment").modal('hide');
+                        $('#widget_unallocated_arrears_total').data('value', floatvalue);
+                        paymentSectionInactive();
+                    } else {
+                        var msg = data.message;
+                        $('#payment-error').html("<div>" + msg + "</div>");
+                    }
+                },
+                error: function(data) {
+                    $('#payment-error').html(JSON.stringify(data));
+                }
+            })
+        }
+        else {
+            $('#payment-error').html('Payment Value must be greater than 0');
+        }
+
+    }
+
+    {#  Handle click event on button requesting card payment modal #}
+    $("#enter-card-details").click(function() {
+
+        agreement_id = $(this).attr("data-agreement-id");
+        $("#card_receipt_val_1").val($("#widget_agreement_arrears_total").html());
+        $('#card-error').html('');
+
+        {# protect modal nehind #}
+        paymentSectionActive();
+
+        {# display card payment modal on top #}
+        $("#card-payment-modal").modal({backdrop:'static'});
+    });
+
+    {# Dismiss/Cancel Card Payment modal and reinstate underlying modal#}
+    $("#btn-dismiss-card-modal").click(function() {
+        paymentSectionInactive();
+    });
+
+    {# Worldpay Iframe #}
+    Worldpay.useTemplateForm({
+
+        'clientKey':'T_C_1eda086d-d536-4828-b1a2-48eae58249d9',
+        'form':'paymentForm',
+        'saveButton':false,
+        'paymentSection':'paymentSection',
+        'display':'inline',
+        'reusable':false,
+        'callback': function(obj) {processWorldPay(obj)}
+
+    });
+
+    {# Callback from Worldpay Iframe - validate, send payment txn to WorldPay,  and update GO database #}
+    function processWorldPay(obj) {
+
+        {# Initialise multiple submission check - handles user double clicking/hitting enter multiple times #}
+        proceed = true;
+        today = new Date();
+        hours_in_seconds_02 = (today.getHours())*3600;
+        minutes_in_seconds_02 = (today.getMinutes()*60);
+        seconds_in_seconds_02 = today.getSeconds();
+        seconds_02 = hours_in_seconds_01 + minutes_in_seconds_02 + seconds_in_seconds_02;
+
+        {# if elapsed time between last submission and this is < 2 seconds - stop submission #}
+        difference = (seconds_02 - seconds_01);
+        if (difference < 2) {
+            proceed = false;
+        }
+
+        {# Save last submission time #}
+        seconds_01 = seconds_02;
+
+        {# if multiple submission captured then stop and send message #}
+        if (proceed === false) {
+            $('#card-error').html('Card Processing in progress - please wait 5 seconds.');
+        } else {
+        {# Not multiple submission so process normally #}
+        if (obj && obj.token) {
+
+            {# Get the requested value from the form #}
+            amount = (initNaN(parseFloat($('#card_receipt_val_1').val().replace(',',''))))*100;
+            agreement_id = '{{ agreement_detail.agreementnumber }}';
+
+            {# Initialise error div #}
+            $('#card-error').html('');
+
+            {# Initialise data #}
+            var data = {};
+            var data = {
+                amount: amount,
+                agreement_id: agreement_id,
+                token: obj.token,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            };
+
+            {# Only proceed if the value requested > 0 #}
+            if (amount > 0) {
+
+                {# submit ajax request #}
+                $.ajax({
+                    method: 'POST',
+                    url: '{% url 'core_app_worldpay:worldpay_charge' %}',
+                    data: data,
+                    dataType: 'json',
+                    success: function(data) {
+                        if(data.success) {
+                            floatvalue = parseFloat(data.unallocated_value);
+                            $("#card-payment-modal").modal('hide');
+                            $("#card-payment-modal2").modal('hide');
+                            $('#widget_unallocated_arrears_total').data('value', floatvalue);
+                            paymentSectionInactive();
+                        } else {
+                            var msg = data.message;
+                            $('#card-error').html("<div>TEST1</div><div>" + msg + "</div>");
+                        }
+                    },
+                    error: function(data) {
+                        $('#card-error').html("<div>TEST2</div>"+JSON.stringify(data));
+                    }
+                })
+            }
+            else {
+                $('#card-error').html('Receipt Value must be greater than 0');
+            }
+        }}
+    }
+});
+
+</script>

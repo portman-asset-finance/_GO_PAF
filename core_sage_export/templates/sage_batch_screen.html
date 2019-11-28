@@ -1,0 +1,1068 @@
+{% extends 'dashboard_base.html' %}
+
+{% load staticfiles %}
+{% load humanize %}
+
+{% block page-css %}
+    <link rel="stylesheet" href="{% static 'assets/vendor/chartist-js/dist/chartist.min.css' %}">
+    <style type="text/css">
+        .forecast_bounce_info {
+            color: #A7A7A7;
+            display: none;
+        }
+    .cursor-pointer {
+        cursor: pointer;
+    }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+    <div class="page-header">
+        <h2 class="header-title" style="color: #8dabc4">
+            {% if sage_batch_header.status == 'RECORDED' %}
+                VIEW BATCH
+            {% else %}
+                {{ sage_batch_ref}}
+            {% endif %}
+        </h2>
+{#        <h2 class="header-title">#}
+{#            {% if batch_ref %}#}
+{#                {{ batch_ref }}#}
+{#            {% endif %}#}
+{#            for {{ uk_due_date }}#}
+{#        </h2>#}
+        <h2 class="header-title">
+            {% if status == 'OPEN' %}
+                <span class="badge badge-primary">OPEN</span>
+            {% elif status == 'RECEIVED' %}
+                <span class="badge badge-success">RECEIVED</span>
+            {% elif status == 'PROCESSING' %}
+                <span class="badge badge-info">PROCESSING</span>
+            {% else %}
+                <span class="badge badge-danger">{{ status }}</span>
+            {% endif %}
+        </h2>
+        <div class="header-sub-title">
+            <nav class="breadcrumb breadcrumb-dash">
+                <a class="breadcrumb-item text-success" href="{% url 'core_sage_export:view_batches' %}"><i class="ti-list p-r-5"></i>
+                    Accounts Batch History</a>
+{#                    Accounting Batch History</a>#}
+            </nav>
+        </div>
+
+{#        <p><i class="fa fa-clock-o"></i> created on {{ created_on }} &nbsp; <i class="fa fa-user"></i> by user {% if created_by %}{{ created_by }}{% else %}lazybatch{% endif %}</p>#}
+
+    </div>
+
+    <div class="alert alert-danger bold" id="sage_batch_error" style="display: none;"></div>
+
+    {% if success %}
+        <div class="col-sm-12">
+            <div class="alert alert-success">
+                <b>Success:</b> Batch has been ACCEPTED
+            </div>
+        </div>
+    {% endif %}
+
+    {% if remove_success %}
+        <div class="col-sm-12" id="remove-success">
+            <div class="alert alert-success">
+                <b>Success:</b> Transaction has been removed
+            </div>
+        </div>
+    {% endif %}
+
+    {% if error %}
+
+        <div class="col-sm-12">
+            <div class="alert alert-danger">
+                <b>Error:</b> {{ error }}
+            </div>
+        </div>
+
+    {% else %}
+
+        {% if count == 0 %}
+
+            <div class="card">
+                <div class="card-header">
+                    0 transactions found.
+                </div>
+            </div>
+
+        {% else %}
+
+            <div class="card" id="sage_batch_info" style="display: none;">
+                <div class="card-header p-b-20">
+                    <form method="get" class="form-inline" id="id_sage_batch_filter">
+{#                        <span class="m-b-20 m-r-10"><h4 class="text-thin">Filter by: </h4></span>#}
+{#                        {% render_field transactions_for_batch.form.agreementnumber class="form-control m-b-20 m-r-15" placeholder="APEL Number"%}#}
+{#                        <span class="m-b-20 m-r-15"><h5 class="text-thin"> and </h5></span>#}
+{#                       {% render_field transactions_for_batch.form.transcustomercompany class="form-control m-b-20 m-r-15" placeholder="Customer Name"%}#}
+{#                        <span class="m-b-20 m-r-15"><h5 class="text-thin"> and </h5></span>#}
+{#                        {% render_field transactions_for_batch.form.transagreementdefname class="form-control m-b-20 m-r-15" placeholder="Agreement Type"%}#}
+{#                        <span class="m-b-20 m-r-15"><h5 class="text-thin"> and </h5></span>#}
+{#                        {% render_field transactions_for_batch.form.transagreementddstatus class="form-control m-b-20 m-r-15" placeholder="DD Status"%}#}
+{#                        <span class="m-b-20 m-r-15"><h5 class="text-thin"> and </h5></span>#}
+{#                        {% render_field transactions_for_batch.form.transactionsourcedesc class="form-control m-b-20 m-r-15" placeholder="Rental Type"%}#}
+{#                        <span class="m-b-20 m-r-15"><h5 class="text-thin"> and </h5></span>#}
+{#                        <div class="input-group">#}
+{#                            {% render_field dd_list.form.transactiondate type="date" class="form-control m-b-20 m-r-15" autocomplete="off"%}#}
+{#                        </div>#}
+
+                        <input type="text" class="form-control m-b-20 m-r-15" placeholder="Agreement ID..." name="agreementnumber__contains" value="{{ filter.agreementnumber__contains }}" autocomplete="off">
+                        <span class="m-b-20 m-r-10"><h4 class="text-thin">and</h4></span>
+                            <input type="text" class="form-control m-b-20 m-r-15" placeholder="Customer..." name="sage_batch_customercompany__contains" value="{{ filter.sage_batch_customercompany }}" autocomplete="off">
+                        <span class="m-b-20 m-r-10"><h4 class="text-thin">and</h4></span>
+                            <select class="form-control m-b-20 m-r-15" name="sage_batch_agreementdefname">
+                                <option value="">Agreement Type</option>
+                                <option value="Lease Agreement" {% if filter.sage_batch_agreementdefname == 'Lease Agreement' %}selected{% endif %}>Lease Agreement</option>
+                                <option value="Hire Purchase" {% if filter.sage_batch_agreementdefname == 'Hire Purchase' %}selected{% endif %}>Hire Purchase</option>
+                            </select>
+                        <span class="m-b-20 m-r-10"><h4 class="text-thin">and</h4></span>
+                        <div class="input-group">
+                            <input type="date" name="transactiondate" autocomplete="off" class="form-control m-b-20 m-r-15" id="id_transactiondate">
+                        </div>
+                        <span class="m-b-20 m-r-10"><h4 class="text-thin">and</h4></span>
+                        <select class="form-control m-b-20 m-r-15" name="sage_batch_typedesc">
+                            <option value="">Transaction Type</option>
+                            <option value="Own Book" {% if filter.sage_batch_typedesc == 'Own Book' %}selected{% endif %}>Own Book</option>
+                            <option value="Interest" {% if filter.sage_batch_typedesc == 'Interest' %}selected{% endif %}>Interest</option>
+                            <option value="Risk Fees" {% if filter.sage_batch_typedesc == 'Risk Fees' %}selected{% endif %}>Risk Fees</option>
+                            <option value="BAMF" {% if filter.sage_batch_typedesc == 'BAMF' %}selected{% endif %}>BAMF</option>
+                            <option value="Secondary" {% if filter.sage_batch_typedesc == 'Secondary' %}selected{% endif %}>Secondary</option>
+                        </select>
+                        <span class="m-b-20 m-r-10"><h4 class="text-thin">and</h4></span>
+                        <select class="form-control m-b-20 m-r-15" name="transactionsourceid__contains">
+                            <option value="">Source</option>
+                            <option value="GO" {% if filter.transactionsourceid__contains == 'GO' %}selected{% endif %}>GO</option>
+                            <option value="SP" {% if filter.transactionsourceid__contains == 'SP' %}selected{% endif %}>EXTERNAL</option>
+                        </select>
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-icon btn-success m-b-20">
+                            <i class="mdi mdi-magnify"></i>
+                        </button>
+                        {% if filter %}
+                            <a class="btn btn-icon btn-warning m-b-20" href="{%  url 'core_sage_export:view_batch' sage_batch_ref %}">
+                                <i class="mdi mdi-refresh"></i>
+                            </a>
+                        {% endif %}
+                    </form>
+                    <div class="row border top p-t-10">
+                        <div class="col-md-6">
+                            <div class="card m-b-0">
+                                <div class="card-body">
+                                    <div class="media">
+                                        <div class="align-self-center">
+                                            <i class="fa fa-bank font-size-30"></i>
+                                        </div>
+                                        <div class="m-l-20">
+                                            <p class="m-b-0">Total amount</p>
+                                            <h2 class="m-b-0">&pound;<span id="id-total-amount">{{ wip_transactions_for_batch|floatformat:2|intcomma }}</span></h2>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+{#                        <div class="col-md-4">#}
+{#                            <div class="card m-b-0">#}
+{#                                <div class="card-body">#}
+{#                                    <div class="media">#}
+{#                                        <div class="align-self-center">#}
+{#                                            <i class="fa fa-line-chart font-size-30"></i>#}
+{#                                        </div>#}
+{#                                        <div class="m-l-20">#}
+{#                                            <p class="m-b-0">Total count</p>#}
+{#                                            <h2 class="m-b-0">#}
+{#                                                <span id="id-total-count">{{ count }}</span>#}
+{#                                            </h2>#}
+{#                                        </div>#}
+{#                                    </div>#}
+{#                                </div>#}
+{#                            </div>#}
+{#                        </div>#}
+                        <div class="col-md-6">
+                            <div class="card m-b-0">
+                                <div class="card-body">
+                                    <div class="media">
+                                        <div class="align-self-center">
+                                            <i class="fa fa-info font-size-30"></i>
+                                        </div>
+                                        <div class="m-l-20">
+                                            <p class="m-b-0">Batch reference</p>
+                                            <h2 class="m-b-0">
+                                                {{ sage_batch_ref }}
+                                            </h2>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if filter %}
+                        <div class="pull-left">
+                            <p>Number of results: {{ filtered_count }}</p>
+                        </div>
+                    {% endif %}
+                    {% if sage_batch_header.status == 'NOT RECORDED' %}
+                        <div class="pull-right">
+                            <button class="btn btn-primary btn-sm" hidden>
+                                <i class="fa fa-plus"></i> Add Drawdown
+                            </button>
+{#                            <button class="btn btn-success btn-sm submit-batch" data-url="{% url 'core_dd_drawdowns:process_drawdowns' batch_ref %}">#}
+{#                                <i class="fa fa-thumbs-up"></i> Submit Batch#}
+{#                            </button>#}
+                        </div>
+                    {% endif %}
+                    <table class="table table-striped table-bordered table-hover">
+                        <thead>
+                            <th><b>Agreement</b></th>
+                            <th><b>Customer</b></th>
+                            <th><b>Agreement Type</b></th>
+                            <th><b>Transaction Date</b></th>
+                            <th><b>Transaction Type</b></th>
+                            <th class="text-right"><b>Amount</b></th>
+                            <th class="text-center"><b>Source</b></th>
+{#                            <th><b>Sage Batch Detail Ref</b></th>#}
+                            {% if sage_batch_header.status == 'NOT RECORDED' %}
+                                <th style="width:93px">
+
+                                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;<div class="switch d-inline">
+                                        <input type="checkbox" id="hideAllDrawdowns" {% if sage_batch_header.save_the_click %}checked{% else %}unchecked{% endif %}>
+                                        <label for="hideAllDrawdowns"></label>
+                                    </div>
+
+                                </th>
+                                {% if filter %}
+                                    <!--
+                                <div class="checkbox">
+                                    <input id="checkbox1" type="checkbox" id="applyAllCheckbox">
+                                    <label for="checkbox1" id="applyAll"></label>
+                                    <label class="text-danger" id="removeAll" style="display:none;"><i class="fa fa-remove"></i></label>
+                                </div>
+                                    -->
+                                {% endif %}
+                            {% endif %}
+                        </thead>
+                        <tbody>
+                            {% for rec in records %}
+                                <tr data-drawdown-id="{{ rec.id }}" {% if rec.remove == 1 %}style="opacity: 0.65"{% endif %}>
+                                    <td>{{ rec.agreementnumber}}</td>
+                                    <td>{{ rec.sage_batch_customercompany }}</td>
+                                    <td> {{ rec.sage_batch_agreementdefname }}</td>
+                                    <td>{{ rec.transactiondate|date:"d/m/Y" }}</td>
+                                    <td>{{ rec.sage_batch_typedesc }}</td>
+                                    <td class="text-right">{% if rec.sage_batch_netpayment %}
+                                            &pound;{{ rec.sage_batch_netpayment|floatformat:2|intcomma }}
+                                        {% else %}
+                                            <span class="text-danger"></span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center"> {# Source #}
+                                    {% if rec.transactionsourceid == 'GO1' or rec.transactionsourceid == 'GO3' %}
+                                        <span class="badge badge-primary" data-toggle="tooltip" data-placement="right" title data-original-title="GO Application">GO</span>
+                                    {% else %}
+                                        <span class="badge bg-instagram text-white" data-toggle="tooltip" data-placement="right" title data-original-title="External Application">EX</span>
+                                    {% endif %}
+                                    </td>
+{#                                    <td>#}
+{#                                        {% if rec.sort_code and rec.account_number %}#}
+{#                                            {{ rec.sort_code }} / {{ rec.account_number }}#}
+{#                                        {% else %}#}
+{#                                            <span class="text-danger">No Bank Details</span>#}
+{#                                        {% endif %}#}
+{#                                    </td>#}
+{#                                    <td>{{ rec.sage_batch_typedesc }}</td>#}
+{#                                    <td>{{ rec.agreement_phase }}</td>#}
+{#                                    <td>#}
+{#                                        {% if rec.reference %}#}
+{#                                            {% if rec.ddi_status.dd_text_description == 'Active DD' %}#}
+{#                                                <i class="ti-check font-size-12 text-success"></i>#}
+{#                                            {% else %}#}
+{#                                                <i class="ti-close font-size-12 text-danger"></i>#}
+{#                                            {% endif %}#}
+{#                                        {% else %}#}
+{#                                            <span class="badge badge-danger">NO SETUP</span>#}
+{#                                        {% endif %}#}
+{#                                    </td>#}
+                                 {% if sage_batch_header.status == 'NOT RECORDED' %}
+                                    <td>
+                                        <a href="{% url 'dashboard:AgreementEnquiryDetail' rec.agreementnumber %}" class="text-success m-r-15"><i class="ti-layers"></i></a>
+
+                                        <div class="switch d-inline">
+                                            <input type="checkbox" id="hideDrawdown{{ rec.id }}"
+                                                   data-remove-url="{% url 'core_sage_export:split_transaction' rec.id %}"
+                                                    {% if rec.remove %}unchecked{% else %}checked{% endif %}
+                                                   data-readd-url="{% url 'core_sage_export:split_transaction' rec.id %}"
+                                            >
+                                            <label for="hideDrawdown{{ rec.id }}"></label>
+                                        </div>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% if sage_batch_header.status == 'NOT RECORDED' %}
+                    <div class="pull-right">
+                        <button class="btn btn-success btn-sm submit-batch">
+                            <i class="fa fa-thumbs-up"></i> Confirm Batch
+                        </button>
+                        <form method="post" action="" onsubmit="return false;" id="id-submit-batch-form">
+                            {% csrf_token %}
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer border bottom text-center">
+                    <div>
+                        <div class="dataTables_paginate paging_simple_numbers">
+                    <ul class="pagination">
+                        {% if records.has_previous %}
+                            <li class="paginate_button page-item previous">
+                                {% if 'agreementnumber' in request.get_full_path %}
+                                    <a href="{{ request.get_full_path }}&page={{ records.previous_page_number }}" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                                {% else %}
+                                    <a href="?page={{ records.previous_page_number }}" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                                {% endif %}
+                            </li>
+                        {% else %}
+                            <li class="paginate_button page-item previous disabled">
+                                <a href="#" aria-controls="dt-opt" data-dt-idx="0" tabindex="0" class="page-link">Previous</a>
+                            </li>
+                        {% endif %}
+                        {% for i in records.paginator.page_range %}
+                            {% if records.number == i %}
+                                <li class="paginate_button page-item active">
+                                    {% if 'agreementnumber' in request.get_full_path %}
+                                        <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                    {% else %}
+                                        <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                    {% endif %}
+                                </li>
+                            {% else %}
+                            {% if records.number < i %}
+                                {% if records.number|add:"1" >= i %}
+                                    <li class="paginate_button page-item">
+                                        {% if 'agreementnumber' in request.get_full_path %}
+                                            <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% else %}
+                                            <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% endif %}
+                                    </li>
+                                {% else %}
+                                {% if records.paginator.num_pages == i %}
+                                    <li class="paginate_button page-item disabled">
+                                        <a href="#" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">
+                                            <i class="mdi mdi-dots-horizontal"></i>
+                                        </a>
+                                    </li>
+                                    <li class="paginate_button page-item">
+                                        {% if 'agreementnumber' in request.get_full_path %}
+                                            <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% else %}
+                                            <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                        {% endif %}
+                                    </li>
+                                {% endif %}
+                                {% endif %}
+                            {% endif %}
+                                {% if records.number > i %}
+                                    {% if records.number|add:"-2" < i  %}
+                                        <li class="paginate_button page-item">
+                                            {% if 'agreementnumber' in request.get_full_path %}
+                                                <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% endif %}
+                                        </li>
+                                    {% else %}
+                                    {% if 1 == i %}
+                                        <li class="paginate_button page-item">
+                                            {% if 'agreementnumber' in request.get_full_path %}
+                                                <a href="{{ request.get_full_path }}&page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% else %}
+                                                <a href="?page={{ i }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                                            {% endif %}
+                                        </li>
+                                        <li class="paginate_button page-item disabled">
+                                            <a href="#" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">
+                                                <i class="mdi mdi-dots-horizontal"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if records.has_next %}
+                            <li class="paginate_button page-item next" id="dt-opt_next">
+                                {% if 'agreementnumber' in request.get_full_path %}
+                                    <a href="{{ request.get_full_path }}&page={{ records.next_page_number }}" aria-controls="dt-opt" data-dt-idx="3" tabindex="0" class="page-link">Next</a>
+                                {% else %}
+                                    <a href="?page={{ records.next_page_number }}" aria-controls="dt-opt" data-dt-idx="1" tabindex="0" class="page-link">Next</a>
+                                {% endif %}
+                            </li>
+                        {% else %}
+                            <li class="paginate_button page-item next disabled" id="dt-opt_next">
+                                <a href="#" aria-controls="dt-opt" data-dt-idx="3" tabindex="0" class="page-link">Next</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add DrawDown Modal -->
+            <div class="modal fade in">
+                <div class="modal-dialog">
+
+                </div>
+            </div>
+
+            <!-- Confirm Remove All Drawdowns Modal -->
+            <div class="modal fade in" id="removeAllConfirmModal">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>Are you sure?</h2>
+                        </div>
+                        <div class="modal-body">
+                            <div class="alert alert-danger">
+                                <p><b>Please confirm you wish to remove these transactions from the batch.</b></p>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+
+                            <button class="btn btn-success" id="confirm-remove-all"
+{#                                    data-filter='{{ json_filter }}' data-url="{% url 'core_dd_drawdowns:delete_drawdowns' batch_ref %}"#}
+                            >
+                                Confirm
+                            </button>
+                            <button class="btn btn-danger" id="cancelRemoveAll" data-dismiss="modal">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confirm Remove DrawDown Modal -->
+            <div class="modal fade in" id="confirm-remove-drawdown">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>Are you sure?</h2>
+                        </div>
+                        <div class="modal-body">
+                            <div class="alert alert-danger">
+                                <p><b>Please confirm you wish to remove the selected sage transaction from this batch.</b></p>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+
+                            <button class="btn btn-success confirm-remove-single">
+                                Confirm
+                            </button>
+                            <button class="btn btn-danger" data-dismiss="modal" id="cancel-remove-single">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+             <!-- Confirm Add All Drawdowns Modal -->
+            <div class="modal fade in" id="addAllDrawdownsModal">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>Are you sure?</h2>
+                        </div>
+                        <div class="modal-body">
+                            <div class="alert alert-info">
+                                <p><b>Please confirm you wish to re-add these transactions into this batch.</b></p>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+
+                            <button class="btn btn-success" id="confirm-add-all"
+{#                                      data-filter='{{ json_filter }}' data-url="{% url 'core_dd_drawdowns:delete_drawdowns' batch_ref %}"#}
+                            >Confirm
+                            </button>
+                            <button class="btn btn-danger" id="cancelAddAll" data-dismiss="modal">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confirm ADD DrawDown Modal -->
+            <div class="modal fade in" id="confirm-add-drawdown">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>Are you sure?</h2>
+                        </div>
+                        <div class="modal-body">
+                            <div class="alert alert-info">
+                                <p><b>Please confirm you wish to re-add the selected transaction into this batch.</b></p>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-success confirm-add-single">
+                                Confirm
+                            </button>
+                            <button class="btn btn-danger" data-dismiss="modal">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confirm Submit Batch Modal -->
+            <div class="modal fade in" id="confirm-submit-batch">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>Are you sure?</h2>
+                        </div>
+                        <div class="modal-body">
+                            <div class="alert alert-danger submit-drawdown-error" style="display:none;"></div>
+                            <div class="ct-chart" id="pie-custom-label" hidden></div>
+                            <div class="alert alert-info">
+                                <b>Please confirm you wish to amend this batch to:</b>
+                            </div>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>Count</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Original Balance</td>
+                                        <td id="id_original_balance_count">{{ forecast.original_balance.count }}</td>
+                                        <td id="id_original_balance_amount">&pound;{{ forecast.original_balance.amount }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Re-batched</td>
+                                        <td><span>{% if forecast.rebatched.count %}-{% endif %}</span><span id="id_rebatched_count">{{ forecast.rebatched.count }}</span></td>
+                                        <td><span>{% if forecast.rebatched.count %}-{% endif %}</span>&pound;<span id="id_rebatched_amount">{{ forecast.rebatched.amount }}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Submitted to Accounts</th>
+{#                                        <th>Submitted to Accounting</th>#}
+                                        <th><span id="id_batch_count">{{ forecast.count }}</span></th>
+                                        <th>&pound;<span id="id_batch_amount">{{ forecast.amount }}</span></th>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="alert alert-info" hidden>
+                                <p><b>Please confirm you wish to submit this batch of:</b></p>
+                                <p>
+                                    <ul>
+                                        <li>Count: {{ count }}</li>
+                                        <li>Amount: &pound;{{ amount }}</li>
+                                        <li>Due on: {{ due_date }}</li>
+                                    </ul>
+                                </p>
+                                <p>
+                                    <ul class="text-danger">
+                                        <li>Forecast Bounce Count: {{ b_count }}</li>
+                                        <li>Forecast Bounce Amount: &pound;{{ b_amount }}</li>
+                                    </ul>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <div class="submit-drawdown-buttons">
+                                <i class="fa fa-pulse fa-spinner fa-2x submit-drawdown-loading"></i>
+                                <button class="btn btn-primary" id="id_send_to_sage">
+                                    Send to Accounts
+                                </button>
+
+                                <button class="btn btn-success confirm-submit" disabled>
+                                    Confirm
+                                </button>
+                                <button class="btn btn-danger" data-dismiss="modal">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <input type="hidden" value="{{ csrf_token }}" id="csrf-token">
+
+        {% endif %}
+
+    {% endif %}
+
+    <div class="modal fade modal-fs" id="modal-fs" aria-hidden="true" style="display: none;">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="container text-center">
+                        <div class="row full-height align-items-center">
+                            <div class="col-md-5 m-h-auto">
+                                <div class="p-h-30 p-b-50">
+                                    <div class="text-center font-size-70">
+                                        <i class="fa fa-remove icon-gradient-danger"></i>
+                                    </div>
+                                    <h1 class="text-thin m-v-15">Duplicate Session</h1>
+                                    <p class="m-b-25 lead">You already have this screen open in another tab/window.</p>
+                                    <div class="text-center">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block page-js %}
+
+{% comment %}    <script src="{% static 'core_dd_drawdowns.js' %}"></script>
+    <script src="{% static 'assets/vendor/chartist-js/dist/chartist.min.js' %}"></script>
+    <!--<script src="{% static 'assets/js/charts/chartist.js' %}"></script>-->{% endcomment %}
+
+
+    <script src="{% static 'duplicate.js' %}"></script>
+
+    <script type="text/javascript">
+
+        sessionStorage.removeItem('onUnload');
+
+        {% if history %}
+            $("#sage_batch_info").show();
+        {% endif %}
+
+        {% if sage_batch_lock %}
+            {% if sage_batch_lock_check %}
+                if(sessionStorage.getItem("GoSageBatchLock") === "{{ sage_batch_lock.session_id }}") {
+                    if(window.IsDuplicate()) {
+                        $("#modal-fs").modal({"backdrop": "static", "keyboard": false})
+                    } else {
+                        $("#sage_batch_info").show();
+                        {% include 'includes/sage_batch_lock.js' %}
+                    }
+                } else {
+                    $("#sage_batch_error").html("Batch is locked by {{ sage_batch_lock.user }} on {{ sage_batch_lock.created }}").show();
+                }
+            {% else %}
+                if(window.IsDuplicate()) {
+                    $("#modal-fs").modal({"backdrop": "static", "keyboard": false})
+                } else {
+                    sessionStorage.setItem("GoSageBatchLock", "{{ sage_batch_lock.session_id }}");
+                    $("#sage_batch_info").show();
+                    {% include 'includes/sage_batch_lock.js' %}
+                }
+            {% endif %}
+        {% else %}
+            $("#sage_batch_info").show();
+        {% endif %}
+
+    </script>
+
+    <script type="text/javascript">
+
+        /*
+        var pieCustomLabelData = {
+            labels: ['Bananas', 'Apples', 'Grapes'],
+            series: [45, 5, 50]
+        };
+
+        var pieCustomLabelOptions = {
+            labelInterpolationFnc: function(value) {
+                return value[0];
+            }
+        };
+
+        var pieCustomLabelResponsiveOptions = [
+			['screen and (min-width: 640px)', {
+				chartPadding: 30,
+				labelOffset: 100,
+				labelDirection: 'explode',
+				labelInterpolationFnc: function(value) {
+					return value;
+				}
+			}],
+			['screen and (min-width: 1024px)', {
+				labelOffset: 80,
+				chartPadding: 20
+			}]
+        ];
+
+        new Chartist.Pie('#pie-custom-label', pieCustomLabelData, pieCustomLabelOptions);
+        */
+
+
+
+    </script>
+
+    <script type="text/javascript">
+
+        var showModal = true ;
+        var removeURL = '';
+        var readdURL = '';
+
+        $(function() {
+
+            var forecastBounceInfo = $(".forecast_bounce_info");
+            var toggleForecastBounces = $(".toggle_forecast_bounce");
+
+            toggleForecastBounces.click(function() {
+                toggleForecastBounces.toggle();
+                forecastBounceInfo.toggle();
+            });
+
+            $("#id_send_to_sage").click(function() {
+
+                window.open("{% url 'core_sage_export:sage_xlsx' sage_batch_ref %}");
+
+                $(".confirm-submit").attr('disabled', false);
+
+            });
+
+            $("#hideAllDrawdowns").click(function(e) {
+
+                if(showModal) {
+
+                    e.preventDefault();
+
+                    if($(this).is(":checked")) {
+                        $("#addAllDrawdownsModal").modal({"backdrop": "static"});
+                    } else {
+                        $("#removeAllConfirmModal").modal({"backdrop": "static"});
+                    }
+                }
+
+            });
+
+            $("#confirm-remove-all").click(function() {
+
+                showModal = false ;
+
+                $("[id^=hideDrawdown]").each(function() {
+
+                    if($(this).is(":checked")) {
+                        $(this).trigger("click");
+                    }
+                    $(this).parents(':eq(2)').css("opacity", "0.65");
+                    $("#removeAllConfirmModal").modal("hide");
+
+                });
+
+                var filterParams = ($("#id_sage_batch_filter").serialize());
+
+                $.ajax({
+                    method: 'POST',
+                    url: '{% url 'core_sage_export:split_transactions' sage_batch_ref %}' + '?to_be_removed=1&' + filterParams,
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+                    },
+                    success: function(data) {
+                        $("#id-total-amount").html(data.total_amount);
+                        _update_forecast(data.forecast);
+                    },
+                    error: function(data) {
+                        alert(JSON.stringify(data));
+                    }
+                });
+
+                $("#hideAllDrawdowns").trigger("click");
+
+                showModal = true ;
+
+            });
+
+            $("#confirm-add-all").click(function() {
+
+                showModal = false ;
+
+                $("[id^=hideDrawdown]").each(function() {
+
+                    if(!$(this).is(":checked")) {
+                        $(this).trigger("click");
+                    }
+                    $(this).parents(':eq(2)').css("opacity", "1");
+
+                    $("#addAllDrawdownsModal").modal("hide");
+
+                });
+
+                var filterParams = ($("#id_sage_batch_filter").serialize());
+
+                $.ajax({
+                    method: 'POST',
+                    url: '{% url 'core_sage_export:split_transactions' sage_batch_ref %}' + '?remove_to_be_removed=1&' + filterParams,
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+                    },
+                    success: function(data) {
+                        $("#id-total-amount").html(data.total_amount);
+                        _update_forecast(data.forecast);
+                    },
+                    error: function(data) {
+                        alert(JSON.stringify(data));
+                    }
+                });
+
+
+                $("#hideAllDrawdowns").trigger("click");
+
+                showModal = true ;
+
+            });
+
+            var confirmAddSingle = $(".confirm-add-single");
+            var confirmRemoveSingle = $(".confirm-remove-single");
+
+            $("[id^=hideDrawdown]").click(function(e) {
+
+                if(showModal) {
+
+                    var t = this ;
+                    readdURL = t.getAttribute('data-readd-url') + '?remove_to_be_removed=1' ;
+                    removeURL = t.getAttribute('data-remove-url') + '?to_be_removed=1' ;
+
+                    e.preventDefault();
+
+                    if($(t).is(":checked")) {
+
+                        $("#confirm-add-drawdown").modal();
+
+                        confirmAddSingle.off("click");
+
+                        confirmAddSingle.click(function() {
+
+                            var tt = this;
+                            this.disabled = true ;
+
+                            $.ajax({
+                                method: 'POST',
+                                url: readdURL,
+                                beforeSend: function(xhr) {
+                                    xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                                },
+                                success: function(data) {
+
+
+                                    $("#id-total-amount").html(data.total_amount);
+
+                                    _update_forecast(data.forecast);
+
+                                    showModal = false ;
+
+                                    $(t).trigger("click");
+
+                                    $(t).parents(':eq(2)').css("opacity", "1");
+
+                                    $("#confirm-add-drawdown").modal("hide");
+
+                                    tt.disabled = false ;
+                                    $("#cancel-add-single").show();
+
+                                    showModal = true;
+                                },
+                                error: function(res) {
+                                    alert(JSON.stringify(res));
+                                }
+                            });
+
+                            $(t).trigger("click");
+
+                            $(t).parents(':eq(2)').css("opacity", "1");
+
+                            $("#confirm-add-drawdown").modal("hide");
+
+                            showModal = true ;
+
+                        });
+
+                    } else {
+
+                        $("#confirm-remove-drawdown").modal();
+
+                        confirmRemoveSingle.off("click");
+
+                        confirmRemoveSingle.click(function () {
+
+                            var tt = this ;
+                            tt.disabled = true ;
+
+                            $("#cancel-remove-single").hide();
+
+                            $.ajax({
+                                method: 'POST',
+                                url: removeURL,
+                                beforeSend: function(xhr) {
+                                    xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                                },
+                                success: function(data) {
+
+                                    $("#id-total-amount").html(data.total_amount);
+                                    _update_forecast(data.forecast);
+
+                                    showModal = false ;
+
+                                    $(t).trigger("click");
+
+                                    $(t).parents(':eq(2)').css("opacity", "0.65");
+
+                                    $("#confirm-remove-drawdown").modal("hide");
+
+                                    tt.disabled = false ;
+                                    $("#cancel-remove-single").show();
+
+                                   showModal = true;
+                                },
+                                error: function(res) {
+                                    alert(JSON.stringify(res));
+                                }
+                            });
+
+                         });
+
+                    }
+
+                } else {
+                        console.log('switch on b');
+                }
+
+            });
+
+            var error = $(".submit-drawdown-error");
+            var buttons = $(".submit-drawdown-buttons");
+            var loading = $(".submit-drawdown-loading");
+            $(".submit-batch").click(function() {
+
+                error.hide();
+                loading.hide();
+
+                var t= $(this);
+
+                var dd_ids = [];
+
+                $("[data-drawdown-id]").each(function() {
+                    dd_ids.push($(this).attr('data-drawdown-id'));
+                });
+
+                $("#confirm-submit-batch").modal({'backdrop': 'static'});
+
+                var clicked = false;
+                $(".confirm-submit").click(function() {
+
+                    $("#id-submit-batch-form").removeAttr("onsubmit").submit();
+                    $("#id-submit-batch-form").removeAttr("onsubmit").submit();
+                    return ;
+
+                    buttons.hide();
+
+                    if(clicked) return ;
+                    clicked = true ;
+
+                    error.hide();
+                    loading.show();
+                    buttons.hide();
+
+                    $.ajax({
+                        url: t.attr("data-url"),
+                        method: 'POST',
+                        data: {
+                            ids: JSON.stringify(dd_ids),
+                            csrfmiddlewaretoken: csrf_token
+                        }   ,
+                        success: function(data) {
+                            if ('error' in data) {
+                                error.html(data.error).show();
+                                loading.hide();
+                                buttons.show();
+                                return ;
+                            }
+                            if ('changes' in data) {
+                                _update_forecast(data.forecast);
+                                error.html('There have been a total of ' + data.changes.length +
+                                    ' changes since the last re-sync. Please double-check the changes below and confirm.').show();
+                                loading.hide();
+                                buttons.show();
+                                return ;
+                            }
+                            location.href = '/core_dd_drawdowns/view/' + data.success + '?success=1';
+                        },
+                        error: function(data) {
+                            error.html(JSON.stringify(data)).show();
+                            loading.hide();
+                            buttons.show();
+                            clicked = false;
+                        }
+                    });
+
+                });
+
+            });
+
+
+        });
+
+        function _update_forecast(data) {
+
+            $("#id_original_balance_count").html(data.original_balance.count);
+            $("#id_original_balance_amount").html(data.original_balance.amount);
+
+            $("#id_rebatched_count").html(data.rebatched.count);
+            $("#id_rebatched_amount").html(data.rebatched.amount);
+
+            $("#id_batch_count").html(data.count);
+            $("#id_batch_amount").html(data.amount);
+
+        }
+
+        /*
+            data = {
+        'removed': {
+            'count': removed_count,
+            'amount': '{:,.2f}'.format(removed_amount)
+        },
+        'inactive': {
+            'count': inactive_dd_count,
+            'amount': '{:,.2f}'.format(inactive_dd_amount)
+        },
+        'no_setup': {
+            'count': no_setup_count,
+            'amount': '{:,.2f}'.format(no_setup_amount)
+        },
+        'active': {
+            'count': active_dd_count,
+            'amount': '{:,.2f}'.format(active_dd_amount)
+        },
+        'bounces': {
+            'count': total_bounce_count,
+            'amount': '{:,.2f}'.format(total_bounce_amount)
+        },
+        'grand_total': {
+            'count': grand_total_count,
+            'amount': '{:,.2f}'.format(grand_total_amount)
+        }
+    }
+         */
+
+
+
+    </script>
+
+{% endblock %}

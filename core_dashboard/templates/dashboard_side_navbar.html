@@ -1,0 +1,178 @@
+{% load staticfiles %}
+{% load dashboard_extras %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/systemjs/0.19.38/system.js"></script>
+<link href="//cdn.syncfusion.com/ej2/ej2-base/styles/material.css" rel="stylesheet" />
+<link href="//cdn.syncfusion.com/ej2/ej2-notifications/styles/material.css" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/systemjs/0.19.38/system.js"></script>
+
+<div class="side-nav expand-lg">
+    <div class="side-nav-inner">
+        <ul class="side-nav-menu scrollable">
+            <li class="side-nav-header">
+                <span>Navigation</span>
+            </li>
+            <li class="nav-item">
+                <a class="" href="{%  url 'dashboard:dashboard' %}">
+                    <span class="icon-holder">
+                        <i class="fa fa-heartbeat"></i>
+                    </span>
+                    <span class="title">Dashboard</span>
+                </a>
+            </li>
+            {% if request.user|has_group:"_agreement_enquiry" %}
+            <li class="nav-item">
+                <a class="" href="{%  url 'dashboard:AgreementEnquiryList' %}">
+                    <span class="icon-holder">
+                        <i class="fa fa-search"></i>
+                    </span>
+                    <span class="title">Agreement Enquiry</span>
+                </a>
+            </li>
+            {% endif %}
+            {% if request.user|has_group:"_agreement_management" %}
+            <li class="nav-item">
+                 <a class="" href="{%  url 'core_agreement_crud:AgreementEnquiryList' %}" >
+                     <span class="icon-holder">
+                         <i class="fa fa-pencil-square-o"></i>
+                         <span class="e-badge e-badge-secondary e-badge-overlap e-badge-notification #2acfd2"
+                               id="dd_new_agreement" style="display:none;">New</span>
+                     </span>
+                     <span class="title">Agreement Management</span>
+                 </a>
+            </li>
+        {% endif %}
+{#            <li class="nav-item">#}
+{#                 <a class="" href="{%  url 'core_agreement_notice:notice_list' %}" >#}
+{#                    <span class="icon-holder">#}
+{#                        <i class="fa fa-chain-broken"></i>#}
+{#                    </span>#}
+{#                    <span class="title">Agreement Notice List</span>#}
+{#                </a>#}
+{#            </li>#}
+            {% if request.user|has_group:"_dd_drawdown_batches" %}
+            <li class="nav-item dropdown">
+                <a class="" href="{%  url 'core_dd_drawdowns:view_batches' %}">
+                    <span class="icon-holder">
+                        <div style="position:relative;">
+                            <i class="fa fa-university"></i>
+                            <span class="e-badge e-badge-secondary e-badge-overlap e-badge-notification #2acfd2"
+                                  id="dd_new_badge" style="display:none;">New</span>
+                        </div>
+                    </span>
+                    <span class="title">DD Drawdown Batches</span>
+                </a>
+            </li>
+            {% endif %}
+            {% if request.user|has_group:"_dd_forecast_by_due_date" %}
+            <li class="nav-item dropdown">
+                <a class="" href="{%  url 'dashboard:DDForecastList' %}">
+                    <span class="icon-holder">
+                        <i class="fa fa-binoculars"></i>
+                    </span>
+                    <span class="title">DD Forecast by Due Date</span>
+                </a>
+            </li>
+            {% endif %}
+            {% if request.user|has_group:"_collections_by_due_date" %}
+            <li class="nav-item dropdown">
+                <a class="" href="{%  url 'core_arrears:arrears_by_duedate_view' %}">
+                    <span class="icon-holder">
+                        <i class="ti-wallet"></i>
+                    </span>
+                    <span class="title">Collections by Due Date</span>
+                </a>
+            </li>
+            {% endif %}
+            {% if request.user|has_group:"_arrears_by_agreement" %}
+            <li class="nav-item dropdown">
+                <a class="" href="{%  url 'core_arrears:arrears_by_agreement_view' %}">
+                    <span class="icon-holder">
+                        <i class="ti-stats-down"></i>
+                    </span>
+                    <span class="title">Arrears by Agreement</span>
+                </a>
+            </li>
+            {% endif %}
+            {% if request.user|has_group:"_ddic_management" %}
+            <li class="nav-item dropdown">
+                <a class="" href="{%  url 'core_app_ddic:ddic' %}" >
+                    <span class="icon-holder">
+                        <div style="position:relative;">
+                            <i class="ti-loop"></i>
+                            <span class="e-badge e-badge-secondary e-badge-overlap e-badge-notification #2acfd2"
+                                  id="ddic_new_badge" style="display:none;">New</span>
+                        </div>
+                    </span>
+                    <span class="title">DDIC Management</span>
+                </a>
+            </li>
+            {% endif %}
+            {% if request.user|has_group:"_companies_house" %}
+            <li class="nav-item dropdown">
+                <a class="" href="{%  url 'core_companies_house:companies_house' %}" >
+                    <span class="icon-holder">
+                        <div style="position:relative;">
+                            <i class="fa fa-id-card-o"></i>
+                            <span class="e-badge e-badge-secondary e-badge-overlap e-badge-notification #2acfd2"
+                                  id="companies_house_new_badge" style="display:none;">New</span>
+                        </div>
+                    </span>
+                    <span class="title">Companies House</span>
+                </a>
+            </li>
+            {% endif %}
+            {% if request.user|has_group:"_accounts_export" %}
+            <li class="nav-item dropdown">
+                <a class="" href="{%  url 'core_sage_export:view_batches' %}" >
+                    <span class="icon-holder">
+                        <div style="position:relative;">
+                            <i class="fa fa-money"></i>
+                            <span class="e-badge e-badge-secondary e-badge-overlap e-badge-notification #2acfd2"
+                                  id="dd_new_badge" style="display:none;">New</span>
+                        </div>
+                    </span>
+                    <span class="title">Accounts Export</span>
+                </a>
+            </li>
+            {% endif %}
+            {% if request.user|has_group:"_transaction_audit" %}
+            <li class="nav-item dropdown">
+                <a
+                    class="" href="{%  url 'core_agreement_crud:scapegoat' %}">
+                    <span class="icon-holder">
+                        <div style="position:relative;">
+                            <i class="fa fa-viacoin"></i>
+                            <span class="e-badge e-badge-secondary e-badge-overlap e-badge-notification #2acfd2"
+                                  id="dd_new_badge" style="display:none;">New</span>
+                        </div>
+                    </span>
+                    <span class="title">Transaction Audit</span>
+                </a>
+            </li>
+            {% endif %}
+            {% if request.user|has_group:"_bacs_file_management" %}
+            <li class="nav-item dropdown">
+                <a class="" href="{% url 'core_bounce:process_bacs_file' %}" >
+                    <span class="icon-holder">
+                        <div style="position:relative;">
+                            <i class="fa fa-upload"></i>
+                        </div>
+                    </span>
+                    <span class="title">BACS File Management</span>
+                </a>
+            </li>
+            {% endif %}
+            {% if user.is_staff %}
+            <li class="nav-item">
+                <a class="" href="/admin/">
+                    <span class="icon-holder">
+                        <i class="fa fa-database"></i>
+                    </span>
+                    <span class="title">Database Admin</span>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+</div>

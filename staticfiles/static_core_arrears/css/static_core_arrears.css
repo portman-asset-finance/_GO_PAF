@@ -1,0 +1,26 @@
+.modal-xl { width: 70%; max-width: none; }
+
+.arrears-active-border-color {border-color: #fd3259 !important;}
+.arrears-active-font-color {color: #fd3259 !important;}
+
+.collected-active-border-color {border-color: forestgreen !important;}
+.collected-active-font-color {color: forestgreen !important;}
+
+.adjustment-active-border-color {border-color: #04a1f4 !important;}
+.adjustment-active-font-color {color: #04a1f4 !important;}
+
+.balance-active-border-color {border-color: #fd3259 !important;}
+.balance-active-font-color {color: #fd3259 !important;}
+
+.form-group-summary-bottom {margin-bottom: 40px !important;}
+.arrears-inactive-font-color {color: #8dabc4 !important;}
+.arrears-detail-margin-bottom {margin-bottom: 0 !important;}
+.arrears-money-style {text-align: right; padding-right: 15px;}
+
+.go-header-title-trailer {  display: inline-block;
+                            font-size: 16px !important;
+                            margin-bottom: 0px;
+                            padding-bottom: 5px;
+                            border-right: 1px solid #e9eaec;
+                            padding-right: 5px !important;
+                            line-height: 1; }

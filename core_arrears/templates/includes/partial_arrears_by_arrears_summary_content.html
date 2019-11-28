@@ -1,0 +1,159 @@
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+{% load dashboard_extras %}
+<div class="card-header row p-t-10 p-b-0">
+    <div class="col-md-3">
+        <div class="card m-b-0">
+            <div class="card-body">
+                <span class="status info"></span>
+                <span class="m-b-10 font-size-14 m-l-5">Billing to Date</span>
+                <div class="float-right">
+                    <b class=" font-size-14 text-dark">{{ agreement_billing_totals_val|floatformat:2|intcomma }}</b>
+                    <span>GBP</span>
+                </div>
+                <div class="progress progress-sm m-t-14 m-b-0">
+                    <div class="progress-bar bg-info" role="progressbar" style="width: {{ agreement_billing_to_date_percent }}%" aria-valuenow="{{ agreement_billing_to_date_val }}" aria-valuemin="0" aria-valuemax="{{ agreement_billing_totals_val }}"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card m-b-0">
+            <div class="card-body">
+                <span class="status danger"></span>
+                <span class="m-b-10 font-size-14 m-l-5">Current Arrears</span>
+                <div class="float-right">
+                    <b class=" font-size-14 text-dark"><span id="widget_agreement_arrears_total2" data-value="{{ total_agreement_arrears_value }}">{{ total_agreement_arrears_value|floatformat:2|intcomma }}</span></b>
+                    <span>GBP</span>
+                </div>
+                <div class="progress progress-sm m-t-14 m-b-0">
+                    <div class="progress-bar bg-gradient-danger" role="progressbar" style="width: {{ agreement_arrears_percent }}%" aria-valuenow="{{ total_agreement_arrears_value }}" aria-valuemin="0" aria-valuemax="{{ agreement_billing_totals_val }}"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card m-b-0">
+            <div class="card-body">
+                <span class="status primary"></span>
+                <span class="m-b-10 font-size-14 m-l-5">Unallocated Receipts</span>
+                <div class="float-right" >
+                    <b class="font-size-14 text-dark"><span id="widget_unallocated_arrears_total2" data-value="{{ unallocated_receipts_total_val }}">{{ unallocated_receipts_total_val|floatformat:2|intcomma }}</span></b>
+                    <span>GBP </span><span>
+                </span>
+                </div>
+                <div class="progress progress-sm m-t-14 m-b-0">
+                    <div class="progress-bar bg-gradient-primary" role="progressbar" style="width: {{ unallocated_receipts_percent }}%" aria-valuenow="{{ unallocated_receipts_total_val }}" aria-valuemin="0" aria-valuemax="{{ agreement_billing_totals_val }}"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 float-left">
+        <button id="record-payment-receipt2" type="button" data-url="{% url 'core_payments:modal_record_payment' agreement_detail.agreementnumber %}"
+                style="margin-bottom: 3px !important; width:180px !important;"
+                class="btn btn-outline btn-success" data-agreement-id="{{ agreement_detail.agreementnumber }}">RECORD RECEIPT</button>
+
+        <button id="enter-card-details2" type="button" class="btn btn-outline btn-success" data-agreement-id="{{ agreement_detail.agreementnumber }}"
+                data-url="{% url 'core_payments:payment_receipt_modal' agreement_detail.agreementnumber %}" style="width:180px !important;" disabled>TAKE CC PAYMENT</button>
+    </div>
+</div>
+<div class="card-body p-t-10">
+        {% if server_messages %}
+            <div class="alert alert-success alert-float alert-dismissible fade show p-t-5 p-b-5 ">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close" style="padding-top: 0.3rem">
+                    <span aria-hidden="true">×</span>
+                </button>
+                <div>
+                    <table>
+                        {{ server_messages |safe}}
+                    </table>
+                </div>
+            </div>
+        {% endif %}
+        <div class="tab-info">
+            <ul class="nav nav-tabs" role="tablist">
+                <li class="nav-item">
+                    <a href="#default-tab-1" class="nav-link active" role="tab" data-toggle="tab">Arrears Management</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#default-tab-2" class="nav-link" role="tab" data-toggle="tab">Receipt History</a>
+                </li>
+            </ul>
+            <div class="tab-content">
+                <div role="tabpanel" class="tab-pane fade in active" id="default-tab-1">
+                    <div class="card m-t-20">
+                        <div class="card-body">
+                            <div class="card-title">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                         <button class="btn btn-success" id="show_sp_only" hidden>Exclude Receipt Allocations</button>
+                                         <button class="btn btn-success" id="show_all">Include Receipt Allocations</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-overflow">
+                                <table class="table table-hover table-sm border" id="arrear-table">
+                                    <thead class="thead-light ">
+                                        <tr>
+                                            <th></th>
+                                            <th class="text-center">Date</th>
+                                            <th>Phase</th>
+                                            <th style="border-right:1px solid gainsboro"></th>
+                                            <th class="text-right">Arrears</th>
+                                            <th></th>
+                                            <th style="border-right:1px solid gainsboro"></th>
+                                            <th class="text-right">Collected</th>
+                                            <th class="text-right">Adjustment</th>
+                                            <th style="border-right:1px solid gainsboro"></th>
+                                            <th class="text-right">Balance</th>
+                                            <th style="border-right:1px solid gainsboro"></th>
+                                            <th class="text-center">Agent</th>
+                                            <th class="text-center">Status Date</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody >
+                                         {% include 'includes/partial_arrears_by_arrears_summary_list.html' %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div role="tabpanel" class="tab-pane fade" id="default-tab-2">
+                    <div class="card m-t-20">
+                        <div class="card-body">
+                            <div class="card-title">
+                                &nbsp;
+                            </div>
+                            <div class="table-overflow">
+                                <table class="table table-hover table-sm border" id="arrear-table">
+                                    <thead class="thead-light ">
+                                        <tr>
+                                            <th class=center"></th>
+                                            <th style="border-right:1px solid gainsboro"></th>
+                                            <th class="text-center">Date and Time</th>
+                                            <th style="border-right:1px solid gainsboro"></th>
+                                            <th class="text-center">Receipt Source</th>
+                                            <th style="border-right:1px solid gainsboro"></th>
+                                            <th class="text-center">Account</th>
+                                            <th style="border-right:1px solid gainsboro"></th>
+                                            <th class="text-right">Receipt (Net)</th>
+                                            <th style="border-right:1px solid gainsboro"></th>
+                                            <th class="text-right">Receipt (Gross)</th>
+                                            <th style="border-right:1px solid gainsboro"></th>
+                                            <th class="text-left">Collected By</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody >
+                                         {% include 'includes/partial_collections_by_agreement_list.html' %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>

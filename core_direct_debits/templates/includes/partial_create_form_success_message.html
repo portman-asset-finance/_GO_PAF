@@ -1,0 +1,22 @@
+<div class="alert alert-success">
+    {% if manual_payment_update %}
+        <b>Success:</b> This agreement is now configured to receive manual payments.
+    {% else %}
+    <b>Success:</b> DDI has been successfully set up.
+    {% endif %}
+</div>
+<button class="btn btn-success"
+        type="button" data-url="{% url 'core_direct_debits:get_dd_history' agreement_no %}"
+        data-manage-ddi="{{ agreement_no}}" data-dismiss="modal"
+        data-create-url="{% url 'core_direct_debits:create_new_dd_instruction' agreement_no %}">
+    <i class="fa fa-thumbs-up"></i> OK
+</button>
+<script type="text/javascript">
+    $(function() {
+        $("#dd-new-modal").on("hidden.bs.modal", function() {
+            //location.reload();
+        });
+        // $("#dd-new-modal").modal("hide");
+        //$("[data-aid='{{ agreement_no }}']").trigger("click");
+    });
+</script>

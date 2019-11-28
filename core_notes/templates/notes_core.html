@@ -1,0 +1,528 @@
+<!-- Javascript -->
+<script type="text/javascript">
+
+    var notes = [];
+    var actions = [];
+    var customerId, agreementId, actionType, customerCompany;
+
+    $(function() {
+
+        var notesModal = $("#notes-modal");
+        var notesTable = $(".notes-table");
+        var modalTitle = $(".notes-modal-title");
+        var notesLoading = $(".notes-modal-loading");
+        var notesContainer = $(".notes-modal-container");
+        var notesInputError = $(".notes-input-error");
+        var submitNoteButton = $("#submit-note");
+        var notesLoadingError = $("#notes-container-error-msg");
+
+        var t ;
+
+        $("[data-toggle='tooltip']").tooltip();
+
+        $("[data-toggle='notes-modal']").click(function() {
+
+            t = this;
+
+            // Reset notes
+            notes = [];
+
+            // Display the modal.
+            notesModal.css("width", "75%");
+            notesModal.css("min-width", "900px");
+
+            // Hide notes container
+            notesContainer.hide();
+
+            // Show loading symbol.
+            notesLoading.show();
+
+            // Hide global error message.
+            notesLoadingError.hide();
+
+            // Get the vars.
+            customerId = $(this).attr("data-customer-id") || false;
+            agreementId = $(this).attr("data-agreement-id") || false;
+            actionType = $(this).attr("data-action-type") || false;
+            customerCompany = $(this).attr("data-customer-company") || false;
+
+            // Create modal title.
+            var title = "Notes &raquo; ";
+            if(customerCompany) {
+                title = title + customerCompany;
+                if (agreementId) title = title + " &raquo; " + agreementId
+            } else {
+                title = title + customerId;
+                if (agreementId) title = title + " &raquo; " + agreementId;
+                if (actionType) title = title + " &raquo; " + actionType;
+            }
+            modalTitle.html(title);
+
+            // Build URL.
+            var url = "/notes/" + customerId;
+            if(agreementId) url = url + "/" + agreementId;
+            if(actionType) url = url + "/" + actionType;
+
+            // Make AJAX request.
+            function _getNotes() {
+                $.ajax({
+                    url: url,
+                    success: function(data) {
+                        var noOfResults = $(".notes-modal-no-of-results");
+                        if(data.length > 0) {
+                            if(data.length === 1) {
+                                noOfResults.html("1 result found.");
+                            } else {
+                                noOfResults.html(data.length + " results found.")
+                            }
+                            notesTable.html(_construct_html_table(data));
+                            var opts = {"order":[]};
+                            if(agreementId) {
+                                opts.order.push([4,"desc"]);
+                            } else {
+                                opts.order.push([5, "desc"]);
+                            }
+                            $("#dt-notes").DataTable(opts);
+                            _register_click_handler();
+                            _register_pagination_click_handler(data.length);
+                            notesTable.show();
+                        } else {
+                            noOfResults.html("0 results found.");
+                        }
+                        notesLoading.hide();
+                        notesContainer.show();
+                    },
+                    error: function() {
+                        notesLoading.hide();
+                        notesLoadingError.html("Internal server error.");
+                    }
+                });
+            }
+
+            if(actions.length === 0) {
+                // Get note types.
+                $.ajax({
+                    url: '/notes/types',
+                    success: function(data) {
+                        actions = data;
+                        for(var i = 0; i < actions.length; i++) {
+                            $("#submit-note-type").append($("<option>", {value:data[i],text:data[i]}));
+                        }
+                        _getNotes();
+                    },
+                    error: function() {
+
+                    }
+                })
+            } else {
+                _getNotes();
+            }
+
+        });
+
+        $(".close-notes-modal").click(function() {
+            notesContainer.hide();
+            notesModal.css("min-width", "0px");
+            notesModal.css("width", "0px");
+            notesTable.hide();
+        });
+
+        $(".input-notes-btn").click(function() {
+
+            submitNoteButton.attr("disabled", false);
+
+            notesInputError.hide();
+
+            tinymce.activeEditor.setContent('');
+
+            // Reset
+            $("#submit-note-type").val("");
+            $("#submit-note-entry").val("");
+            $("#submit-note-files").val("");
+
+            $("#input-notes-modal").modal({backdrop:"static",keyboard:false});
+        });
+
+        $("#customer-files-btn").click(function() {
+            $("#customer-files").modal();
+        });
+
+        $("#refresh-notes").click(function() {
+            $(t).trigger("click");
+        });
+
+        submitNoteButton.click(function() {
+
+            submitNoteButton.attr("disabled", true);
+
+            notesInputError.hide();
+
+            var formData = new FormData();
+            formData.append("customer_id", customerId);
+
+            var data = {
+                'type': $("#submit-note-type").val(),
+                'entry': tinymce.get('submit-note-entry').getContent() //$("#submit-note-entry").val(),
+            };
+
+            if(agreementId) formData.append('agreement_id', agreementId);
+
+            if(!data.type) {
+                notesInputError.html("Please select an action/type.").show();
+                submitNoteButton.attr("disabled", false);
+                return;
+            }
+            formData.append('type', data.type);
+
+            if(!data.entry) {
+                notesInputError.html("Please enter a note.").show();
+                submitNoteButton.attr("disabled", false);
+                return;
+            }
+            formData.append('entry', data.entry);
+
+            var files = document.getElementById("submit-note-files");
+            for(var i = 0; i < files.files.length; i++) {
+                formData.append("file" + Math.floor(i + 1), files.files[i]);
+            }
+
+            // Submit request.
+            $.ajax({
+                    url: '/notes/',
+                    type: 'POST',
+                    data: formData,
+                    cache: false,
+                    processData: false,
+                    enctype: "multipart/form-data",
+                    contentType: false,
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                    },
+                    success: function() {
+                        $("#input-notes-modal").modal('hide');
+                        $(t).trigger("click");
+                    },
+                    error: function() {
+                        notesInputError.html("Internal server error.").show();
+                        submitNoteButton.attr("disabled", false);
+                    }
+                })
+
+
+        });
+
+    });
+
+    function _construct_html_table(data) {
+
+        notes = data;
+
+        var assets = [];
+
+        var html = "<table id='dt-notes' class='table table-bordered table-striped table-hover'><thead><tr>";
+        if(!agreementId) html += "<th>Agreement Id</th>";
+        html += "<th>Type</th><th>Note</th><th>Files</th><th>User</th><th>Added</th></tr></thead><tbody>";
+        for(var i = 0; i < data.length; i++) {
+            if(data[i].files.length > 0) {
+                for(var j = 0; j < data[i].files.length; j++ ) {
+                    assets.push(data[i].files[j]);
+                }
+            }
+            html += "<tr class='dt-note' data-notes-id='" + i + "'>";
+            if(!agreementId) html += "<td>" + data[i].agreement_id + "</td>";
+            var entry = "<div style='word-wrap:break-word!important;'>" + data[i].text_entry + "</div>";
+            html += "<td>"+ data[i].type + "</td><td style='max-width:300px;'>" + entry + "</td><td>"+ data[i].files.length +"</td><td>"+data[i].user+"</td><td>"+data[i].created+"</td></tr>"
+        }
+        html += "</tbody></table>";
+
+        if(assets.length > 0) _order_files_html(assets);
+
+        return html;
+
+    }
+
+    function _register_click_handler() {
+
+        $(".dt-note").click(function() {
+
+            var t = $(this);
+            var activeNote = notes[parseInt(t.attr("data-notes-id"))];
+
+            $("#update-note-entry").html(activeNote.entry).attr("disabled", "1");
+            $("#update-note-type").val(activeNote.type).attr("disabled", "1");
+
+            $("#update-info-created").html(activeNote.created);
+            $("#update-info-user").html(activeNote.user);
+
+            _order_files_html(activeNote.files, $("#current-assets"));
+
+            $("#update-notes-modal").modal({'backdrop':'static','keyboard':false});
+
+        });
+
+        $("#dt-notes_length").hide();
+
+        _pagination_icons();
+
+    }
+
+    function _register_pagination_click_handler(noOfResults) {
+
+        var paginateContainer = $(".dataTables_paginate").last();
+        if(noOfResults < 11) {
+            paginateContainer.hide()
+        } else {
+            paginateContainer.show();
+            paginateContainer.click(function() {
+                _register_click_handler();
+            });
+            $("[class^=sorting]").click(function() {
+                _register_click_handler();
+            });
+        }
+
+    }
+
+    function _pagination_icons() {
+
+        var next = $("#dt-notes_next");
+        var previous = $("#dt-notes_previous");
+
+        next.html(" &nbsp; <i class='fa fa-arrow-right'></i>");
+        previous.html("<i class='fa fa-arrow-left'></i> &nbsp; ");
+
+    }
+
+    function _order_files_html (assets, viewAssets = $("#list-customer-files")) {
+
+        viewAssets.html("");
+
+        var html = "";
+
+        for(var i = 0; i < assets.length; i++) {
+            html += _single_file_html(assets[i]);
+        }
+
+        html += "</div>";
+
+        console.log(html);
+
+        viewAssets.html(html);
+
+        _register_asset_click_handler();
+
+    }
+
+    function _single_file_html(file) {
+
+        var icon = 'file-text-o';
+
+        if(/pdf$/.exec(file.original_file_name)) {
+            icon = 'file-pdf-o';
+        }
+
+        if(/excel/.exec(file.file_type)) {
+            icon = 'file-excel-o';
+        }
+
+        if(/csv$/.exec(file.original_file_name)) {
+            icon = 'file-excel-o';
+        }
+
+        if(/doc|docx$/.exec(file.original_file_name)) {
+            icon = 'file-word-o';
+        }
+
+        if(/png|jpeg|jpg|gif/.exec(file.original_file_name)) {
+            icon = 'file-image-o'
+        }
+
+        var attributes = '';
+        if(!file.on_disk||file.on_disk==="0") {
+            attributes = 'style="cursor:not-allowed;background-color:#f1f1f1;" data-toggle="tooltip" title="File has either been moved or deleted."';
+        } else {
+            attributes = 'data-asset-id="' + file.id + '"';
+        }
+
+        var html = '<div class="col-md-4"> \
+            <div class="card" style="height:135px;"> \
+                <div class="card-body" ' + attributes + '> \
+                    <div class="media"> \
+                        <div class="align-self-center">\
+                            <i class="fa fa-' + icon + ' font-size-40 icon-gradient-success text-success"></i> \
+                        </div> \
+                        <div class="m-l-20" style="word-break: break-word;"> \
+                            <p class="m-b-0">' + file.original_file_name + '</p> \
+                        </div> \
+                    </div> \
+                </div> \
+           </div> \
+        </div>';
+
+        return html ;
+
+    }
+
+    function _register_asset_click_handler() {
+
+        $("[data-asset-id]").click(function() {
+            window.open("/notes/asset/" + $(this).attr("data-asset-id"));
+        });
+
+        $("[data-toggle='tooltip']").tooltip({placement:'bottom'});
+
+    }
+
+</script>
+
+<!-- CSS -->
+<style type="text/css">
+
+    /* The main notes modal */
+    .notes-modal {
+        height: 100%;
+        width: 0;
+        position: fixed;
+        z-index: 1040;
+        top: 0;
+        left: 0;
+        background-color: #FFF;
+        border-right: 2px solid #F1F1F1;
+        overflow-x: hidden;;
+        padding-top: 60px;
+        transition: 0.5s;
+    }
+
+    /* Position the close button */
+    .notes-modal .close-notes-modal {
+        position: absolute;
+        top: 0;
+        right: 25px;
+        font-size: 36px;
+        margin-left: 50px;
+        color: #818181;
+    }
+
+    /* Loading symbol */
+    .notes-modal-loading {
+        color: #2acfd2;
+        margin-left: 30px;
+    }
+
+    /* Notes modal filter padding */
+    .notes-modal-filter {
+        overflow: hidden;
+    }
+    .notes-modal-filter input {
+        margin-left: 5px;
+    }
+
+    /* Hide modal container */
+    .notes-table,
+    .notes-input-error,
+    .notes-update-error,
+    .notes-modal-container {
+        display: none;
+    }
+
+    .notes-table thead {
+        background-color: #F1F1F1;
+        cursor: pointer;
+    }
+    .notes-table {
+        cursor: pointer;
+    }
+
+    #dt-notes_filter input {
+        margin-left: 5px;
+        -webkit-border-radius: 4px;
+        -moz-border-radius: 4px;
+        border-radius: 4px;
+        border: 1px solid #8A8A8A;
+        padding: 4px;
+    }
+
+    .dataTables_paginate {
+        text-align: center;
+    }
+    .dataTables_paginate a {
+        margin: 0px 2px;
+    }
+
+    #customer-files .card:hover,
+    #current-assets .card:hover {
+        cursor: pointer;
+        background-color: #f1f1f1;
+    }
+
+    #notes-container-error-msg {
+        margin: 0px 10px;
+        display: none;
+    }
+
+    table.dataTable tbody td {
+    word-break: break-word;
+    vertical-align: top;
+}
+
+</style>
+
+<!-- HTML -->
+<div class="notes-modal" id="notes-modal">
+    <a href="javascript:void(0);" class="close-notes-modal">&times;</a>
+    <i class="notes-modal-loading fa fa-spinner fa-pulse fa-4x"></i>
+    <div class="alert alert-danger" id="notes-container-error-msg"></div>
+    <div class="container-fluid notes-modal-container">
+        <div class="row">
+            <div class="col-sm-12">
+                <h1 class="notes-modal-title"></h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <span class="notes-modal-no-of-results"></span>
+                <button class="btn btn-success pull-right btn-labeled input-notes-btn" data-toggle="tooltip" title="Add A New Note">
+                    <span class="btn-label">
+                        <i class="fa fa-plus"></i>
+                    </span>
+                </button>
+                <button
+                        class="btn btn-info pull-right btn-labeled"
+                        data-toggle="tooltip" title="View All Files" id="customer-files-btn">
+                    <span class="btn-label">
+                        <i class="fa fa-cloud-download"></i>
+                    </span>
+                </button>
+                <button
+                        class="btn btn-danger pull-right btn-labeled"
+                        data-toggle="tooltip" title="Refresh notes." id="refresh-notes">
+                    <span class="btn-label">
+                        <i class="fa fa-refresh"></i>
+                    </span>
+                </button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12 notes-table"></div>
+        </div>
+    </div>
+</div>
+
+{% include 'includes/input-notes-modal.html' %}
+
+{% include 'includes/view-note-modal.html' %}
+
+<div class="modal fade in" id="customer-files">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Customer Files</h3>
+                <button class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="row" id="list-customer-files"><p style="margin-left:10px;">0 files uploaded.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

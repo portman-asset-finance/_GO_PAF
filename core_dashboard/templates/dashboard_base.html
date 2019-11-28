@@ -1,0 +1,166 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<meta name="description" content="{% block metadescription %}{% endblock %}">
+	<link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+	<title>GO FINTECH</title>
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" href="{% static 'assets/images/logo/apple-touch-icon.png'%}">
+    <link rel="shortcut icon" href="{% static 'assets/images/logo/favicon.png'%}">
+
+    <!-- core dependcies css -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/bootstrap/dist/css/bootstrap.css'%}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/PACE/themes/blue/pace-theme-minimal.css'%}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/perfect-scrollbar/css/perfect-scrollbar.min.css'%}" />
+
+    <!-- page css -->
+    {% block page-css %}
+    {% endblock %}
+
+    <!-- core css -->
+    <link href="{% static 'assets/css/font-awesome.min.css'%}" rel="stylesheet">
+    <link href="{% static 'assets/css/themify-icons.css'%}" rel="stylesheet">
+    <link href="{% static 'assets/css/materialdesignicons.min.css'%}" rel="stylesheet">
+    <link href="{% static 'assets/css/animate.min.css'%}" rel="stylesheet">
+    <link href="{% static 'assets/css/app.css'%}" rel="stylesheet">
+    <link href="{% static 'static_core_dashboard/css/static_core_dashboard.css'%}" rel="stylesheet">
+
+</head>
+<body>
+
+    <div class="app header-info">
+        <div class="layout">
+
+            {% include 'dashboard_header_navbar.html' %}
+            {% include 'dashboard_side_navbar.html' %}
+
+            <div class="page-container" style="border: 1px solid black;">
+
+{#                {% include 'dashboard_quick_view.html' %}#}
+
+                <div class="main-content">
+                    <div class="container-fluid">
+                        {% block content %}
+		                {% endblock %}
+                    </div>
+                </div>
+
+                {% include 'dashboard_footer.html' %}
+
+            </div>
+
+        </div>
+    </div>
+
+    {#  Build and Config js  #}
+
+    <script src="{% static 'assets/vendor/jquery/dist/jquery.min.js'%}"></script>
+    <script src="{% static 'assets/vendor/popper.js/dist/umd/popper.min.js'%}"></script>
+    <script src="{% static 'assets/vendor/bootstrap/dist/js/bootstrap.js'%}"></script>
+    <script src="{% static 'assets/vendor/PACE/pace.min.js'%}"></script>
+    <script src="{% static 'assets/vendor/perfect-scrollbar/js/perfect-scrollbar.jquery.js'%}"></script>
+    <script src="{% static 'assets/vendor/d3/d3.min.js'%}"></script>
+    <script src="{% static 'assets/js/app.js'%}"></script>
+    <script src="{% static 'assets/js/configurator.js'%}"></script>
+    <script src="{% static 'assets/tinymce/tinymce.min.js' %}"></script>
+    <script src="{% static 'assets/js/extras/moment.min.js' %}"></script>
+{#    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>#}
+    <script src="{% static 'assets/js/tables/jquery.dataTables.min.js' %}"></script>
+{#    <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>#}
+
+    <script src="{% static 'assets/js/tables/datetime-moment.js' %}"></script>
+{#    <script src="https://cdn.datatables.net/plug-ins/1.10.19/sorting/datetime-moment.js"></script>#}
+
+    {#  End of Build and Config js  #}
+
+    <script type="text/javascript">
+
+        tinymce.init({
+            selector: "#submit-note-entry",
+            menubar: false,
+            invalid_elements: "script",
+            setup: function(editor) {
+                {#editor.on("change", function(e) {#}
+                {#    if(editor.getContent()) {#}
+                {#        $(".notes-input-error").hide();#}
+                {#        $("#changes-not-saved-message").show();#}
+                {#    } else {#}
+                {#        $("#changes-not-saved-message").hide();#}
+                {#    }#}
+                {# });#}
+                editor.on("keyup", function(e) {
+                    console.log('in here 1');
+                    if(editor.getContent()) {
+                        $(".notes-input-error").hide();
+                        $("#changes-not-saved-message").show();
+                    } else {
+                        $("#changes-not-saved-message").hide();
+                    }
+                });
+            }
+        });
+
+        // Check new DDICS
+        $(function () {
+            $.ajax({
+                method: 'GET',
+                url: '{% url 'core_app_ddic:active_ddic' %}',
+                success: function(data) {
+                    if (data.count > 0) {
+                        $("#ddic_new_badge").html(data.count).show();
+                    } else {
+                        $("#ddic_new_badge").html(data.count).hide();
+                    }
+                }
+             });
+            $.ajax({
+                method: 'GET',
+                url: '{% url 'core_dd_drawdowns:active' %}',
+                success: function(data) {
+                    if (data.count > 0) {
+                        $("#dd_new_badge").html(data.count).show();
+                    } else {
+                        $("#dd_new_badge").html(data.count).hide();
+                    }
+                }
+            });
+            $.ajax({
+                method: 'GET',
+                url: '{% url 'core_agreement_crud:active' %}',
+                success: function(data) {
+                    if (data.count > 0) {
+                        $("#dd_new_agreement").html(data.count).show();
+                    } else {
+                        $("#dd_new_agreement").html(data.count).hide();
+                    }
+                }
+            });
+            $.ajax({
+                method: 'GET',
+                url: '{% url 'core_companies_house:active_companies_house' %}',
+                success: function(data) {
+                    if (data.count > 0) {
+                        $("#companies_house_new_badge").html(data.count).show();
+                    } else {
+                        $("#companies_house_new_badge").html(data.count).hide();
+                    }
+                }
+             });
+
+            $("body").on("submit", "form", function(e) {
+                $(":submit").attr("disabled", "disabled");
+            });
+        });
+
+
+    </script>
+
+    {% block page-js %}
+    {% endblock %}
+
+
+</body>
+</html>

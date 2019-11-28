@@ -1,0 +1,35 @@
+{% extends "dashboard_base.html" %}
+{% load staticfiles %}
+{% load humanize %}
+{% load widget_tweaks %}
+{% block metadescription %}
+	GO Dashboard
+{% endblock %}
+{% block title %}
+	GO Dashboard
+{% endblock %}
+{% block page-css %}
+{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2 class="header-title" style="color: #8dabc4">{{ agreement_detail.agreementnumber }}</h2>
+    <h2 class="header-title">{{ agreement_detail.customercompany }}</h2>
+    <div class="header-sub-title">
+        {% if  agreement_detail.agreementdefname != 'Hire Purchase' %}
+            <span class="badge badge-info badge-lg">{{ agreement_detail.agreementdefname }}</span>
+        {% else %}
+            <span class="badge badge-primary badge-lg">{{ agreement_detail.agreementdefname }}</span>
+        {% endif %}
+        <nav class="breadcrumb breadcrumb-dash">            &nbsp;&nbsp;&nbsp;
+            <a class="breadcrumb-item text-success" href="javascript:" onclick='history.go(-1);'><i class="ti-list p-r-5"></i>Arrears List</a>
+            <span class="breadcrumb-item active">Arrears Detail</span>
+        </nav>
+    </div>
+</div>
+<div class="card">
+    <div class="card-body">
+    </div>
+</div>
+{% endblock %}
+{% block page-js %}
+{% endblock %}

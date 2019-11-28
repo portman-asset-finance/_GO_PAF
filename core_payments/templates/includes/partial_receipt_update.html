@@ -1,0 +1,23 @@
+{% load staticfiles %}
+<form method="post"
+      action="#"
+      class="js-arrear-update-form">
+  {% csrf_token %}
+  <div class="modal-header">
+      <div class="page-header m-b-0">
+        <h5 class="go-header-title-trailer" style="color: #8dabc4">Payment Receipt for</h5>
+        <h5 class="go-header-title-trailer">{{ agreement_detail.agreementnumber }}</h5>
+        <h5 class="go-header-title-trailer">{{ agreement_customer.customercompany }}</h5>
+      </div>
+      <button type="button" class="close go-modal-close" aria-label="Close">
+           <span aria-hidden="true">&times;</span>
+        </button>
+  </div>
+  <div class="modal-body">
+    {% include 'includes/partial_receipt_form.html' %}
+  </div>
+  <div class="modal-footer">
+    <button id="btn-dismiss-receipt-modal" type="button" class="btn btn-default go-modal-close">Close</button>
+    <button id="btn-update-receipt" type="submit" class="btn btn-success">Confirm Receipt</button>
+  </div>
+</form>
